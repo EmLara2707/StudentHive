@@ -10,12 +10,12 @@ st.set_page_config(page_title="StudentHive", layout="wide")
 st.markdown(
     """
     <style>
-    /* White sidebar */
+    /* Sidebar background */
     [data-testid="stSidebar"] {
         background-color: #E7EDF1;
     }
 
-    /* Text colors so they show on white */
+    /* Text colors so they show on the light sidebar */
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
@@ -96,7 +96,7 @@ st.markdown(
     /* ---------- Bigger button text ---------- */
     [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"] p,
     [data-testid="stSidebar"] .stButton > button p {
-        font-size: 1.15rem;      /* change this to make text bigger/smaller */
+        font-size: 1.15rem;
         font-weight: 500;
     }
 
@@ -122,30 +122,15 @@ st.markdown(
 # ==========================================
 
 if "logged_in" not in st.session_state:
-    st.session_state.logged_in = True  # TEMP OVERRIDE: was False
+    st.session_state.logged_in = False
 
 if "user" not in st.session_state:
-    st.session_state.user = {"name": "Test User"}  # TEMP: fake user for dev
+    st.session_state.user = None
 
 
 def logout() -> None:
     st.session_state.logged_in = False
     st.session_state.user = None
-
-
-def login() -> None:
-    st.session_state.logged_in = True
-    st.session_state.user = {"name": "Test User"}  # TEMP
-
-
-# ==========================================
-# LOGIN PAGE (placeholder until loginAndRegister exists)
-# ==========================================
-
-def login_page() -> None:
-    st.header("Login and Register")
-    st.write("Login page coming soon.")
-    st.button("Log in (temp)", on_click=login)
 
 
 # ==========================================
@@ -154,12 +139,12 @@ def login_page() -> None:
 
 if st.session_state.logged_in:
     pages = {
-        "Dashboard": st.Page("pages/Dashboard.py", title="Dashboard", default=True),
-        "Marketplace": st.Page("pages/Marketplace.py", title="Marketplace"),
-        "Gigs": st.Page("pages/Gigs.py", title="Gigs"),
-        "Rentals": st.Page("pages/Rentals.py", title="Rentals"),
-        "Messages": st.Page("pages/Messages.py", title="Messages"),
-        "Settings": st.Page("pages/Settings.py", title="Settings"),
+        "Dashboard": st.Page("views/Dashboard.py", title="Dashboard", default=True),
+        "Marketplace": st.Page("views/Marketplace.py", title="Marketplace"),
+        "Gigs": st.Page("views/Gigs.py", title="Gigs"),
+        "Rentals": st.Page("views/Rentals.py", title="Rentals"),
+        "Messages": st.Page("views/Messages.py", title="Messages"),
+        "Settings": st.Page("views/Settings.py", title="Settings"),
     }
 
     # Hide Streamlit's built-in menu, we draw our own below
@@ -179,7 +164,14 @@ if st.session_state.logged_in:
 
 else:
     pg = st.navigation(
-        [st.Page(login_page, title="Login", url_path="login")],
+        [
+            st.Page(
+                "views/Login_and_Register.py",
+                title="Login",
+                url_path="login",
+                default=True,
+            )
+        ],
         position="hidden",
     )
 
