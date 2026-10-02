@@ -245,7 +245,7 @@ st.markdown(
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .chip-borrowing { background: #0F9D8A; }
+    .chip-renting { background: #0F9D8A; }
     .chip-lending   { background: #F5A03C; }
     .chip-pending   { opacity: 0.55; }
 
@@ -277,7 +277,7 @@ st.markdown(
         border-radius: 50%;
         display: inline-block;
     }
-    .dot-borrowing { background: #0F9D8A; }
+    .dot-renting { background: #0F9D8A; }
     .dot-lending   { background: #F5A03C; margin-left: 0.6rem; }
 
     /* ---------- Rental cards (clickable) ---------- */
@@ -350,7 +350,7 @@ st.markdown(
         font-weight: 700;
         color: #FFFFFF;
     }
-    .badge-borrowing { background: #0F9D8A; }
+    .badge-renting { background: #0F9D8A; }
     .badge-lending   { background: #F5A03C; }
     .badge-pending   { background: #8A94A0; }
     .badge-cancelled { background: #D64545; }
@@ -496,7 +496,7 @@ st.markdown(
 
 # ==========================================
 # SAMPLE DATA (replace with database data later)
-# role:      "Borrowing" (you took an item) / "Lending" (you offered an item)
+# role:      "Renting" (you took an item) / "Lending" (you offered an item)
 # status:    "Active" / "Pending" / "Completed" / "Cancelled"
 # cancelled_by: "me" / "them" (only for Cancelled)
 # ==========================================
@@ -506,10 +506,10 @@ IMG = "https://placehold.co/200"
 
 rentals = [
     # --- My rentals (active / pending) ---
-    {"item": "Canon DSLR Camera", "role": "Borrowing", "status": "Active",
+    {"item": "Canon DSLR Camera", "role": "Renting", "status": "Active",
      "start": today - timedelta(days=3), "end": today - timedelta(days=1),
      "price": "₱500/day", "with": "Ana R.", "image": IMG},
-    {"item": "Camping Tent (4P)", "role": "Borrowing", "status": "Active",
+    {"item": "Camping Tent (4P)", "role": "Renting", "status": "Active",
      "start": today + timedelta(days=1), "end": today + timedelta(days=4),
      "price": "₱350/day", "with": "Miguel S.", "image": IMG},
     {"item": "Projector", "role": "Lending", "status": "Active",
@@ -521,24 +521,24 @@ rentals = [
     {"item": "Electric Guitar", "role": "Lending", "status": "Pending",
      "start": today + timedelta(days=5), "end": today + timedelta(days=7),
      "price": "₱300/day", "with": "Josh P.", "image": IMG},
-    {"item": "Power Drill", "role": "Borrowing", "status": "Pending",
+    {"item": "Power Drill", "role": "Renting", "status": "Pending",
      "start": today + timedelta(days=9), "end": today + timedelta(days=10),
      "price": "₱150/day", "with": "Leo M.", "image": IMG},
     {"item": "Folding Bike", "role": "Lending", "status": "Active",
      "start": today + timedelta(days=12), "end": today + timedelta(days=15),
      "price": "₱250/day", "with": "Nina T.", "image": IMG},
     # --- Completed ---
-    {"item": "Karaoke Set", "role": "Borrowing", "status": "Completed",
+    {"item": "Karaoke Set", "role": "Renting", "status": "Completed",
      "start": today - timedelta(days=20), "end": today - timedelta(days=18),
      "price": "₱600/day", "with": "Rico B.", "image": IMG},
     {"item": "Acoustic Guitar", "role": "Lending", "status": "Completed",
      "start": today - timedelta(days=14), "end": today - timedelta(days=11),
      "price": "₱200/day", "with": "Mia L.", "image": IMG},
-    {"item": "Tripod Stand", "role": "Borrowing", "status": "Completed",
+    {"item": "Tripod Stand", "role": "Renting", "status": "Completed",
      "start": today - timedelta(days=9), "end": today - timedelta(days=8),
      "price": "₱100/day", "with": "Ana R.", "image": IMG},
     # --- Cancelled ---
-    {"item": "Sound System", "role": "Borrowing", "status": "Cancelled", "cancelled_by": "me",
+    {"item": "Sound System", "role": "Renting", "status": "Cancelled", "cancelled_by": "me",
      "start": today - timedelta(days=6), "end": today - timedelta(days=5),
      "price": "₱800/day", "with": "Paolo G.", "image": IMG},
     {"item": "Ring Light", "role": "Lending", "status": "Cancelled", "cancelled_by": "them",
@@ -585,7 +585,7 @@ def badges_html(r: dict) -> str:
 
 def card_info_html(r: dict) -> str:
     """Single-line HTML (no indentation, so Markdown doesn't treat it as code)."""
-    who_label = "From" if r["role"] == "Borrowing" else "To"
+    who_label = "From" if r["role"] == "Renting" else "To"
     return (
         '<div class="listing-info">'
         f'<div class="listing-name">{escape(r["item"])}</div>'
@@ -733,7 +733,7 @@ def build_todos() -> list:
                 todos.append((r["start"], f"Respond to request: {item}",
                               f"{r['with']} wants to rent it", rid))
             continue
-        if r["role"] == "Borrowing":
+        if r["role"] == "Renting":
             if r["start"] >= today:
                 todos.append((r["start"], f"Pick up {item}", f"From {r['with']}", rid))
             todos.append((r["end"], f"Return {item}", f"To {r['with']}", rid))
@@ -781,7 +781,7 @@ def render_todos(todos: list) -> None:
 def detail_html(r: dict) -> str:
     days = (r["end"] - r["start"]).days + 1
     rate = daily_rate(r)
-    borrowing = r["role"] == "Borrowing"
+    renting = r["role"] == "Renting"
 
     note_cls = ""
     if r["status"] == "Cancelled":
@@ -789,7 +789,7 @@ def detail_html(r: dict) -> str:
     elif r["status"] == "Completed":
         note = "This rental was completed."
     elif r["status"] == "Pending":
-        note = (f"Waiting for {r['with']} to approve your request." if borrowing
+        note = (f"Waiting for {r['with']} to approve your request." if renting
                 else f"{r['with']} is waiting for your response.")
     elif today < r["start"]:
         note = f"Starts in {plural((r['start'] - today).days, 'day')}."
@@ -805,8 +805,8 @@ def detail_html(r: dict) -> str:
         ("Duration", plural(days, "day")),
         ("Rate", r["price"]),
         ("Estimated total", f"₱{rate * days:,}"),
-        ("Owner" if borrowing else "Renter", r["with"]),
-        ("Your role", "Borrowing this item" if borrowing else "Lending this item"),
+        ("Owner" if renting else "Renter", r["with"]),
+        ("Your role", "Renting this item" if renting else "Lending this item"),
     ]
     rows_html = "".join(
         f'<div class="det-row"><span class="det-label">{label}</span>'
@@ -867,7 +867,7 @@ with left_col:
             ) or "Calendar"
         with filt_col:
             chosen = st.pills(
-                "Filter", ["Borrowing", "Lending"], selection_mode="multi",
+                "Filter", ["Renting", "Lending"], selection_mode="multi",
                 label_visibility="collapsed", key="pills_mine",
             ) or []
 
@@ -895,7 +895,7 @@ with left_col:
                     render_calendar(view, items)
                     st.markdown(
                         '<div class="cal-legend">'
-                        '<span class="dot dot-borrowing"></span>Borrowing (rentals you took)'
+                        '<span class="dot dot-renting"></span>Renting (rentals you took)'
                         '<span class="dot dot-lending"></span>Lending (rentals you offered)'
                         '</div>',
                         unsafe_allow_html=True,
@@ -921,7 +921,7 @@ with left_col:
         with sort_col:
             sort_button("done", "↑ Oldest first", "↓ Newest first")
 
-        role_map = {"Items I rented": "Borrowing", "Items I rented out": "Lending"}
+        role_map = {"Items I rented": "Renting", "Items I rented out": "Lending"}
         items = [r for r in rentals if r["status"] == "Completed"
                  and (len(chosen) != 1 or r["role"] == role_map[chosen[0]])]
         items.sort(key=lambda r: r["end"], reverse=not st.session_state.asc_done)
