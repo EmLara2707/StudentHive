@@ -1,8 +1,7 @@
 import os
 import streamlit as st
 
-# set_page_config must be the first Streamlit command
-st.set_page_config(page_title="StudentHive", layout="wide")
+# NOTE: do NOT call st.set_page_config here. app.py already does it.
 
 st.markdown(
     """
@@ -31,10 +30,12 @@ st.markdown(
         overflow: hidden !important;
     }
 
-    /* remove header, toolbar and colored top bar */
+    /* remove header, toolbar, colored top bar, and the (empty) sidebar */
     [data-testid="stHeader"],
     [data-testid="stToolbar"],
-    [data-testid="stDecoration"] {
+    [data-testid="stDecoration"],
+    [data-testid="stSidebar"],
+    [data-testid="stSidebarCollapsedControl"] {
         display: none !important;
     }
 
@@ -51,7 +52,6 @@ st.markdown(
     }
 
     /* ---------- left image ---------- */
-    /* image fills the full viewport height and touches the left edge */
     [data-testid="stImage"],
     [data-testid="stImageContainer"] {
         height: 100vh !important;
@@ -62,7 +62,7 @@ st.markdown(
         height: 100vh !important;
         width: 100% !important;
         object-fit: cover !important;
-        border-radius: 0 !important;   /* removes the rounded corners */
+        border-radius: 0 !important;
         display: block;
     }
 
@@ -118,7 +118,7 @@ st.markdown(
         display: none;
     }
 
-    /* ---------- field labels (School Email, Password) ---------- */
+    /* ---------- field labels ---------- */
     [data-testid="stWidgetLabel"] p {
         font-size: 1.15rem !important;
         font-weight: 500;
@@ -150,7 +150,7 @@ st.markdown(
         border: none;
         color: #ffffff;
     }
- 
+
     /* ---------- legal text ---------- */
     .sh-legal {
         text-align: center;
@@ -165,62 +165,94 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+def find_image() -> str | None:
+    """Look for the image next to this file, then one folder up (project root)."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates = [
+        os.path.join(base_dir, "images", "LoginAndRegister.png"),
+        os.path.join(base_dir, "..", "images", "LoginAndRegister.png"),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            return path
+    return None
+
+
 left_col, right_col = st.columns([5, 4], gap="medium")
 
 with left_col:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(BASE_DIR, "images", "LoginAndRegister.png")
-    st.image(image_path, use_container_width=True)
+    image_path = find_image()
+    if image_path:
+        st.image(image_path, use_container_width=True)
+    else:
+        st.warning("Image not found: images/LoginAndRegister.png")
 
 with right_col:
+    # Everything lives inside the keyed container so the
+    # .st-key-form_panel padding and max-width actually apply.
     with st.container(key="form_panel"):
         st.markdown('<div style="height:20vh"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="sh-title">Join StudentHive</div>', unsafe_allow_html=True)
-    st.markdown(
+        st.markdown('<div class="sh-title">Join StudentHive</div>', unsafe_allow_html=True)
+        st.markdown(
             '<div class="sh-sub">Login to your verified student account to start exploring.</div>',
             unsafe_allow_html=True,
         )
-    st.space("small")
-
-    login_tab, signup_tab = st.tabs(["Login", "Sign-up"])
-
-    with login_tab:
-        st.write("")
-        school_email = st.text_input("School Email")
-        password = st.text_input("Password", type="password")
-        st.space("small")
-        login_button = st.button("Login", key="login_btn")
         st.space("small")
 
-        if login_button:
-            st.success("Login succesfully!")
+        login_tab, signup_tab = st.tabs(["Login", "Sign-up"])
 
-    with signup_tab:
-        st.write("")
-        full_name = st.text_input("Full Name")
-        new_email = st.text_input("School Email", key="signup_email")
-        new_password = st.text_input("Password", type="password", key="signup_password")
-        confirm_password = st.text_input(
-            "Confirm Password", type="password", key="signup_confirm"
-        )
-        st.space("small")
-        signup_button = st.button("Create Account", key="signup_btn")
- 
-        st.markdown(
-            """
-            <div class="sh-legal">
-            By creating an account, you agree to our
-            <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-        st.space("medium")
+        # ---------------- LOGIN ----------------
+        with login_tab:
+            st.write("")
+            school_email = st.text_input("School Email", key="login_email")
+            password = st.text_input("Password", type="password", key="login_password")
+            st.space("small")
+            login_button = st.button("Login", key="login_btn")
+            st.space("small")
 
-        if signup_button:
-            if not new_email or not new_password or not confirm_password:
-                st.error("Please fill in all fields.")
-            elif new_password != confirm_password:
-                st.error("Passwords do not match.")
-            else:
-                st.success("Account created! Check your school email to verify it.")
+            if login_button:
+                if not school_email or not password:
+                    st.error("Please fill in all fields.")
+                else:
+                    # TODO: replace with a real credential check
+                    st.session_state.logged_in = True
+                    st.session_state.user = {
+                        "name": school_email.split("@")[0],
+                        "email": school_email,
+                    }
+                    st.rerun()
+
+        # ---------------- SIGN-UP ----------------
+        with signup_tab:
+            st.write("")
+            full_name = st.text_input("Full Name", key="signup_name")
+            new_email = st.text_input("School Email", key="signup_email")
+            new_password = st.text_input(
+                "Password", type="password", key="signup_password"
+            )
+            confirm_password = st.text_input(
+                "Confirm Password", type="password", key="signup_confirm"
+            )
+            st.space("small")
+            signup_button = st.button("Create Account", key="signup_btn")
+
+            st.markdown(
+                """
+                <div class="sh-legal">
+                By creating an account, you agree to our
+                <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            st.space("medium")
+
+            if signup_button:
+                if not full_name or not new_email or not new_password or not confirm_password:
+                    st.error("Please fill in all fields.")
+                elif new_password != confirm_password:
+                    st.error("Passwords do not match.")
+                else:
+                    # TODO: save the account to your database
+                    st.success("Account created! Check your school email to verify it.")
