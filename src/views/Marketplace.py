@@ -6,7 +6,7 @@ import streamlit as st
 # make `models.py` (in src/) importable from pages/
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from models import get_marketplace, render_listing_grid
+from views.Listing import get_marketplace, render_listing_grid
 
 # ==========================================
 # STYLES (Marketplace page only)
