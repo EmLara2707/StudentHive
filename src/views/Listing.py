@@ -29,7 +29,8 @@ class Listing:
     # ------------------------------------------------------------------
     def render_image(self, height: int = 150, badge: bool = True) -> None:
         """Sky + hills placeholder with the category badge (pure CSS)."""
-        badge_html = f"<span class='sh-badge'>{self.category}</span>" if badge else ""
+        badge_html = (f"<span class='sh-badge sh-badge-{self.category.lower()}'>{self.category}</span>"
+            if badge else "")
         st.markdown(
             f"<div class='sh-image' style='height:{height}px'>"
             f"{badge_html}<div class='sh-cloud'></div></div>",
@@ -147,6 +148,23 @@ class Marketplace:
             results = [l for l in results
                        if q in l.title.lower() or q in l.owner.lower() or q in l.course.lower()]
         return results
+
+    def add_listing(self, title: str, category: str, price: float,
+                    course: str, owner: str, description: str = "") -> Listing:
+        """Create a new listing (newest first). Gigs are per hour, Rentals per day."""
+        new_id = max((l.id for l in self._listings), default=0) + 1
+        listing = Listing(
+            id=new_id,
+            title=title.strip(),
+            category=category,
+            price=price,
+            unit="hr" if category == "Gig" else "day",
+            owner=owner,
+            course=course.strip() or "N/A",
+            description=[description.strip()] if description.strip() else [],
+        )
+        self._listings.insert(0, listing)
+        return listing
 
     def get_gig_bookings(self) -> List[Booking]:
         return [b for b in self._bookings
