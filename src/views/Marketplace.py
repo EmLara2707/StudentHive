@@ -3,7 +3,7 @@ from pathlib import Path
 
 import streamlit as st
 
-# make `models.py` (in src/) importable from pages/
+# make `src/` importable so `views.Listing` can be found
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from views.Listing import get_marketplace, render_listing_grid
@@ -22,6 +22,7 @@ st.markdown(
         --teal-hover: #0b5750;
         --teal-soft: #3f8f86;
         --mint: #4ccfc0;
+        --orange: #F5A03C;
         --ink: #3a3d3f;
         --muted: #5b6770;
         --line: #dcdfe2;
@@ -46,6 +47,17 @@ st.markdown(
     [data-testid="stMain"] h2,
     [data-testid="stMain"] h3 { color: var(--ink); }
 
+    [data-testid="stMainBlockContainer"] {
+        padding-top: 2rem !important;
+        padding-bottom: 0 !important;
+    }
+    [data-testid="stMainBlockContainer"],
+    .block-container {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+        max-width: 100% !important;
+    }
+
     /* ---------- search box (pill) ---------- */
     [data-testid="stTextInput"] [data-baseweb="input"],
     [data-testid="stTextInput"] [data-baseweb="base-input"] {
@@ -55,34 +67,121 @@ st.markdown(
     [data-testid="stTextInput"] [data-baseweb="input"] { border: 1.5px solid var(--muted); }
     [data-testid="stTextInput"] input { color: var(--ink); }
 
-    /* ---------- filter pills ---------- */
-    .st-key-filter_pills [data-testid="stPills"],
-    .st-key-filter_pills > div { justify-content: flex-end; }
-
+    /* ---------- filter pills (Gig / Rentals) ---------- */
     .st-key-filter_pills button {
         border-radius: 999px;
         border: 1.5px solid var(--ink);
         background: #ffffff;
-        color: var(--ink);
         min-height: 1.8rem;
         padding: 0 0.9rem;
+        box-shadow: none;
     }
-    .st-key-filter_pills button[kind="pillsActive"],
-    .st-key-filter_pills button[aria-checked="true"] {
-        background: var(--teal);
+    .st-key-filter_pills button p { color: var(--ink); }
+
+    /* hover */
+    .st-key-filter_pills button:hover {
         border-color: var(--teal);
+        background: #ffffff;
     }
+    .st-key-filter_pills button:hover p { color: var(--teal); }
+
+    /* clicked / selected: solid teal with white text */
+    .st-key-filter_pills [data-testid="stBaseButton-pillsActive"],
+    .st-key-filter_pills button[kind="pillsActive"],
+    .st-key-filter_pills button[aria-pressed="true"],
+    .st-key-filter_pills button[aria-checked="true"] {
+        background: var(--teal) !important;
+        border-color: var(--teal) !important;
+    }
+    .st-key-filter_pills [data-testid="stBaseButton-pillsActive"] p,
     .st-key-filter_pills button[kind="pillsActive"] p,
-    .st-key-filter_pills button[aria-checked="true"] p { color: #ffffff; }
+    .st-key-filter_pills button[aria-pressed="true"] p,
+    .st-key-filter_pills button[aria-checked="true"] p {
+        color: #ffffff !important;
+    }
+    .st-key-filter_pills [data-testid="stBaseButton-pillsActive"]:hover,
+    .st-key-filter_pills button[kind="pillsActive"]:hover {
+        background: var(--teal-hover) !important;
+        border-color: var(--teal-hover) !important;
+    }
+
+    /* focus ring after clicking (replaces the default red one) */
+    .st-key-filter_pills button:focus,
+    .st-key-filter_pills button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 0.15rem rgba(15, 107, 98, 0.25) !important;
+    }
+
+    /* ---------- "Add a Listing" button ---------- */
+    .st-key-add_listing_btn button {
+        background: var(--teal);
+        border: none;
+        border-radius: 999px;
+        min-height: 1.9rem;
+        padding: 0 1rem;
+        white-space: nowrap;
+    }
+    .st-key-add_listing_btn button p {
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .st-key-add_listing_btn button:hover,
+    .st-key-add_listing_btn button:focus:not(:active) {
+        background: var(--teal-hover);
+        border: none;
+        color: #ffffff;
+    }
+
+    /* post button inside the dialog */
+    [data-testid="stDialog"] [data-testid="stFormSubmitButton"] button {
+        background: var(--teal);
+        border: none;
+        border-radius: 999px;
+    }
+    [data-testid="stDialog"] [data-testid="stFormSubmitButton"] button p {
+        color: #ffffff;
+        font-weight: 600;
+    }
+    [data-testid="stDialog"] [data-testid="stFormSubmitButton"] button:hover {
+        background: var(--teal-hover);
+    }
 
     /* ---------- listing cards ---------- */
     [class*="st-key-listingcard_"] {
         background: #ffffff;
         border-radius: 18px;
-        padding: 0.7rem;
+        padding: 0.7rem 0.7rem 1rem 0.7rem !important;   /* extra space at the bottom */
         box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14);
-        gap: 0.4rem;
+        gap: 0.3rem;
     }
+
+    /* owner + View row: each column is centered on the row's middle line,
+       so the View button sits at the vertical middle of the User profile box */
+    [class*="st-key-listingcard_"] [data-testid="stHorizontalBlock"] {
+        align-items: center !important;
+        margin-bottom: 0.2rem;
+    }
+    [class*="st-key-listingcard_"] [data-testid="stColumn"] {
+        align-self: center !important;
+        justify-content: center;
+    }
+    /* strip any extra space around the profile box and the button so each
+       one is exactly as tall as its content (extra space would shift the center) */
+    [class*="st-key-listingcard_"] [data-testid="stColumn"] [data-testid="stVerticalBlock"] {
+        gap: 0;
+    }
+    [class*="st-key-listingcard_"] [data-testid="stColumn"] [data-testid="stElementContainer"],
+    [class*="st-key-listingcard_"] [data-testid="stColumn"] [data-testid="stMarkdown"],
+    [class*="st-key-listingcard_"] [data-testid="stColumn"] [data-testid="stMarkdownContainer"] {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0;
+    }
+    [class*="st-key-listingcard_"] [data-testid="stColumn"] [data-testid="stMarkdownContainer"] p {
+        margin: 0 !important;
+    }
+    [class*="st-key-listingcard_"] .stButton { margin: 0; }
 
     .sh-image {
         position: relative;
@@ -97,13 +196,15 @@ st.markdown(
         position: absolute;
         top: 10px;
         left: 10px;
-        background: var(--teal);
+        background: var(--teal);          /* Gig */
         color: #ffffff;
         font-size: 0.75rem;
         font-weight: 600;
         padding: 2px 14px;
         border-radius: 999px;
     }
+    .sh-badge-rental { background: var(--orange); }   /* Rental */
+
     .sh-cloud {
         position: absolute;
         top: 16px;
@@ -119,7 +220,7 @@ st.markdown(
         display: flex;
         justify-content: space-between;
         gap: 0.5rem;
-        margin-top: 0.4rem;
+        margin-top: 1.5rem;
     }
     .sh-card-title {
         font-family: 'Montserrat', sans-serif;
@@ -135,7 +236,7 @@ st.markdown(
         color: var(--ink);
         white-space: nowrap;
     }
-    .sh-divider { border: none; border-top: 1px solid var(--line); margin: 0.4rem 0 0.2rem; }
+    .sh-divider { border: none; border-top: 1px solid var(--line); margin: 0.2rem 0 0.6rem; }
 
     .sh-owner { display: flex; align-items: center; gap: 0.6rem; }
     .sh-avatar {
@@ -159,7 +260,7 @@ st.markdown(
         border: none;
         border-radius: 999px;
         min-height: 1.9rem;
-        padding: 0 0.5rem;
+        padding: 0rem 0.5rem;
     }
     [class*="st-key-listingcard_"] button p {
         color: #ffffff;
@@ -192,6 +293,26 @@ def close_listing() -> None:
     st.session_state.selected_listing_id = None
 
 
+@st.dialog("Add a Listing")
+def add_listing_dialog() -> None:
+    with st.form("add_listing_form", border=False):
+        title = st.text_input("Title")
+        category = st.radio("Type", ["Gig", "Rental"], horizontal=True)
+        price = st.number_input("Price (\u20b1)", min_value=0.0, step=50.0, value=100.0,
+                                help="Gigs are priced per hour, Rentals per day.")
+        course = st.text_input("Course")
+        description = st.text_area("Description")
+        submitted = st.form_submit_button("Post Listing", width="stretch")
+
+    if submitted:
+        if not title.strip():
+            st.error("Please add a title.")
+        else:
+            owner = (st.session_state.get("user") or {}).get("name", "User")
+            market.add_listing(title, category, price, course, owner, description)
+            st.rerun()
+
+
 selected_id = st.session_state.get("selected_listing_id")
 
 if selected_id is None:
@@ -200,12 +321,18 @@ if selected_id is None:
     with left:
         st.title("Marketplace")
         st.caption("Browse verified Gigs and Rentals across your campus")
+        st.space("small")
     with right:
         query = st.text_input("Search", placeholder="\U0001F50D  Search listings",
                               label_visibility="collapsed", key="market_search")
-        with st.container(key="filter_pills"):
-            chosen = st.pills("Filter", ["Gig", "Rentals"], selection_mode="multi",
-                              label_visibility="collapsed", key="market_filter")
+        add_col, pills_col = st.columns([1.3, 2], vertical_alignment="center")
+        with add_col:
+            if st.button("Add a Listing", icon=":material/add:", key="add_listing_btn"):
+                add_listing_dialog()
+        with pills_col:
+            with st.container(key="filter_pills"):
+                chosen = st.pills("Filter", ["Gig", "Rentals"], selection_mode="multi",
+                                  label_visibility="collapsed", key="market_filter")
 
     # the pill says "Rentals", the data says "Rental"
     categories = ["Rental" if c == "Rentals" else c for c in (chosen or [])]
