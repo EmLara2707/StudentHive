@@ -273,6 +273,112 @@ st.markdown(
         border: none;
         color: #ffffff;
     }
+
+    /* ================= LISTING DETAIL PAGE ================= */
+
+    /* Back button (small outlined pill) */
+    .st-key-back_btn button {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        min-height: 1.5rem;
+        padding: 0 0.7rem;
+        box-shadow: none;
+    }
+    .st-key-back_btn button p {
+        color: var(--ink);
+        font-size: 0.7rem;
+        font-weight: 500;
+    }
+    .st-key-back_btn button:hover { border-color: var(--teal); }
+    .st-key-back_btn button:hover p { color: var(--teal); }
+
+    /* Gallery: one big picture + two stacked thumbnails */
+    .sh-gallery {
+        display: grid;
+        grid-template-columns: 3.1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 8px;
+        height: 240px;
+        margin-bottom: 1rem;
+    }
+    .sh-gallery .sh-image { height: 100%; border-radius: 16px; }
+    .sh-gallery .sh-image:first-child { grid-row: 1 / 3; }
+
+    /* Title, meta, About */
+    .sh-detail-title {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.6rem;
+        line-height: 1.2;
+        color: var(--ink);
+    }
+    .sh-detail-meta {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-top: 0.2rem;
+    }
+    .sh-detail-divider { border: none; border-top: 1px solid var(--line); margin: 0.8rem 0 1rem; }
+    .sh-about-title {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: var(--ink);
+        margin-bottom: 0.5rem;
+    }
+    .sh-about-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.72rem;
+        line-height: 1.5;
+        color: var(--ink);
+        margin-bottom: 1rem;
+    }
+
+    /* Side panel box */
+    [class*="st-key-detail_panel_"] {
+        border: 3px solid var(--line);
+        border-radius: 14px;
+        padding: 1.2rem 1rem 1rem 1rem !important;
+        gap: 0.5rem;
+    }
+    .sh-panel-price { padding: 0 0.6rem 0.4rem; }
+    .sh-panel-price .amt {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.7rem;
+        color: var(--ink);
+    }
+    .sh-panel-price .per { font-size: 0.7rem; color: var(--teal-soft); margin-left: 0.3rem; }
+
+    .sh-panel-user {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        background: #f0f0f0;
+        border: 2px solid var(--line);
+        border-radius: 12px;
+        padding: 0.7rem 1rem;
+        margin-bottom: 0.4rem;
+    }
+    .sh-avatar-lg { width: 46px; height: 46px; border-width: 3px; font-size: 1.1rem; }
+    .sh-panel-user-name { font-weight: 700; font-size: 0.95rem; color: var(--ink); line-height: 1.2; }
+    .sh-panel-user-sub { font-size: 0.65rem; color: var(--muted); }
+
+    /* Message Owner (teal) / Request Booking (yellow-orange) */
+    [class*="st-key-message_owner_"] button,
+    [class*="st-key-request_booking_"] button {
+        border: none;
+        border-radius: 8px;
+        min-height: 2.2rem;
+    }
+    [class*="st-key-message_owner_"] button { background: #0b9488; }
+    [class*="st-key-message_owner_"] button p { color: #ffffff; font-weight: 700; font-size: 0.85rem; }
+    [class*="st-key-message_owner_"] button:hover { background: var(--teal-hover); border: none; }
+
+    [class*="st-key-request_booking_"] button { background: #ffc65c; }
+    [class*="st-key-request_booking_"] button p { color: #1b1b1b; font-weight: 700; font-size: 0.85rem; }
+    [class*="st-key-request_booking_"] button:hover { background: #f5b23c; border: none; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -343,9 +449,12 @@ if selected_id is None:
 else:
     # ---------- detail view ----------
     listing = market.get_listing(selected_id)
-    st.button("\u2190 Back to Marketplace", on_click=close_listing, key="back_btn")
 
-    main_col, side_col = st.columns([2, 1])
+    back_col, crumb_col = st.columns([1.4, 6], vertical_alignment="center")
+    with back_col:
+        st.button("Back to Marketplace", on_click=close_listing, key="back_btn")
+
+    main_col, side_col = st.columns([2.7, 1], gap="large")
     with main_col:
         listing.render_detail()
     with side_col:
