@@ -287,7 +287,7 @@ st.markdown(
     }
     .st-key-back_btn button p {
         color: var(--ink);
-        font-size: 0.7rem;
+        font-size: 1rem;
         font-weight: 500;
     }
     .st-key-back_btn button:hover { border-color: var(--teal); }
@@ -299,7 +299,7 @@ st.markdown(
         grid-template-columns: 3.1fr 1fr;
         grid-template-rows: 1fr 1fr;
         gap: 8px;
-        height: 240px;
+        height: 450px;
         margin-bottom: 1rem;
     }
     .sh-gallery .sh-image { height: 100%; border-radius: 16px; }
@@ -309,7 +309,7 @@ st.markdown(
     .sh-detail-title {
         font-family: 'Montserrat', sans-serif;
         font-weight: 800;
-        font-size: 1.6rem;
+        font-size: 2.5rem;
         line-height: 1.2;
         color: var(--ink);
     }
@@ -323,13 +323,13 @@ st.markdown(
     .sh-about-title {
         font-family: 'Montserrat', sans-serif;
         font-weight: 700;
-        font-size: 1.15rem;
+        font-size: 1.5rem;
         color: var(--ink);
         margin-bottom: 0.5rem;
     }
     .sh-about-text {
         font-family: 'Inter', sans-serif;
-        font-size: 0.72rem;
+        font-size: 0.90rem;
         line-height: 1.5;
         color: var(--ink);
         margin-bottom: 1rem;
@@ -359,7 +359,7 @@ st.markdown(
         border: 2px solid var(--line);
         border-radius: 12px;
         padding: 0.7rem 1rem;
-        margin-bottom: 0.4rem;
+        margin-bottom: 3rem;
     }
     .sh-avatar-lg { width: 46px; height: 46px; border-width: 3px; font-size: 1.1rem; }
     .sh-panel-user-name { font-weight: 700; font-size: 0.95rem; color: var(--ink); line-height: 1.2; }
