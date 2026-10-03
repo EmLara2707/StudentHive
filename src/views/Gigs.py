@@ -245,7 +245,7 @@ st.markdown(
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .chip-providing { background: #0F9D8A; }
+    .chip-doing { background: #0F9D8A; }
     .chip-hiring    { background: #F5A03C; }
     .chip-pending   { opacity: 0.55; }
 
@@ -277,7 +277,7 @@ st.markdown(
         border-radius: 50%;
         display: inline-block;
     }
-    .dot-providing { background: #0F9D8A; }
+    .dot-doing { background: #0F9D8A; }
     .dot-hiring    { background: #F5A03C; margin-left: 0.6rem; }
 
     /* ---------- Gig cards (clickable) ---------- */
@@ -350,7 +350,7 @@ st.markdown(
         font-weight: 700;
         color: #FFFFFF;
     }
-    .badge-providing { background: #0F9D8A; }
+    .badge-doing { background: #0F9D8A; }
     .badge-hiring    { background: #F5A03C; }
     .badge-pending   { background: #8A94A0; }
     .badge-cancelled { background: #D64545; }
@@ -496,7 +496,7 @@ st.markdown(
 
 # ==========================================
 # SAMPLE DATA (replace with database data later)
-# role:      "Providing" (you do the gig for someone) / "Hiring" (you posted a gig for someone to do)
+# role:      "Doing" (you do the gig for someone) / "Hiring" (you posted a gig for someone to do)
 # status:    "Active" / "Pending" / "Completed" / "Cancelled"
 # cancelled_by: "me" / "them" (only for Cancelled)
 # ==========================================
@@ -506,10 +506,10 @@ IMG = "https://placehold.co/200"
 
 gigs = [
     # --- My gigs (active / pending) ---
-    {"item": "Math Tutoring (Calculus)", "role": "Providing", "status": "Active",
+    {"item": "Math Tutoring (Calculus)", "role": "Doing", "status": "Active",
      "start": today - timedelta(days=3), "end": today - timedelta(days=1),
      "price": "₱500/day", "with": "Ana R.", "image": IMG},
-    {"item": "Event Photography", "role": "Providing", "status": "Active",
+    {"item": "Event Photography", "role": "Doing", "status": "Active",
      "start": today + timedelta(days=1), "end": today + timedelta(days=4),
      "price": "₱1,200/day", "with": "Miguel S.", "image": IMG},
     {"item": "Poster Design", "role": "Hiring", "status": "Active",
@@ -521,24 +521,24 @@ gigs = [
     {"item": "Guitar Lessons", "role": "Hiring", "status": "Pending",
      "start": today + timedelta(days=5), "end": today + timedelta(days=7),
      "price": "₱350/day", "with": "Josh P.", "image": IMG},
-    {"item": "Python Tutoring", "role": "Providing", "status": "Pending",
+    {"item": "Python Tutoring", "role": "Doing", "status": "Pending",
      "start": today + timedelta(days=9), "end": today + timedelta(days=10),
      "price": "₱450/day", "with": "Leo M.", "image": IMG},
-    {"item": "Dog Walking", "role": "Providing", "status": "Active",
+    {"item": "Dog Walking", "role": "Doing", "status": "Active",
      "start": today + timedelta(days=12), "end": today + timedelta(days=15),
      "price": "₱250/day", "with": "Nina T.", "image": IMG},
     # --- Completed ---
-    {"item": "Video Editing", "role": "Providing", "status": "Completed",
+    {"item": "Video Editing", "role": "Doing", "status": "Completed",
      "start": today - timedelta(days=20), "end": today - timedelta(days=18),
      "price": "₱800/day", "with": "Rico B.", "image": IMG},
     {"item": "Logo Design", "role": "Hiring", "status": "Completed",
      "start": today - timedelta(days=14), "end": today - timedelta(days=11),
      "price": "₱600/day", "with": "Mia L.", "image": IMG},
-    {"item": "Essay Editing", "role": "Providing", "status": "Completed",
+    {"item": "Essay Editing", "role": "Doing", "status": "Completed",
      "start": today - timedelta(days=9), "end": today - timedelta(days=8),
      "price": "₱200/day", "with": "Ana R.", "image": IMG},
     # --- Cancelled ---
-    {"item": "Wedding Videography", "role": "Providing", "status": "Cancelled", "cancelled_by": "me",
+    {"item": "Wedding Videography", "role": "Doing", "status": "Cancelled", "cancelled_by": "me",
      "start": today - timedelta(days=6), "end": today - timedelta(days=5),
      "price": "₱1,500/day", "with": "Paolo G.", "image": IMG},
     {"item": "Social Media Management", "role": "Hiring", "status": "Cancelled", "cancelled_by": "them",
@@ -585,7 +585,7 @@ def badges_html(r: dict) -> str:
 
 def card_info_html(r: dict) -> str:
     """Single-line HTML (no indentation, so Markdown doesn't treat it as code)."""
-    who_label = "For" if r["role"] == "Providing" else "By"
+    who_label = "For" if r["role"] == "Doing" else "By"
     return (
         '<div class="listing-info">'
         f'<div class="listing-name">{escape(r["item"])}</div>'
@@ -733,7 +733,7 @@ def build_todos() -> list:
                 todos.append((r["start"], f"Respond to applicant: {item}",
                               f"{r['with']} wants to take this gig", rid))
             continue
-        if r["role"] == "Providing":
+        if r["role"] == "Doing":
             if r["start"] >= today:
                 todos.append((r["start"], f"Start {item}", f"For {r['with']}", rid))
             todos.append((r["end"], f"Deliver {item}", f"To {r['with']}", rid))
@@ -781,7 +781,7 @@ def render_todos(todos: list) -> None:
 def detail_html(r: dict) -> str:
     days = (r["end"] - r["start"]).days + 1
     rate = daily_rate(r)
-    providing = r["role"] == "Providing"
+    doing = r["role"] == "Doing"
 
     note_cls = ""
     if r["status"] == "Cancelled":
@@ -789,7 +789,7 @@ def detail_html(r: dict) -> str:
     elif r["status"] == "Completed":
         note = "This gig was completed."
     elif r["status"] == "Pending":
-        note = (f"Waiting for {r['with']} to accept your offer." if providing
+        note = (f"Waiting for {r['with']} to accept your offer." if doing
                 else f"{r['with']} is waiting for your response.")
     elif today < r["start"]:
         note = f"Starts in {plural((r['start'] - today).days, 'day')}."
@@ -805,8 +805,8 @@ def detail_html(r: dict) -> str:
         ("Duration", plural(days, "day")),
         ("Rate", r["price"]),
         ("Estimated total", f"₱{rate * days:,}"),
-        ("Client" if providing else "Student", r["with"]),
-        ("Your role", "Providing this gig" if providing else "Hiring for this gig"),
+        ("Client" if doing else "Student", r["with"]),
+        ("Your role", "Doing this gig" if doing else "Hiring for this gig"),
     ]
     rows_html = "".join(
         f'<div class="det-row"><span class="det-label">{label}</span>'
@@ -867,7 +867,7 @@ with left_col:
             ) or "Calendar"
         with filt_col:
             chosen = st.pills(
-                "Filter", ["Providing", "Hiring"], selection_mode="multi",
+                "Filter", ["Doing", "Hiring"], selection_mode="multi",
                 label_visibility="collapsed", key="pills_mine",
             ) or []
 
@@ -895,8 +895,8 @@ with left_col:
                     render_calendar(view, items)
                     st.markdown(
                         '<div class="cal-legend">'
-                        '<span class="dot dot-providing"></span>Providing (gigs you’re doing)'
-                        '<span class="dot dot-hiring"></span>Hiring (gigs you posted)'
+                        '<span class="dot dot-doing"></span>Doing (gigs you took)'
+                        '<span class="dot dot-hiring"></span>Hiring (gigs you offered)'
                         '</div>',
                         unsafe_allow_html=True,
                     )
@@ -915,13 +915,13 @@ with left_col:
         filt_col, sort_col = st.columns([5, 2], vertical_alignment="center")
         with filt_col:
             chosen = st.pills(
-                "Filter", ["Gigs I did", "Gigs I posted"], selection_mode="multi",
+                "Filter", ["Gigs I did", "Gigs I offered"], selection_mode="multi",
                 label_visibility="collapsed", key="pills_done",
             ) or []
         with sort_col:
             sort_button("done", "↑ Oldest first", "↓ Newest first")
 
-        role_map = {"Gigs I did": "Providing", "Gigs I posted": "Hiring"}
+        role_map = {"Gigs I did": "Doing", "Gigs I offered": "Hiring"}
         items = [r for r in gigs if r["status"] == "Completed"
                  and (len(chosen) != 1 or r["role"] == role_map[chosen[0]])]
         items.sort(key=lambda r: r["end"], reverse=not st.session_state.asc_done)
