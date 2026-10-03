@@ -9,7 +9,7 @@ import streamlit as st
 # ---------- Layout sizes (px) ----------
 # Tune these to fit your screen. The page itself never scrolls;
 # only the boxes below scroll internally if their content is taller.
-LIST_H = 650   # left box: rental lists
+LIST_H = 680   # left box: rental lists
 CAL_H = 680    # left box: calendar (taller than the lists)
 TODO_H = 680   # right box: to-do list / rental details
 DIVIDER_H = 780  # vertical bar between the left and right sides
@@ -78,30 +78,80 @@ st.markdown(
     }
 
     /* ---------- Tabs ---------- */
-    [data-testid="stMain"] button[aria-selected="true"] [data-testid="stMarkdownContainer"] p {
-        color: #0F9D8A !important;
-        font-weight: 700;
-    }
-    [data-testid="stMain"] [data-baseweb="tab-highlight"] {
-        background-color: #0F9D8A !important;
+    [data-testid="stMain"] [data-testid="stTab"] {
+        background: transparent;
     }
 
-    /* ---------- Filter / view pills ---------- */
+    /* unselected tab text: same ink color as the page text */
+    [data-testid="stMain"] [data-testid="stTab"] [data-testid="stMarkdownContainer"] p {
+        color: #3a3d3f !important;
+        font-weight: 600;
+    }
+
+    /* hover */
+    [data-testid="stMain"] [data-testid="stTab"]:hover [data-testid="stMarkdownContainer"] p {
+        color: #0f6b62 !important;
+    }
+
+    /* selected tab text */
+    [data-testid="stMain"] [data-testid="stTab"][aria-selected="true"] [data-testid="stMarkdownContainer"] p {
+        color: #0f6b62 !important;
+        font-weight: 700;
+    }
+
+    /* underline under the selected tab */
+    [data-testid="stMain"] [data-testid="stTab"] .react-aria-SelectionIndicator,
+    [data-testid="stMain"] [data-baseweb="tab-highlight"] {
+        background-color: #0f6b62 !important;
+    }
+
+    /* ---------- Filter / view pills (same look as Marketplace Gig / Rentals) ---------- */
     [class*="st-key-pills_"] button {
         border-radius: 999px;
         border: 1.5px solid #3a3d3f;
         background: #ffffff;
         min-height: 1.8rem;
         padding: 0 0.9rem;
+        box-shadow: none;
     }
-    [class*="st-key-pills_"] button[kind="pillsActive"],
-    [class*="st-key-pills_"] button[aria-checked="true"] {
-        background: #0f6b62;
+    [data-testid="stMain"] [class*="st-key-pills_"] button [data-testid="stMarkdownContainer"] p {
+        color: #3a3d3f !important;
+    }
+
+    /* hover: teal outline + teal text */
+    [class*="st-key-pills_"] button:hover {
         border-color: #0f6b62;
+        background: #ffffff;
     }
+    [data-testid="stMain"] [class*="st-key-pills_"] button:hover [data-testid="stMarkdownContainer"] p {
+        color: #0f6b62 !important;
+    }
+
+    /* selected: solid teal with white text */
+    [class*="st-key-pills_"] [data-testid="stBaseButton-pillsActive"],
+    [class*="st-key-pills_"] button[kind="pillsActive"],
+    [class*="st-key-pills_"] button[aria-pressed="true"],
+    [class*="st-key-pills_"] button[aria-checked="true"] {
+        background: #0f6b62 !important;
+        border-color: #0f6b62 !important;
+    }
+    [data-testid="stMain"] [class*="st-key-pills_"] [data-testid="stBaseButton-pillsActive"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stMain"] [class*="st-key-pills_"] button[kind="pillsActive"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMain"] [class*="st-key-pills_"] button[aria-pressed="true"] [data-testid="stMarkdownContainer"] p,
     [data-testid="stMain"] [class*="st-key-pills_"] button[aria-checked="true"] [data-testid="stMarkdownContainer"] p {
         color: #ffffff !important;
+    }
+    [class*="st-key-pills_"] [data-testid="stBaseButton-pillsActive"]:hover,
+    [class*="st-key-pills_"] button[kind="pillsActive"]:hover {
+        background: #0b5750 !important;
+        border-color: #0b5750 !important;
+    }
+
+    /* focus ring after clicking (replaces Streamlit's default red) */
+    [class*="st-key-pills_"] button:focus,
+    [class*="st-key-pills_"] button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 0.15rem rgba(15, 107, 98, 0.25) !important;
     }
 
     /* ---------- Sort toggle button (also used by the Back buttons) ---------- */
@@ -285,7 +335,7 @@ st.markdown(
         background: #FFFFFF;
         border-radius: 1rem;
         padding: 0 0.9rem 0 0;
-        box-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14);
         gap: 0;
         overflow: hidden;
     }
@@ -859,7 +909,7 @@ with left_col:
 
     # ----- My Rentals: calendar or list -----
     with tab_mine:
-        view_col, filt_col, sort_col = st.columns([2, 3, 2], vertical_alignment="center")
+        view_col, filt_col, sort_col = st.columns([1.1, 1.9, 3], vertical_alignment="center")
         with view_col:
             view_mode = st.pills(
                 "View", ["Calendar", "List"], default="Calendar",
