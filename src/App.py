@@ -161,7 +161,7 @@ elif st.session_state.logged_in:
         "Gigs": st.Page("views/Gigs.py", title="Gigs"),
         "Rentals": st.Page("views/Rentals.py", title="Rentals"),
         "Messages": st.Page("views/Messages.py", title="Messages"),
-        "Settings": st.Page("views/Settings.py", title="Settings"),
+        "Profile": st.Page("views/Profile.py", title="Profile"),
     }
 
     # Hide Streamlit's built-in menu, we draw our own below

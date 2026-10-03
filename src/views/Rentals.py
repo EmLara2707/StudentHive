@@ -200,7 +200,7 @@ st.markdown(
     [class*="st-key-calgrid"] > div:first-child {
         min-height: 1.8rem;
     }
-    [class*="st-key-calgrid"] { gap: 0.35rem; }
+    [class*="st-key-calgrid"] { gap: 0.8rem; }
     [class*="st-key-dc_"] {
         position: relative;          /* the invisible click button is stretched over this */
         height: 95px;               /* fixed height, so a cell can never grow into its neighbours */
@@ -909,7 +909,7 @@ with left_col:
 
     # ----- My Rentals: calendar or list -----
     with tab_mine:
-        view_col, filt_col, sort_col = st.columns([1.1, 1.9, 3], vertical_alignment="center")
+        view_col, filt_col, _, sort_col = st.columns([1.1, 1.9, 1.7, 1.3], vertical_alignment="center")
         with view_col:
             view_mode = st.pills(
                 "View", ["Calendar", "List"], default="Calendar",
@@ -962,7 +962,7 @@ with left_col:
 
     # ----- Completed: list only -----
     with tab_done:
-        filt_col, sort_col = st.columns([5, 2], vertical_alignment="center")
+        filt_col, sort_col = st.columns([4.726, 1.274], vertical_alignment="center")
         with filt_col:
             chosen = st.pills(
                 "Filter", ["Items I rented", "Items I rented out"], selection_mode="multi",
@@ -984,7 +984,7 @@ with left_col:
 
     # ----- Cancelled: list only -----
     with tab_cancel:
-        filt_col, sort_col = st.columns([5, 2], vertical_alignment="center")
+        filt_col, sort_col = st.columns([4.726, 1.274], vertical_alignment="center")
         with filt_col:
             chosen = st.pills(
                 "Filter", ["Cancelled by me", "Cancelled by others"], selection_mode="multi",
