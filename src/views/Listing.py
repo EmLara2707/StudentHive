@@ -1,9 +1,8 @@
 from dataclasses import dataclass, field
+from html import escape
 from typing import Callable, List, Optional
 
 import streamlit as st
-
-TEAL = "#0E8C7F"
 
 
 @dataclass
@@ -24,13 +23,20 @@ class Listing:
     def price_label(self) -> str:
         return f"\u20b1{self.price:.0f}/{self.unit}"
 
+    @property
+    def unit_label(self) -> str:
+        """'hr' -> 'hour' for the detail page."""
+        return {"hr": "hour"}.get(self.unit, self.unit)
+
     # ------------------------------------------------------------------
-    # Rendering
+    # Marketplace card
     # ------------------------------------------------------------------
     def render_image(self, height: int = 150, badge: bool = True) -> None:
         """Sky + hills placeholder with the category badge (pure CSS)."""
-        badge_html = (f"<span class='sh-badge sh-badge-{self.category.lower()}'>{self.category}</span>"
-            if badge else "")
+        badge_html = (
+            f"<span class='sh-badge sh-badge-{escape(self.category.lower())}'>"
+            f"{escape(self.category)}</span>" if badge else ""
+        )
         st.markdown(
             f"<div class='sh-image' style='height:{height}px'>"
             f"{badge_html}<div class='sh-cloud'></div></div>",
@@ -44,8 +50,8 @@ class Listing:
             self.render_image()
             st.markdown(
                 f"<div class='sh-title-row'>"
-                f"<div class='sh-card-title'>{self.title}</div>"
-                f"<div class='sh-price'>{self.price_label}</div></div>"
+                f"<div class='sh-card-title'>{escape(self.title)}</div>"
+                f"<div class='sh-price'>{escape(self.price_label)}</div></div>"
                 f"<hr class='sh-divider'>",
                 unsafe_allow_html=True,
             )
@@ -53,9 +59,9 @@ class Listing:
             with info_col:
                 st.markdown(
                     f"<div class='sh-owner'>"
-                    f"<div class='sh-avatar'>{self.owner[:1].upper()}</div>"
-                    f"<div><div class='sh-owner-name'>{self.owner}</div>"
-                    f"<div class='sh-owner-course'>{self.course}</div></div></div>",
+                    f"<div class='sh-avatar'>{escape(self.owner[:1].upper())}</div>"
+                    f"<div><div class='sh-owner-name'>{escape(self.owner)}</div>"
+                    f"<div class='sh-owner-course'>{escape(self.course)}</div></div></div>",
                     unsafe_allow_html=True,
                 )
             with btn_col:
@@ -63,33 +69,49 @@ class Listing:
                     st.button("View", key=f"{key_prefix}_view_{self.id}",
                               width="stretch", on_click=on_view, args=(self.id,))
 
-    def render_detail(self) -> None:
-        self.render_image(height=280)
-        st.title(self.title)
-        st.divider()
-        st.subheader(f"About this {self.category}")
-        for paragraph in self.description:
-            st.write(paragraph)
+    # ------------------------------------------------------------------
+    # Listing detail page
+    # ------------------------------------------------------------------
 
-        c1, c2 = st.columns(2)
-        with c1, st.container(border=True):
-            st.markdown("**Subjects Covered**")
-            for s in self.subjects:
-                st.write(f"- {s}")
-        with c2, st.container(border=True):
-            st.markdown("**Requirements**")
-            for r in self.requirements:
-                st.write(f"- {r}")
+    def render_gallery(self) -> None:
+        """One big picture and two stacked thumbnails (placeholders)."""
+        scene = "<div class='sh-image'><div class='sh-cloud'></div></div>"
+        st.markdown(f"<div class='sh-gallery'>{scene}{scene}{scene}</div>",
+                    unsafe_allow_html=True)
+
+    def render_detail(self) -> None:
+        """Main column: gallery, title, meta line, About section."""
+        self.render_gallery()
+        meta = " &bull; ".join(escape(x) for x in (self.owner, self.course, self.category))
+        paragraphs = "".join(
+            f"<div class='sh-about-text'>{escape(p)}</div>" for p in self.description
+        ) or "<div class='sh-about-text'>No description provided.</div>"
+        st.markdown(
+            f"<div class='sh-detail-title'>{escape(self.title)}</div>"
+            f"<div class='sh-detail-meta'>{meta}</div>"
+            f"<hr class='sh-detail-divider'>"
+            f"<div class='sh-about-title'>About this {escape(self.category)}</div>"
+            f"{paragraphs}",
+            unsafe_allow_html=True,
+        )
 
     def render_side_panel(self) -> None:
-        with st.container(border=True):
-            st.subheader(self.price_label)
-            st.write(f"**{self.owner}**")
-            st.caption(f"Course, {self.course}")
-            st.button("Message Owner", width="stretch", disabled=True,
-                      key=f"message_owner_{self.id}")
-            st.button("Request Booking", width="stretch", disabled=True,
-                      key=f"request_booking_{self.id}")
+        """Right column: price, owner box, Message Owner / Request Booking."""
+        with st.container(key=f"detail_panel_{self.id}"):
+            st.markdown(
+                f"<div class='sh-panel-price'>"
+                f"<span class='amt'>\u20b1{self.price:.0f}</span>"
+                f"<span class='per'>/ {escape(self.unit_label)}</span></div>"
+                f"<div class='sh-panel-user'>"
+                f"<div class='sh-avatar sh-avatar-lg'>{escape(self.owner[:1].upper())}</div>"
+                f"<div><div class='sh-panel-user-name'>{escape(self.owner)}</div>"
+                f"<div class='sh-panel-user-sub'>Course, {escape(self.course)}</div></div></div>",
+                unsafe_allow_html=True,
+            )
+            if st.button("Message Owner", key=f"message_owner_{self.id}", width="stretch"):
+                st.toast("Messaging is coming soon.")
+            if st.button("Request Booking", key=f"request_booking_{self.id}", width="stretch"):
+                st.toast("Booking requests are coming soon.")
 
 
 @dataclass
