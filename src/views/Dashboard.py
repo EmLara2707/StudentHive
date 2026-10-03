@@ -284,7 +284,7 @@ st.markdown(
         background: #FFFFFF;
         border-radius: 1rem;
         overflow: hidden;
-        box-shadow: 0 0 12px rgba(0, 0, 0, 0.25);   /* slight black glow */
+        box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14);   /* slight black glow */
     }
 
     .listing-card img {

@@ -69,7 +69,9 @@ st.markdown(
     /* ---------- right panel ---------- */
     .st-key-form_panel {
         padding: 0 4rem;
+        width: 100%;
         max-width: 640px;
+        margin: 0 auto;      /* centers the form inside the right column */
     }
 
     .sh-title {
@@ -88,11 +90,13 @@ st.markdown(
     }
 
     /* ---------- tabs ---------- */
+    [data-testid="stTabs"] [role="tablist"],
     .stTabs [data-baseweb="tab-list"] {
         gap: 0;
         border-bottom: 3px solid var(--line);
     }
 
+    [data-testid="stTab"],
     .stTabs [data-baseweb="tab"] {
         flex: 1;
         justify-content: center;
@@ -100,18 +104,29 @@ st.markdown(
         background: transparent;
     }
 
+    /* unselected tab text: same ink color as the rest of the page text */
+    [data-testid="stTab"] [data-testid="stMarkdownContainer"] p,
     .stTabs [data-baseweb="tab"] p {
         font-weight: 600;
         font-size: 1.1rem;
-        color: var(--ink);
+        color: var(--ink) !important;
     }
 
+    /* hover */
+    [data-testid="stTab"]:hover [data-testid="stMarkdownContainer"] p {
+        color: var(--teal) !important;
+    }
+
+    /* selected tab text */
+    [data-testid="stTab"][aria-selected="true"] [data-testid="stMarkdownContainer"] p,
     .stTabs [aria-selected="true"] p {
-        color: var(--teal-soft);
+        color: var(--teal) !important;
     }
 
+    /* underline under the selected tab */
+    [data-testid="stTab"] .react-aria-SelectionIndicator,
     .stTabs [data-baseweb="tab-highlight"] {
-        background-color: var(--teal);
+        background-color: var(--teal) !important;
         height: 3px;
     }
     .stTabs [data-baseweb="tab-border"] {
