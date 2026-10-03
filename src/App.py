@@ -127,17 +127,34 @@ if "logged_in" not in st.session_state:
 if "user" not in st.session_state:
     st.session_state.user = None
 
+if "onboarding_complete" not in st.session_state:
+    st.session_state.onboarding_complete = False
 
 def logout() -> None:
     st.session_state.logged_in = False
     st.session_state.user = None
-
+    st.session_state.onboarding_complete = False
+    st.session_state.pop("ob_step", None)
+    st.session_state.pop("ob_data", None)
 
 # ==========================================
 # PAGES
 # ==========================================
 
-if st.session_state.logged_in:
+if st.session_state.logged_in and not st.session_state.onboarding_complete:
+    pg = st.navigation(
+        [
+            st.Page(
+                "views/OnBoarding.py",
+                title="Onboarding",
+                url_path="onboarding",
+                default=True,
+            )
+        ],
+        position="hidden",
+    )
+
+elif st.session_state.logged_in:
     pages = {
         "Dashboard": st.Page("views/Dashboard.py", title="Dashboard", default=True),
         "Marketplace": st.Page("views/Marketplace.py", title="Marketplace"),
