@@ -60,16 +60,28 @@ button[data-baseweb="tab"][aria-selected="true"] p { color: var(--teal-soft); }
 
 /* ---------- banner ---------- */
 .st-key-banner { background: var(--field); border-radius: 18px; padding: 1.3rem 2rem 2.5rem 2rem; margin-top: 0.5rem; }
-.st-key-avatar { position: relative; width: 132px; height: 132px; }
-.pf-avatar { width: 128px; height: 128px; border-radius: 50%; border: 3px solid var(--mint); background: #f3f6f8 center/cover no-repeat; }
-.st-key-cam_btn { position: absolute; right: 0; bottom: 2px; width: auto; }
-.st-key-cam_btn button { width: 38px; height: 38px; min-height: 0; padding: 0 !important; border-radius: 50% !important; background: #ffffff !important; border: 2px solid #111 !important; }
+.st-key-avatar { position: relative; width: 128px !important; min-width: 128px !important; max-width: 128px !important; height: 128px; flex: 0 0 128px !important; margin-right: 0 !important; }
+.pf-avatar { width: 128px; height: 128px; border-radius: 50%; border: 3px solid var(--mint); background: #f3f6f8 center/cover no-repeat; box-sizing: border-box; }
+.st-key-cam_btn { position: absolute !important; right: 0 !important; bottom: 0 !important; left: auto !important; top: auto !important; width: 38px !important; height: 38px !important; margin: 0 !important; z-index: 2; }
+.st-key-cam_btn [data-testid="stButton"] { width: 38px; margin: 0; }
+.st-key-cam_btn button { width: 38px; height: 38px; min-height: 0; padding: 0 !important; display: flex; align-items: center; justify-content: center; border-radius: 50% !important; background: #ffffff !important; border: 2px solid #111 !important; }
+.st-key-cam_btn button p { display: none; }
 .st-key-cam_btn button span { font-size: 1.1rem !important; color: #111 !important; }
 .pf-name { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.9rem; line-height: 1.2; color: var(--ink); }
 .pf-major { font-size: 1rem; color: var(--ink); }
 .pf-rating { font-size: 0.9rem; color: var(--muted); margin-top: 0.3rem; }
 .pf-rating .star { color: #fbc02d; margin-right: 0.4rem; }
-
+.st-key-banner_row > [data-testid="stLayoutWrapper"]:has(.st-key-avatar) {
+    flex: 0 0 128px !important;
+    width: 128px !important;
+    min-width: 128px !important;
+}
+.st-key-banner_row > [data-testid="stLayoutWrapper"]:has(.st-key-banner_info) {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0;
+}
+.st-key-banner_row { gap: 3rem !important; }
 /* ---------- pencil buttons ---------- */
 [class*="st-key-edit_"] { width: auto !important; flex: 0 0 auto; }
 [class*="st-key-edit_"] button { min-height: 0; padding: 0.1rem 0.3rem !important; background: transparent !important; border: none !important; box-shadow: none !important; }
@@ -315,24 +327,22 @@ def _banner():
         style = ""
 
     with st.container(key="banner"):
-        c1, c2 = st.columns([1, 5], vertical_alignment="center")
-        with c1:
+        with st.container(horizontal=True, vertical_alignment="center", key="banner_row"):
             with st.container(key="avatar"):
                 st.markdown(f'<div class="pf-avatar" style="{style}"></div>', unsafe_allow_html=True)
                 if st.button("", key="cam_btn", icon=":material/photo_camera:"):
                     photo_dialog()
-        with c2:
-            _inline_text("username", "username", "pf-name")
-            _inline_text("major", "major", "pf-major")
-            st.markdown('<div class="pf-rating"><span class="star">★</span>4.8 (124 reviews)</div>', unsafe_allow_html=True)
-
+            with st.container(key="banner_info"):
+                _inline_text("username", "username", "pf-name")
+                _inline_text("major", "major", "pf-major")
+                st.markdown('<div class="pf-rating"><span class="star">★</span>4.8 (124 reviews)</div>', unsafe_allow_html=True)
 
 def _about():
     _heading("About me", "about")
     with st.container(key="card_about"):
         if "about" in st.session_state.editing:
             st.text_area(
-                "Short bio", value=_p()["bio"], key="in_about", height=200, max_chars=150,
+                "Short bio", value=_p()["bio"], key="in_about", height=200, max_chars=500,
                 label_visibility="collapsed", help="Press Ctrl+Enter to save",
             )
             with st.container(horizontal=True, horizontal_alignment="right"):
@@ -411,21 +421,23 @@ def _listings():
 
 
 def _summary_tab():
-    _banner()
-    st.space("medium")
-    left, right = st.columns([2.2, 1])
-    with left:
+    # Row 1: profile banner on the left, About me on the right
+    banner_col, about_col = st.columns([1.5, 1.3])
+    with banner_col:
+        _banner()
+    with about_col:
         _about()
-    with right:
-        _skills()
-    st.space("small")
-    left, right = st.columns([1.5, 1])
-    with left:
-        _portfolio()
-    with right:
-        _socials()
-    _listings()
 
+    # Row 2: Portfolio & Links and Social Media share most of the width, Skills on the right
+    portfolio_col, socials_col, skills_col = st.columns([1.5, 1.5, 1])
+    with portfolio_col:
+        _portfolio()
+    with socials_col:
+        _socials()
+    with skills_col:
+        _skills()
+
+    _listings()
 
 # ------------------------------------------------------------ settings tab
 def _settings_tab():
@@ -476,7 +488,7 @@ def render_profile():
         st.toast(st.session_state.pop("toast"))
 
     st.title("Profile Information")
-    st.caption("Browse verified Gigs and Rentals across your campus")
+    st.caption("Keep your profile up to date to build trust with other students")
     
     summary, settings = st.tabs(["Summary", "Settings"])
     with summary:
