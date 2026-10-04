@@ -156,12 +156,12 @@ if st.session_state.logged_in and not st.session_state.onboarding_complete:
 
 elif st.session_state.logged_in:
     pages = {
+        "Profile": st.Page("views/Profile.py", title="Profile"),
         "Dashboard": st.Page("views/Dashboard.py", title="Dashboard", default=True),
         "Marketplace": st.Page("views/Marketplace.py", title="Marketplace"),
         "Gigs": st.Page("views/Gigs.py", title="Gigs"),
         "Rentals": st.Page("views/Rentals.py", title="Rentals"),
         "Messages": st.Page("views/Messages.py", title="Messages"),
-        "Profile": st.Page("views/Profile.py", title="Profile"),
     }
 
     # Hide Streamlit's built-in menu, we draw our own below
