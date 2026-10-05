@@ -33,23 +33,36 @@ class Listing:
         return f"background:url('{uri}') center/cover no-repeat;"
 
     @property
-    def price_label(self) -> str:
-        return f"\u20b1{self.price:.0f}/{self.unit}"
+    def price_label(self):
+        if self.unit == "once":
+            return f"₱{self.price:,.0f}"
+        return f"₱{self.price:,.0f}/{self.unit}"
 
     @property
-    def unit_label(self) -> str:
-        """'hr' -> 'hour' for the detail page."""
-        return {"hr": "hour"}.get(self.unit, self.unit)
+    def unit_label(self):
+        return {"hr": "hour", "day": "day", "once": "one-time"}.get(self.unit, self.unit)
+
+    @property
+    def deliverable_kind(self) -> str:
+        """'Service' or 'Project' for Gigs, '' for Rentals."""
+        if self.category != "Gig":
+            return ""
+        return "Project" if "project" in self.deliverable.lower() else "Service"
 
     # ------------------------------------------------------------------
     # Marketplace card
     # ------------------------------------------------------------------
     def render_image(self, height: int = 150, badge: bool = True) -> None:
         """Sky + hills placeholder with the category badge (pure CSS)."""
-        badge_html = (
-            f"<span class='sh-badge sh-badge-{escape(self.category.lower())}'>"
-            f"{escape(self.category)}</span>" if badge else ""
-        )
+        badge_html = ""
+        if badge:
+            kind = self.deliverable_kind
+            kind_html = f"<span class='sh-badge sh-badge-kind'>{escape(kind)}</span>" if kind else ""
+            badge_html = (
+                f"<div class='sh-badge-row'>"
+                f"<span class='sh-badge sh-badge-{escape(self.category.lower())}'>"
+                f"{escape(self.category)}</span>{kind_html}</div>"
+            )
         cloud = "" if self.images else "<div class='sh-cloud'></div>"
         photo = self._bg(self.images[0]) if self.images else ""
         st.markdown(
@@ -98,26 +111,45 @@ class Listing:
         total = len(self.images)
         hidden = max(0, total - GALLERY_PREVIEW)
 
+        # tile size per image: 3+ uses big + 2 thumbnails, fewer images use full-size tiles
+        sizes = ["big", "thumb", "thumb"] if total >= 3 else ["big"] * total
+
         # one hidden block that sets each tile button's photo as its background
         rules = []
-        for i in range(min(total, GALLERY_PREVIEW)):
-            size = "big" if i == 0 else "thumb"
+        for i, size in enumerate(sizes):
             shade = "linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)), " if (i == 2 and hidden) else ""
             rules.append(f".st-key-gal_{size}_{self.id}_{i} button{{background-image:{shade}url('{self.images[i]}');}}")
         with st.container(key="gal_css"):
             st.markdown(f"<style>{''.join(rules)}</style>", unsafe_allow_html=True)
 
-        big, side = st.columns([2, 1], gap="small")
-        with big:
+        if total >= 3:
+            # usual layout: one big tile + two stacked thumbnails (+N on the last one)
+            big, side = st.columns([2, 1], gap="small")
+            with big:
+                self._gallery_tile(0, "big")
+            with side:
+                self._gallery_tile(1, "thumb")
+                self._gallery_tile(2, "thumb", extra=hidden)
+        elif total == 2:
+            # two halves
+            left, right = st.columns(2, gap="small")
+            with left:
+                self._gallery_tile(0, "big")
+            with right:
+                self._gallery_tile(1, "big")
+        else:
+            # one image stretches across the full width
+            # (with no images, this shows the full-width placeholder scene)
             self._gallery_tile(0, "big")
-        with side:
-            self._gallery_tile(1, "thumb")
-            self._gallery_tile(2, "thumb", extra=hidden)
 
     def _gallery_tile(self, i, size, extra=0):
         if i >= len(self.images):
-            # keep your existing placeholder scene here
-            st.markdown(f'<div class="sh-gal-tile sh-gal-{size} sh-gal-ph"></div>', unsafe_allow_html=True)
+            height = 368 if size == "big" else 176
+            with st.container(key=f"galph_{self.id}_{i}"):
+                st.markdown(
+                    f"<div class='sh-image' style='height:{height}px;'><div class='sh-cloud'></div></div>",
+                    unsafe_allow_html=True,
+                )
             return
         label = f"+{extra}" if extra else " "
         if st.button(label, key=f"gal_{size}_{self.id}_{i}", width="stretch"):
@@ -144,10 +176,13 @@ class Listing:
     def render_side_panel(self) -> None:
         """Right column: price, owner box, Message Owner / Request Booking."""
         with st.container(key=f"detail_panel_{self.id}"):
+            per = "one-time payment" if self.unit == "once" else f"/ {self.unit_label}"
+            cta = "Request Project" if self.deliverable_kind == "Project" else "Request Booking"
+
             st.markdown(
                 f"<div class='sh-panel-price'>"
                 f"<span class='amt'>\u20b1{self.price:.0f}</span>"
-                f"<span class='per'>/ {escape(self.unit_label)}</span></div>"
+                f"<span class='per'>{escape(per)}</span></div>"
                 f"<div class='sh-panel-user'>"
                 f"<div class='sh-avatar sh-avatar-lg'>{escape(self.owner[:1].upper())}</div>"
                 f"<div><div class='sh-panel-user-name'>{escape(self.owner)}</div>"
@@ -156,8 +191,8 @@ class Listing:
             )
             if st.button("Message Owner", key=f"message_owner_{self.id}", width="stretch"):
                 st.toast("Messaging is coming soon.")
-            if st.button("Request Booking", key=f"request_booking_{self.id}", width="stretch"):
-                st.toast("Booking requests are coming soon.")
+            if st.button(cta, key=f"request_booking_{self.id}", width="stretch"):
+                st.toast(f"{cta} is coming soon.")
 
 
 @dataclass

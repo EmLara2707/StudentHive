@@ -185,10 +185,16 @@ st.markdown(
             radial-gradient(ellipse 75% 45% at 72% 112%, #8aa300 0 98%, transparent 100%),
             linear-gradient(#bee3fa, #e8f5fd);
     }
-    .sh-badge {
+    
+    .sh-badge-row {
         position: absolute;
         top: 10px;
         left: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .sh-badge {
         background: var(--teal);          /* Gig */
         color: #ffffff;
         font-size: 0.75rem;
@@ -197,6 +203,7 @@ st.markdown(
         border-radius: 999px;
     }
     .sh-badge-rental { background: var(--orange); }   /* Rental */
+    .sh-badge-kind { background: #b7cee0; color: var(--ink); }   /* Service / Project */
 
     .sh-cloud {
         position: absolute;
@@ -399,6 +406,7 @@ st.markdown(
     }
     [class*="st-key-gal_big_"] button:hover, [class*="st-key-gal_thumb_"] button:hover { filter: brightness(.9); }
     [class*="st-key-gal_big_"] button:focus, [class*="st-key-gal_thumb_"] button:focus { outline: none !important; box-shadow: none !important; }
+    [class*="st-key-galph_"] [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
 
     /* ---------- Lightbox ---------- */
     .sh-lb-img { display: block; width: 100%; max-height: 70vh; object-fit: contain; border-radius: 12px; background: #111; }
