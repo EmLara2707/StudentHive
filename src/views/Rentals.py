@@ -449,6 +449,55 @@ st.markdown(
     }
     .det-note-overdue { background: #FBE5E5; }
 
+    /* ---------- Action buttons in the details panel ---------- */
+    /* Accept / Complete: solid teal */
+    [class*="st-key-act_accept"] button,
+    [class*="st-key-act_complete"] button {
+        background: #0f6b62;
+        border: none;
+        border-radius: 999px;
+        min-height: 2.3rem;
+        padding: 0 1rem;
+        box-shadow: none;
+    }
+    [class*="st-key-act_accept"] button:hover,
+    [class*="st-key-act_accept"] button:focus:not(:active),
+    [class*="st-key-act_complete"] button:hover,
+    [class*="st-key-act_complete"] button:focus:not(:active) {
+        background: #0b5750;
+        border: none;
+    }
+    [data-testid="stMain"] [class*="st-key-act_accept"] button [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMain"] [class*="st-key-act_complete"] button [data-testid="stMarkdownContainer"] p {
+        color: #FFFFFF !important;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Reject / Cancel: white with a red outline */
+    [class*="st-key-act_reject"] button,
+    [class*="st-key-act_cancel"] button {
+        background: #FFFFFF;
+        border: 1.5px solid #D64545;
+        border-radius: 999px;
+        min-height: 2.3rem;
+        padding: 0 1rem;
+        box-shadow: none;
+    }
+    [class*="st-key-act_reject"] button:hover,
+    [class*="st-key-act_reject"] button:focus:not(:active),
+    [class*="st-key-act_cancel"] button:hover,
+    [class*="st-key-act_cancel"] button:focus:not(:active) {
+        background: #FBE5E5;
+        border: 1.5px solid #D64545;
+    }
+    [data-testid="stMain"] [class*="st-key-act_reject"] button [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMain"] [class*="st-key-act_cancel"] button [data-testid="stMarkdownContainer"] p {
+        color: #D64545 !important;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
     /* ---------- To-do panel ---------- */
     .todo-row {
         display: flex;
@@ -549,59 +598,76 @@ st.markdown(
 # role:      "Renting" (you took an item) / "Lending" (you offered an item)
 # status:    "Active" / "Pending" / "Completed" / "Cancelled"
 # cancelled_by: "me" / "them" (only for Cancelled)
+#
+# Pending + Lending  = someone asked to rent YOUR item (you can accept / reject)
+# Pending + Renting  = YOU asked to rent someone's item (waiting for their answer)
 # ==========================================
 
 today = date.today()
 IMG = "https://placehold.co/200"
 
-rentals = [
-    # --- My rentals (active / pending) ---
-    {"item": "Canon DSLR Camera", "role": "Renting", "status": "Active",
-     "start": today - timedelta(days=3), "end": today - timedelta(days=1),
-     "price": "₱500/day", "with": "Ana R.", "image": IMG},
-    {"item": "Camping Tent (4P)", "role": "Renting", "status": "Active",
-     "start": today + timedelta(days=1), "end": today + timedelta(days=4),
-     "price": "₱350/day", "with": "Miguel S.", "image": IMG},
-    {"item": "Projector", "role": "Lending", "status": "Active",
-     "start": today, "end": today + timedelta(days=2),
-     "price": "₱400/day", "with": "Carla D.", "image": IMG},
-    {"item": "Portable Speaker", "role": "Lending", "status": "Active",
-     "start": today + timedelta(days=2), "end": today + timedelta(days=3),
-     "price": "₱180/day", "with": "Dan K.", "image": IMG},
-    {"item": "Electric Guitar", "role": "Lending", "status": "Pending",
-     "start": today + timedelta(days=5), "end": today + timedelta(days=7),
-     "price": "₱300/day", "with": "Josh P.", "image": IMG},
-    {"item": "Power Drill", "role": "Renting", "status": "Pending",
-     "start": today + timedelta(days=9), "end": today + timedelta(days=10),
-     "price": "₱150/day", "with": "Leo M.", "image": IMG},
-    {"item": "Folding Bike", "role": "Lending", "status": "Active",
-     "start": today + timedelta(days=12), "end": today + timedelta(days=15),
-     "price": "₱250/day", "with": "Nina T.", "image": IMG},
-    # --- Completed ---
-    {"item": "Karaoke Set", "role": "Renting", "status": "Completed",
-     "start": today - timedelta(days=20), "end": today - timedelta(days=18),
-     "price": "₱600/day", "with": "Rico B.", "image": IMG},
-    {"item": "Acoustic Guitar", "role": "Lending", "status": "Completed",
-     "start": today - timedelta(days=14), "end": today - timedelta(days=11),
-     "price": "₱200/day", "with": "Mia L.", "image": IMG},
-    {"item": "Tripod Stand", "role": "Renting", "status": "Completed",
-     "start": today - timedelta(days=9), "end": today - timedelta(days=8),
-     "price": "₱100/day", "with": "Ana R.", "image": IMG},
-    # --- Cancelled ---
-    {"item": "Sound System", "role": "Renting", "status": "Cancelled", "cancelled_by": "me",
-     "start": today - timedelta(days=6), "end": today - timedelta(days=5),
-     "price": "₱800/day", "with": "Paolo G.", "image": IMG},
-    {"item": "Ring Light", "role": "Lending", "status": "Cancelled", "cancelled_by": "them",
-     "start": today - timedelta(days=2), "end": today - timedelta(days=1),
-     "price": "₱120/day", "with": "Kyla V.", "image": IMG},
-]
 
-# every rental gets an id so a click can say which one was picked
-for _i, _r in enumerate(rentals):
-    _r["id"] = _i
+def _sample_rentals() -> list:
+    return [
+        # --- Active ---
+        {"item": "Canon DSLR Camera", "role": "Renting", "status": "Active",
+         "start": today - timedelta(days=3), "end": today - timedelta(days=1),
+         "price": "₱500/day", "with": "Ana R.", "image": IMG},
+        {"item": "Camping Tent (4P)", "role": "Renting", "status": "Active",
+         "start": today + timedelta(days=1), "end": today + timedelta(days=4),
+         "price": "₱350/day", "with": "Miguel S.", "image": IMG},
+        {"item": "Projector", "role": "Lending", "status": "Active",
+         "start": today, "end": today + timedelta(days=2),
+         "price": "₱400/day", "with": "Carla D.", "image": IMG},
+        {"item": "Portable Speaker", "role": "Lending", "status": "Active",
+         "start": today + timedelta(days=2), "end": today + timedelta(days=3),
+         "price": "₱180/day", "with": "Dan K.", "image": IMG},
+        {"item": "Folding Bike", "role": "Lending", "status": "Active",
+         "start": today + timedelta(days=12), "end": today + timedelta(days=15),
+         "price": "₱250/day", "with": "Nina T.", "image": IMG},
+        # --- Pending (not accepted yet) ---
+        {"item": "Electric Guitar", "role": "Lending", "status": "Pending",
+         "start": today + timedelta(days=5), "end": today + timedelta(days=7),
+         "price": "₱300/day", "with": "Josh P.", "image": IMG},
+        {"item": "Gaming Console", "role": "Lending", "status": "Pending",
+         "start": today + timedelta(days=3), "end": today + timedelta(days=4),
+         "price": "₱350/day", "with": "Sam W.", "image": IMG},
+        {"item": "Power Drill", "role": "Renting", "status": "Pending",
+         "start": today + timedelta(days=9), "end": today + timedelta(days=10),
+         "price": "₱150/day", "with": "Leo M.", "image": IMG},
+        # --- Completed ---
+        {"item": "Karaoke Set", "role": "Renting", "status": "Completed",
+         "start": today - timedelta(days=20), "end": today - timedelta(days=18),
+         "price": "₱600/day", "with": "Rico B.", "image": IMG},
+        {"item": "Acoustic Guitar", "role": "Lending", "status": "Completed",
+         "start": today - timedelta(days=14), "end": today - timedelta(days=11),
+         "price": "₱200/day", "with": "Mia L.", "image": IMG},
+        {"item": "Tripod Stand", "role": "Renting", "status": "Completed",
+         "start": today - timedelta(days=9), "end": today - timedelta(days=8),
+         "price": "₱100/day", "with": "Ana R.", "image": IMG},
+        # --- Cancelled ---
+        {"item": "Sound System", "role": "Renting", "status": "Cancelled", "cancelled_by": "me",
+         "start": today - timedelta(days=6), "end": today - timedelta(days=5),
+         "price": "₱800/day", "with": "Paolo G.", "image": IMG},
+        {"item": "Ring Light", "role": "Lending", "status": "Cancelled", "cancelled_by": "them",
+         "start": today - timedelta(days=2), "end": today - timedelta(days=1),
+         "price": "₱120/day", "with": "Kyla V.", "image": IMG},
+    ]
+
+
+# Kept in session_state so accepting / rejecting / completing / cancelling sticks between reruns.
+# TODO: replace with your database; the update_rental() function below is where to save changes.
+if "rentals" not in st.session_state:
+    _data = _sample_rentals()
+    for _i, _r in enumerate(_data):
+        _r["id"] = _i          # every rental gets an id so a click can say which one was picked
+    st.session_state.rentals = _data
+
+rentals = st.session_state.rentals
 rentals_by_id = {r["id"]: r for r in rentals}
 
-my_rentals = [r for r in rentals if r["status"] in ("Active", "Pending")]
+my_rentals = [r for r in rentals if r["status"] == "Active"]                     # calendar + My Rentals list
+open_rentals = [r for r in rentals if r["status"] in ("Active", "Pending")]       # to-do list
 
 
 # ==========================================
@@ -646,6 +712,57 @@ def card_info_html(r: dict) -> str:
     )
 
 
+# ----- changing a rental's status -----
+
+def get_rental(rid: int) -> dict:
+    return next(r for r in st.session_state.rentals if r["id"] == rid)
+
+
+def update_rental(rid: int, status: str, cancelled_by: str | None = None, msg: str = "") -> None:
+    """Accept / reject / complete / cancel all go through here."""
+    r = get_rental(rid)
+    r["status"] = status
+    if cancelled_by:
+        r["cancelled_by"] = cancelled_by
+    if msg:
+        st.session_state.toast = msg
+    # TODO: save the new status in your backend here
+
+
+@st.dialog("Reject this request?")
+def confirm_reject_dialog(rid: int) -> None:
+    r = get_rental(rid)
+    st.write(f"{r['with']}'s request to rent “{r['item']}” will be declined.")
+    c1, c2 = st.columns(2)
+    if c1.button("Keep request", key="dlg_reject_no", use_container_width=True):
+        st.rerun()
+    if c2.button("Yes, reject", key="dlg_reject_yes", type="primary", use_container_width=True):
+        update_rental(rid, "Cancelled", "me", f"Rejected request for {r['item']}")
+        st.rerun()
+
+
+@st.dialog("Cancel this rental?")
+def confirm_cancel_dialog(rid: int) -> None:
+    r = get_rental(rid)
+    st.write(f"“{r['item']}” with {r['with']} will be cancelled. This can’t be undone.")
+    c1, c2 = st.columns(2)
+    if c1.button("Keep rental", key="dlg_cancel_no", use_container_width=True):
+        st.rerun()
+    if c2.button("Yes, cancel it", key="dlg_cancel_yes", type="primary", use_container_width=True):
+        update_rental(rid, "Cancelled", "me", f"Cancelled {r['item']}")
+        st.rerun()
+
+@st.dialog("Cancel this request?")
+def confirm_cancel_request_dialog(rid: int) -> None:
+    r = get_rental(rid)
+    st.write(f"Your request to rent “{r['item']}” from {r['with']} will be withdrawn.")
+    c1, c2 = st.columns(2)
+    if c1.button("Keep request", key="dlg_creq_no", use_container_width=True):
+        st.rerun()
+    if c2.button("Yes, cancel it", key="dlg_creq_yes", type="primary", use_container_width=True):
+        update_rental(rid, "Cancelled", "me", f"Cancelled request for {r['item']}")
+        st.rerun()
+
 # ----- selection (which rental / day is shown) -----
 
 def open_rental(rid: int) -> None:
@@ -666,8 +783,10 @@ def close_day() -> None:
     st.session_state.selected_rental = None
 
 
-def render_cards(items: list, tab: str) -> None:
+def render_cards(items: list, tab: str, top_pad: bool = True) -> None:
     """Each card is a real container with a View button, so it is clickable."""
+    if top_pad:
+        st.markdown('<div style="height:0.5rem"></div>', unsafe_allow_html=True)
     for r in items:
         with st.container(key=f"rcard_{tab}_{r['id']}"):
             img_col, info_col, btn_col = st.columns([1.4, 6, 1.6], vertical_alignment="center")
@@ -678,7 +797,6 @@ def render_cards(items: list, tab: str) -> None:
             info_col.markdown(card_info_html(r), unsafe_allow_html=True)
             btn_col.button("View", key=f"view_{tab}_{r['id']}", on_click=open_rental,
                            args=(r["id"],), use_container_width=True)
-
 
 # ----- calendar / month navigation -----
 
@@ -775,7 +893,7 @@ def build_todos() -> list:
     """Most urgent things first: overdue, then soonest due.
     Each entry is (due date, title, subtitle, rental id)."""
     todos = []
-    for r in my_rentals:
+    for r in open_rentals:
         item = r["item"]
         rid = r["id"]
         if r["status"] == "Pending":
@@ -856,7 +974,6 @@ def detail_html(r: dict) -> str:
         ("Rate", r["price"]),
         ("Estimated total", f"₱{rate * days:,}"),
         ("Owner" if renting else "Renter", r["with"]),
-        ("Your role", "Renting this item" if renting else "Lending this item"),
     ]
     rows_html = "".join(
         f'<div class="det-row"><span class="det-label">{label}</span>'
@@ -872,6 +989,42 @@ def detail_html(r: dict) -> str:
     )
 
 
+def render_actions(r: dict) -> None:
+    """Buttons under the details, depending on status and whether the rental has started."""
+    rid = r["id"]
+
+    # Someone asked to rent MY item -> I decide
+    if r["status"] == "Pending" and r["role"] == "Lending":
+        c1, c2 = st.columns(2)
+        c1.button(
+            "Accept", key="act_accept", on_click=update_rental,
+            args=(rid, "Active", None, f"Accepted {r['with']}'s request for {r['item']}"),
+            use_container_width=True,
+        )
+        if c2.button("Reject", key="act_reject", use_container_width=True):
+            confirm_reject_dialog(rid)
+
+    # I asked to rent someone's item and they haven't answered -> I can withdraw it
+    elif r["status"] == "Pending" and r["role"] == "Renting":
+        if st.button("Cancel request", key="act_cancel", use_container_width=True):
+            confirm_cancel_request_dialog(rid)
+
+    elif r["status"] == "Active":
+        if today >= r["start"]:
+            # already started -> can be completed or cancelled
+            c1, c2 = st.columns(2)
+            c1.button(
+                "Complete", key="act_complete", on_click=update_rental,
+                args=(rid, "Completed", None, f"Marked {r['item']} as completed"),
+                use_container_width=True,
+            )
+            if c2.button("Cancel", key="act_cancel", use_container_width=True):
+                confirm_cancel_dialog(rid)
+        else:
+            # hasn't begun yet -> can only be cancelled
+            if st.button("Cancel", key="act_cancel", use_container_width=True):
+                confirm_cancel_dialog(rid)
+
 # ==========================================
 # SESSION STATE
 # ==========================================
@@ -881,6 +1034,7 @@ if "rent_month" not in st.session_state:
 
 # True = oldest/soonest first, False = newest/latest first
 st.session_state.setdefault("asc_mine", True)
+st.session_state.setdefault("asc_pending", True)
 st.session_state.setdefault("asc_done", False)
 st.session_state.setdefault("asc_cancel", False)
 st.session_state.setdefault("selected_rental", None)  # id shown in the details panel
@@ -890,6 +1044,9 @@ st.session_state.setdefault("selected_day", None)     # day shown in the expande
 # ==========================================
 # PAGE
 # ==========================================
+
+if "toast" in st.session_state:
+    st.toast(st.session_state.pop("toast"))
 
 with st.container(key="page_header"):
     st.title("Rentals")
@@ -905,9 +1062,11 @@ with divider_col:
 
 # ---------- Left: tabs ----------
 with left_col:
-    tab_mine, tab_done, tab_cancel = st.tabs(["My Rentals", "Completed", "Cancelled"])
+    tab_mine, tab_pending, tab_done, tab_cancel = st.tabs(
+        ["My Rentals", "Pending", "Completed", "Cancelled"]
+    )
 
-    # ----- My Rentals: calendar or list -----
+    # ----- My Rentals: calendar or list (active rentals only) -----
     with tab_mine:
         view_col, filt_col, _, sort_col = st.columns([1.1, 1.9, 1.7, 1.3], vertical_alignment="center")
         with view_col:
@@ -917,16 +1076,16 @@ with left_col:
             ) or "Calendar"
         with filt_col:
             chosen = st.pills(
-                "Filter", ["Renting", "Lending"], selection_mode="multi",
+                "Filter", ["Renting", "Lending"], selection_mode="single",
                 label_visibility="collapsed", key="pills_mine",
-            ) or []
+            )
 
-        # none or both selected -> show everything
-        items = [r for r in my_rentals if len(chosen) != 1 or r["role"] == chosen[0]]
+        # nothing selected -> show everything
+        items = [r for r in my_rentals if chosen is None or r["role"] == chosen]
 
         if view_mode == "Calendar":
             view = st.session_state.rent_month
-            with st.container(height=CAL_H, border=True):
+            with st.container(height=CAL_H, border=False):
                 if st.session_state.selected_day is not None:
                     render_day_view(st.session_state.selected_day, items)
                 else:
@@ -954,29 +1113,52 @@ with left_col:
             with sort_col:
                 sort_button("mine", "↑ Soonest first", "↓ Latest first")
             items.sort(key=lambda r: r["start"], reverse=not st.session_state.asc_mine)
-            with st.container(height=LIST_H, border=True):
+            with st.container(height=LIST_H, border=False):
                 if items:
                     render_cards(items, "mine")
                 else:
                     st.caption("No rentals to show.")
+
+    # ----- Pending: requests that haven't been accepted yet -----
+    with tab_pending:
+        filt_col, sort_col = st.columns([4.726, 1.274], vertical_alignment="center")
+        with filt_col:
+            chosen = st.pills(
+                "Filter", ["Requests to me", "Requests I sent"], selection_mode="single",
+                label_visibility="collapsed", key="pills_pending",
+            )
+        with sort_col:
+            sort_button("pending", "↑ Soonest first", "↓ Latest first")
+
+        # "Requests to me" = someone wants to rent my item (I'm Lending)
+        role_map = {"Requests to me": "Lending", "Requests I sent": "Renting"}
+        items = [r for r in rentals if r["status"] == "Pending"
+                 and (chosen is None or r["role"] == role_map[chosen])]
+        items.sort(key=lambda r: r["start"], reverse=not st.session_state.asc_pending)
+
+        with st.container(height=LIST_H, border=False):
+            if items:
+                render_cards(items, "pending")
+            else:
+                st.caption("No pending requests.")
 
     # ----- Completed: list only -----
     with tab_done:
         filt_col, sort_col = st.columns([4.726, 1.274], vertical_alignment="center")
         with filt_col:
             chosen = st.pills(
-                "Filter", ["Items I rented", "Items I rented out"], selection_mode="multi",
+                "Filter", ["Items I rented", "Items I rented out"], selection_mode="single",
                 label_visibility="collapsed", key="pills_done",
-            ) or []
+            )
         with sort_col:
             sort_button("done", "↑ Oldest first", "↓ Newest first")
 
         role_map = {"Items I rented": "Renting", "Items I rented out": "Lending"}
         items = [r for r in rentals if r["status"] == "Completed"
-                 and (len(chosen) != 1 or r["role"] == role_map[chosen[0]])]
+                 and (chosen is None or r["role"] == role_map[chosen])]
         items.sort(key=lambda r: r["end"], reverse=not st.session_state.asc_done)
 
-        with st.container(height=LIST_H, border=True):
+        with st.container(height=LIST_H, border=False):
             if items:
                 render_cards(items, "done")
             else:
@@ -987,18 +1169,18 @@ with left_col:
         filt_col, sort_col = st.columns([4.726, 1.274], vertical_alignment="center")
         with filt_col:
             chosen = st.pills(
-                "Filter", ["Cancelled by me", "Cancelled by others"], selection_mode="multi",
+                "Filter", ["Cancelled by me", "Cancelled by others"], selection_mode="single",
                 label_visibility="collapsed", key="pills_cancel",
-            ) or []
+            )
         with sort_col:
             sort_button("cancel", "↑ Oldest first", "↓ Newest first")
 
         who_map = {"Cancelled by me": "me", "Cancelled by others": "them"}
         items = [r for r in rentals if r["status"] == "Cancelled"
-                 and (len(chosen) != 1 or r["cancelled_by"] == who_map[chosen[0]])]
+                 and (chosen is None or r["cancelled_by"] == who_map[chosen])]
         items.sort(key=lambda r: r["start"], reverse=not st.session_state.asc_cancel)
 
-        with st.container(height=LIST_H, border=True):
+        with st.container(height=LIST_H, border=False):
             if items:
                 render_cards(items, "cancel")
             else:
@@ -1011,10 +1193,11 @@ with right_col:
     if selected is not None:
         st.subheader("Rental Details")
         st.caption("Press Back to return to your to-do list.")
-        with st.container(height=TODO_H, border=True):
+        with st.container(height=TODO_H, border=False):
             # the "sort_" key prefix reuses the pill-button style
             st.button("← Back to To-Do", key="sort_back", on_click=close_rental)
             st.markdown(detail_html(selected), unsafe_allow_html=True)
+            render_actions(selected)
     else:
         st.subheader("To-Do")
         todos = build_todos()
@@ -1023,7 +1206,7 @@ with right_col:
             f"{len(todos)} open task(s)" + (f" · {overdue} overdue" if overdue else "")
         )
 
-        with st.container(height=TODO_H, border=True):
+        with st.container(height=TODO_H, border=False):
             if todos:
                 render_todos(todos)
             else:
