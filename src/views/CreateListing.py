@@ -305,7 +305,8 @@ WIZARD_CSS = """
 # WIZARD STATE
 # ==========================================
 
-RATE_UNITS = {"Hourly Rate": "hr", "Daily Rate": "day"}
+RATE_TYPES = ["Hourly Rate", "Daily Rate", "One Time Payment"]
+RATE_UNITS = {"Hourly Rate": "hr", "Daily Rate": "day", "One Time Payment": "once"}
 STEP_NUMBER = {"type": 1, "deliverable": 1, "details": 2, "media": 3, "review": 4}
 PROGRESS_LABELS = ["Type of Listing", "Details", "Upload Images", "Review and Post"]
 
