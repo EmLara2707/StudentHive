@@ -5,11 +5,15 @@ from typing import Callable, List, Optional, Tuple
 
 import streamlit as st
 
+
+
 MAX_IMAGES = 10
 GALLERY_PREVIEW = 3   # tiles shown before the "+N" overlay
 
 ALLOWED_MIMES = ("image/jpeg", "image/png", "image/webp")
 
+def open_profile(name: str) -> None:
+    st.session_state.viewing_market_profile = name
 
 @dataclass
 class Listing:
@@ -182,13 +186,22 @@ class Listing:
             st.markdown(
                 f"<div class='sh-panel-price'>"
                 f"<span class='amt'>\u20b1{self.price:.0f}</span>"
-                f"<span class='per'>{escape(per)}</span></div>"
-                f"<div class='sh-panel-user'>"
-                f"<div class='sh-avatar sh-avatar-lg'>{escape(self.owner[:1].upper())}</div>"
-                f"<div><div class='sh-panel-user-name'>{escape(self.owner)}</div>"
-                f"<div class='sh-panel-user-sub'>Course, {escape(self.course)}</div></div></div>",
+                f"<span class='per'>{escape(per)}</span></div>",
                 unsafe_allow_html=True,
             )
+
+            # clicking anywhere on the owner box opens their profile
+            with st.container(key=f"profilerow_{self.id}"):
+                st.button("View profile", key=f"profilebtn_{self.id}",
+                          on_click=open_profile, args=(self.owner,))
+                st.markdown(
+                    f"<div class='sh-panel-user'>"
+                    f"<div class='sh-avatar sh-avatar-lg'>{escape(self.owner[:1].upper())}</div>"
+                    f"<div><div class='sh-panel-user-name'>{escape(self.owner)}</div>"
+                    f"<div class='sh-panel-user-sub'>Course, {escape(self.course)}</div></div></div>",
+                    unsafe_allow_html=True,
+                )
+
             if st.button("Message Owner", key=f"message_owner_{self.id}", width="stretch"):
                 st.toast("Messaging is coming soon.")
             if st.button(cta, key=f"request_booking_{self.id}", width="stretch"):
@@ -215,16 +228,20 @@ class Marketplace:
         description = ["Lorem ipsum " * 5, "Lorem ipsum " * 15, "Lorem ipsum " * 10]
         subjects = ["Subject One", "Subject Two", "Subject Three", "Subject Four"]
         reqs = ["Requirement One", "Requirement Two", "Requirement Three", "Requirement Four"]
+        # (id, title, category, price, unit, deliverable)
+        # A Gig whose deliverable mentions "project" is shown as a Project,
+        # every other Gig is a Service.
         rows = [
-            (1, "Advanced Calculus Tutoring", "Gig", 300, "hr"),
-            (2, "Dorm Room Mini Fridge Rental", "Rental", 150, "day"),
-            (3, "Programming Fundamentals Tutoring", "Gig", 300, "hr"),
-            (4, "Graphing Calculator Rental", "Rental", 150, "day"),
-            (5, "Essay Editing & Proofreading", "Gig", 300, "hr"),
-            (6, "Study Room Speaker Rental", "Rental", 150, "day"),
+            (1, "Advanced Calculus Tutoring", "Gig", 300, "hr", "Service Deliverables"),
+            (2, "Dorm Room Mini Fridge Rental", "Rental", 150, "day", ""),
+            (3, "Programming Fundamentals Tutoring", "Gig", 300, "hr", "Service Deliverables"),
+            (4, "Graphing Calculator Rental", "Rental", 150, "day", ""),
+            (5, "Essay Editing & Proofreading", "Gig", 300, "once", "Project Deliverables"),
+            (6, "Study Room Speaker Rental", "Rental", 150, "day", ""),
+            (7, "Poster & Slide Deck Design", "Gig", 500, "once", "Project Deliverables"),
         ]
-        return [Listing(i, t, c, p, u, "User", "MMCM", description, subjects, reqs)
-                for i, t, c, p, u in rows]
+        return [Listing(i, t, c, p, u, "User", "MMCM", description, subjects, reqs, d)
+                for i, t, c, p, u, d in rows]
 
     def _build_bookings(self) -> List[Booking]:
         return [

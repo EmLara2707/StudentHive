@@ -8,7 +8,14 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from views.CreateListing import render_create_listing, reset_wizard
 from views.Listing import get_marketplace, render_listing_grid
+from views.UserProfileView import render_user_profile
 
+def close_profile() -> None:
+    st.session_state.viewing_market_profile = None
+
+if st.session_state.get("viewing_market_profile"):
+    render_user_profile(st.session_state.viewing_market_profile, on_back=close_profile)
+    st.stop()
 # ==========================================
 # STYLES (Marketplace page only)
 # ==========================================
@@ -74,8 +81,9 @@ st.markdown(
     }
     [data-testid="stTextInput"] input { color: var(--ink); }
 
-    /* ---------- filter pills (Gig / Rentals) ---------- */
-    .st-key-filter_pills button {
+    /* ---------- filter pills (Gig / Rentals) + gig type pills (Service / Project) ---------- */
+    .st-key-filter_pills button,
+    .st-key-kind_pills button {
         border-radius: 999px;
         border: 1.5px solid var(--ink);
         background: #ffffff;
@@ -83,38 +91,53 @@ st.markdown(
         padding: 0 0.9rem;
         box-shadow: none;
     }
-    .st-key-filter_pills button p { color: var(--ink); }
+    .st-key-filter_pills button p,
+    .st-key-kind_pills button p { color: var(--ink); }
 
     /* hover */
-    .st-key-filter_pills button:hover {
+    .st-key-filter_pills button:hover,
+    .st-key-kind_pills button:hover {
         border-color: var(--teal);
         background: #ffffff;
     }
-    .st-key-filter_pills button:hover p { color: var(--teal); }
+    .st-key-filter_pills button:hover p,
+    .st-key-kind_pills button:hover p { color: var(--teal); }
 
     /* clicked / selected: solid teal with white text */
     .st-key-filter_pills [data-testid="stBaseButton-pillsActive"],
     .st-key-filter_pills button[kind="pillsActive"],
     .st-key-filter_pills button[aria-pressed="true"],
-    .st-key-filter_pills button[aria-checked="true"] {
+    .st-key-filter_pills button[aria-checked="true"],
+    .st-key-kind_pills [data-testid="stBaseButton-pillsActive"],
+    .st-key-kind_pills button[kind="pillsActive"],
+    .st-key-kind_pills button[aria-pressed="true"],
+    .st-key-kind_pills button[aria-checked="true"] {
         background: var(--teal) !important;
         border-color: var(--teal) !important;
     }
     .st-key-filter_pills [data-testid="stBaseButton-pillsActive"] p,
     .st-key-filter_pills button[kind="pillsActive"] p,
     .st-key-filter_pills button[aria-pressed="true"] p,
-    .st-key-filter_pills button[aria-checked="true"] p {
+    .st-key-filter_pills button[aria-checked="true"] p,
+    .st-key-kind_pills [data-testid="stBaseButton-pillsActive"] p,
+    .st-key-kind_pills button[kind="pillsActive"] p,
+    .st-key-kind_pills button[aria-pressed="true"] p,
+    .st-key-kind_pills button[aria-checked="true"] p {
         color: #ffffff !important;
     }
     .st-key-filter_pills [data-testid="stBaseButton-pillsActive"]:hover,
-    .st-key-filter_pills button[kind="pillsActive"]:hover {
+    .st-key-filter_pills button[kind="pillsActive"]:hover,
+    .st-key-kind_pills [data-testid="stBaseButton-pillsActive"]:hover,
+    .st-key-kind_pills button[kind="pillsActive"]:hover {
         background: var(--teal-hover) !important;
         border-color: var(--teal-hover) !important;
     }
 
     /* focus ring after clicking (replaces the default red one) */
     .st-key-filter_pills button:focus,
-    .st-key-filter_pills button:focus-visible {
+    .st-key-filter_pills button:focus-visible,
+    .st-key-kind_pills button:focus,
+    .st-key-kind_pills button:focus-visible {
         outline: none;
         box-shadow: 0 0 0 0.15rem rgba(15, 107, 98, 0.25) !important;
     }
@@ -413,6 +436,61 @@ st.markdown(
     .sh-lb-count { text-align: center; color: var(--muted); margin-top: .5rem; font-size: .9rem; }
     .st-key-lb_prev button, .st-key-lb_next button { border-radius: 50%; width: 44px; height: 44px; padding: 0; background: var(--teal); color: #fff; border: none; }
     .st-key-lb_prev button:hover, .st-key-lb_next button:hover { background: var(--teal-hover); }
+
+    [class*="st-key-profilerow_"] {
+        position: relative;
+        cursor: pointer;
+    }
+    [class*="st-key-profilerow_"]:hover .sh-panel-user { background: #e4e7ea; }
+
+    [class*="st-key-profilebtn_"] {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0;
+        z-index: 5;
+    }
+    [class*="st-key-profilebtn_"] > div,
+    [class*="st-key-profilebtn_"] .stButton {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    [class*="st-key-profilebtn_"] button {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        padding: 0;
+        border: none;
+        border-radius: 0.75rem;
+        background: transparent;
+        box-shadow: none;
+        cursor: pointer;
+    }
+    [class*="st-key-profilebtn_"] button:hover,
+    [class*="st-key-profilebtn_"] button:focus:not(:active),
+    [class*="st-key-profilebtn_"] button:active {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }
+    [data-testid="stMain"] [class*="st-key-profilebtn_"] button [data-testid="stMarkdownContainer"] p {
+        opacity: 0;
+    }
+
+    [class*="st-key-profilerow_"],
+    [class*="st-key-profilerow_"] > div:not([class*="st-key-profilebtn_"]) {
+        flex-shrink: 0 !important;
+        height: auto !important;
+        min-height: fit-content !important;
+    }
+
+    .sh-panel-user { margin-bottom: 0; }
+
+    [class*="st-key-profilerow_"] {
+        gap: 0;
+        margin-bottom: 1.5rem;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -455,20 +533,41 @@ elif selected_id is None:
     with right:
         query = st.text_input("Search", placeholder="\U0001F50D  Search listings",
                               label_visibility="collapsed", key="market_search")
-        add_col, pills_col = st.columns([1.3, 2], vertical_alignment="center")
+        add_col, pills_col, kind_col = st.columns([1.2, 1.5, 1.6], vertical_alignment="center")
         with add_col:
             st.button("Add a Listing", icon=":material/add:", key="add_listing_btn",
                       on_click=open_create)
         with pills_col:
             with st.container(key="filter_pills"):
-                chosen = st.pills("Filter", ["Gig", "Rentals"], selection_mode="multi",
+                # single select: one pill at a time, none selected = show everything
+                chosen = st.pills("Filter", ["Gig", "Rentals"], selection_mode="single",
                                   label_visibility="collapsed", key="market_filter")
 
+        # Service / Project pills: only shown while "Gig" is selected
+        kind_choice = None
+        if chosen == "Gig":
+            with kind_col:
+                with st.container(key="kind_pills"):
+                    kind_choice = st.pills("Gig type", ["Service", "Project"],
+                                           selection_mode="single",
+                                           label_visibility="collapsed", key="market_kind")
+
     # the pill says "Rentals", the data says "Rental"
-    categories = ["Rental" if c == "Rentals" else c for c in (chosen or [])]
+    if chosen == "Gig":
+        categories = ["Gig"]
+    elif chosen == "Rentals":
+        categories = ["Rental"]
+    else:
+        categories = []
+
+    results = market.search(query, categories)
+
+    # Service / Project narrows the Gigs; nothing selected = all gigs
+    if kind_choice:
+        results = [l for l in results if l.deliverable_kind == kind_choice]
 
     # ---------- grid ----------
-    render_listing_grid(market.search(query, categories), open_listing, key_prefix="market")
+    render_listing_grid(results, open_listing, key_prefix="market")
 
 else:
     # ---------- detail view ----------
