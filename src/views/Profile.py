@@ -1,4 +1,5 @@
 import base64
+import html
 
 import streamlit as st
 
@@ -50,16 +51,40 @@ CSS = """
 .pf-h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--ink); line-height: 1.2; margin: 0; }
 .pf-h2.danger { color: var(--danger); }
 
-/* ---------- tabs ---------- */
-[data-baseweb="tab-list"] { gap: 0; width: max-content; }
-button[data-baseweb="tab"] { min-width: 11rem; justify-content: center; padding: 0.6rem 1rem; }
-button[data-baseweb="tab"] p { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem; color: var(--muted); }
-button[data-baseweb="tab"][aria-selected="true"] p { color: var(--teal-soft); }
-[data-baseweb="tab-highlight"] { background: var(--teal) !important; height: 3px !important; }
-[data-baseweb="tab-border"] { background: var(--line) !important; height: 3px !important; }
+/* ---------- tabs (same selectors and colors as Rentals / Gigs) ---------- */
+[data-testid="stMain"] [data-testid="stTab"] {
+    background: transparent;
+    min-width: 11rem;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+}
 
+/* unselected tab text */
+[data-testid="stMain"] [data-testid="stTab"] [data-testid="stMarkdownContainer"] p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    color: #3a3d3f !important;
+    font-weight: 600;
+}
+
+/* hover */
+[data-testid="stMain"] [data-testid="stTab"]:hover [data-testid="stMarkdownContainer"] p {
+    color: #0f6b62 !important;
+}
+
+/* selected tab text */
+[data-testid="stMain"] [data-testid="stTab"][aria-selected="true"] [data-testid="stMarkdownContainer"] p {
+    color: #0f6b62 !important;
+    font-weight: 700;
+}
+
+/* underline under the selected tab */
+[data-testid="stMain"] [data-testid="stTab"] .react-aria-SelectionIndicator,
+[data-testid="stMain"] [data-baseweb="tab-highlight"] {
+    background-color: #0f6b62 !important;
+}
 /* ---------- banner ---------- */
-.st-key-banner { background: var(--field); border-radius: 18px; padding: 1.3rem 2rem 2.5rem 2rem; margin-top: 0.5rem; }
+.st-key-banner { background: var(--field); border-radius: 18px; padding: 1.3rem 2rem 1.8rem 2rem; margin-top: 0.5rem; }
 .st-key-avatar { position: relative; width: 128px !important; min-width: 128px !important; max-width: 128px !important; height: 128px; flex: 0 0 128px !important; margin-right: 0 !important; }
 .pf-avatar { width: 128px; height: 128px; border-radius: 50%; border: 3px solid var(--mint); background: #f3f6f8 center/cover no-repeat; box-sizing: border-box; }
 .st-key-cam_btn { position: absolute !important; right: 0 !important; bottom: 0 !important; left: auto !important; top: auto !important; width: 38px !important; height: 38px !important; margin: 0 !important; z-index: 2; }
@@ -82,22 +107,27 @@ button[data-baseweb="tab"][aria-selected="true"] p { color: var(--teal-soft); }
     min-width: 0;
 }
 .st-key-banner_row { gap: 3rem !important; }
+
 /* ---------- pencil buttons ---------- */
 [class*="st-key-edit_"] { width: auto !important; flex: 0 0 auto; }
 [class*="st-key-edit_"] button { min-height: 0; padding: 0.1rem 0.3rem !important; background: transparent !important; border: none !important; box-shadow: none !important; }
 [class*="st-key-edit_"] button span { font-size: 1.1rem !important; color: var(--ink) !important; }
 [class*="st-key-edit_"] button:hover { background: rgba(0, 0, 0, 0.06) !important; }
 
+/* nudge the pencil without affecting layout: negative X = left, positive Y = down */
+[class*="st-key-edit_"] button { transform: translate(-12px, 8px); }
 /* ---------- section cards (same look as listing cards) ---------- */
 [class*="st-key-card_"] { background: #ffffff; border-radius: 18px; padding: 1rem 1.2rem 1.3rem 1.2rem !important; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); gap: 0.5rem; }
 .st-key-card_skills, .st-key-card_socials { padding-bottom: 0.5rem !important; }
 .st-key-card_about { padding-bottom: 2rem !important; }
-.st-key-card_portfolio { padding-bottom: 1.8rem !important; }
+.st-key-card_portfolio [data-testid="stWidgetLabel"] p { font-size: 1rem !important; }
+.st-key-card_portfolio [data-baseweb="input"] input { font-size: 1.05rem; }
+.st-key-card_portfolio { padding-bottom: 1.9rem !important; padding-top: 0.6rem !important; }
 .pf-about { font-size: 0.9rem; line-height: 1.5; color: var(--ink); white-space: pre-wrap; }
 .pf-chip { display: inline-block; background: var(--field); border-radius: 999px; padding: 0.3rem 0.9rem; margin: 0 0.5rem 0.5rem 0; font-weight: 500; font-size: 0.8rem; color: var(--ink); }
 .pf-chip.wide { padding: 0.4rem 1.3rem; }
-.pf-label { font-weight: 600; font-size: 0.8rem; color: var(--ink); margin: 0 0 0.3rem 0.3rem; }
-.pf-pill { background: var(--field); border-radius: 999px; padding: 0.5rem 1rem; text-align: center; font-size: 0.85rem; word-break: break-all; min-height: 2.2rem; }
+.pf-label { font-weight: 600; font-size: 1rem; color: var(--ink); margin: 0 0 0.3rem 0.3rem; }
+.pf-pill { background: var(--field); border-radius: 999px; padding: 0.6rem 1.1rem; text-align: center; font-size: 1.05rem; word-break: break-all; min-height: 2.6rem; }
 
 /* ---------- inputs ---------- */
 [data-testid="stMain"] [data-testid="stWidgetLabel"] p,
@@ -142,7 +172,6 @@ button[data-baseweb="tab"][aria-selected="true"] p { color: var(--teal-soft); }
 .st-key-del_yes button:disabled { opacity: 0.4; }
 
 /* ---------- listings (same card as Marketplace) ---------- */
-.pf-listing { background: #fff; border-radius: 18px; padding: 0.7rem 0.7rem 1.2rem 0.7rem; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); }
 .pf-thumb { position: relative; height: 150px; border-radius: 14px; overflow: hidden;
     background:
       radial-gradient(ellipse 55% 38% at 22% 108%, #c5dc7a 0 98%, transparent 100%),
@@ -151,6 +180,43 @@ button[data-baseweb="tab"][aria-selected="true"] p { color: var(--teal-soft); }
 .pf-price { position: absolute; top: 10px; right: 10px; background: #fff; border-radius: 999px; padding: 2px 12px; font-size: 0.75rem; font-weight: 600; color: var(--ink); }
 .pf-listing-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem; line-height: 1.3; color: var(--ink); margin-top: 1rem; }
 .pf-review { background: #fff; border-radius: 18px; padding: 1rem 1.2rem; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); margin-bottom: 0.8rem; font-size: 0.9rem; line-height: 1.5; color: var(--ink); }
+
+/* ---------- my listings: horizontal scroller ---------- */
+.st-key-listing_row { flex-wrap: nowrap !important; overflow-x: auto; gap: 1rem !important; padding: 0.5rem 0.5rem 1.2rem 0.5rem; }
+.st-key-listing_row > * { flex: 0 0 340px !important; width: 340px !important; min-width: 340px !important; }
+[class*="st-key-lcard_"] { position: relative; background: #fff; border-radius: 18px; padding: 0.8rem 0.8rem 1.3rem 0.8rem !important; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); gap: 1.3rem; }
+[class*="st-key-lcard_"] .pf-thumb { height: 190px; display: block; flex-shrink: 0; }
+[class*="st-key-lcard_"] .pf-listing-name { margin: 0; padding: 0.2rem 0.5rem 0.4rem 0.5rem; font-size: 1.1rem; line-height: 1.35; min-height: 3.2rem; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.pf-thumb.is-closed { filter: grayscale(1); opacity: 0.6; }
+
+/* three-dots button: floats over the top-left of the image */
+[class*="st-key-lcard_"] [data-testid="stLayoutWrapper"]:has([class*="st-key-menu_"]) { position: absolute !important; top: 1.35rem; left: 1.35rem; width: auto !important; z-index: 5; }
+[class*="st-key-menu_"] { width: auto !important; }
+[class*="st-key-menu_"] button { min-height: 0; width: 34px; height: 34px; padding: 0 !important; display: flex; align-items: center; justify-content: center; background: #ffffff !important; border: none !important; border-radius: 999px !important; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.22) !important; }
+[class*="st-key-menu_"] button { gap: 0 !important; }
+/* hide everything Streamlit puts in the button (label, icon, chevron) and draw three dots instead */
+[class*="st-key-menu_"] button > * { display: none !important; }
+[class*="st-key-menu_"] button::before { content: ""; display: block; width: 18px; height: 4px; background: radial-gradient(circle, var(--ink) 1.8px, transparent 2.2px) 0 50% / 6px 4px repeat-x; }
+[class*="st-key-menu_"] button:hover { background: #f1f4f6 !important; }
+
+/* dropdown panel (rendered outside the card, so it can't be scoped by key) */
+[data-testid="stPopoverBody"] { padding: 0.35rem !important; min-width: 0 !important; width: auto !important; }
+[data-testid="stPopoverBody"] [data-testid="stVerticalBlock"] { gap: 0.1rem !important; }
+
+/* dropdown items */
+[class*="st-key-mi_"] button { justify-content: flex-start; border: none !important; background: transparent !important; padding: 0.35rem 0.6rem !important; min-height: 0; }
+[class*="st-key-mi_"] button:hover { background: var(--field) !important; }
+[class*="st-key-mi_del_"] button, [class*="st-key-mi_del_"] button span { color: var(--danger-btn) !important; }
+
+/* listing dialog buttons */
+.st-key-lst_save button, .st-key-lst_close_yes button { background: var(--teal) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; white-space: nowrap; }
+.st-key-lst_save button p, .st-key-lst_close_yes button p { color: #fff !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-lst_save button:hover, .st-key-lst_close_yes button:hover { background: var(--teal-hover) !important; }
+.st-key-lst_cancel button, .st-key-lst_close_no button, .st-key-lst_del_no button { background: #fff !important; border: 1.5px solid var(--teal) !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
+.st-key-lst_cancel button p, .st-key-lst_close_no button p, .st-key-lst_del_no button p { color: var(--teal) !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-lst_del_yes button { background: var(--danger-btn) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
+.st-key-lst_del_yes button p { color: #fff !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-lst_del_yes button:hover { background: #bd1c1c !important; }
 </style>
 """
 
@@ -166,12 +232,24 @@ DEFAULTS = {
     "photo": None,  # (bytes, mime)
 }
 
+DEFAULT_LISTINGS = [
+    {"id": 1, "name": "Python Tutoring", "price": 20, "status": "open"},
+    {"id": 2, "name": "Figma Design Review", "price": 25, "status": "open"},
+    {"id": 3, "name": "Calculus Help", "price": 18, "status": "open"},
+    {"id": 4, "name": "Resume Workshop", "price": 15, "status": "open"},
+    {"id": 5, "name": "Guitar Lessons", "price": 30, "status": "open"},
+    {"id": 6, "name": "Essay Proofreading", "price": 12, "status": "open"},
+    {"id": 7, "name": "Camera Rental", "price": 40, "status": "open"},
+    {"id": 8, "name": "Spanish Conversation", "price": 22, "status": "open"},
+]
+
 
 # ------------------------------------------------------------ state helpers
 def _init():
     st.session_state.setdefault("profile", dict(DEFAULTS))
     st.session_state.setdefault("editing", set())
     st.session_state.setdefault("pw_round", 0)
+    st.session_state.setdefault("listings", [dict(l) for l in DEFAULT_LISTINGS])
 
 
 def _p():
@@ -337,6 +415,7 @@ def _banner():
                 _inline_text("major", "major", "pf-major")
                 st.markdown('<div class="pf-rating"><span class="star">★</span>4.8 (124 reviews)</div>', unsafe_allow_html=True)
 
+
 def _about():
     _heading("About me", "about")
     with st.container(key="card_about"):
@@ -396,7 +475,7 @@ def _portfolio():
 
 def _socials():
     with st.container(horizontal=True, vertical_alignment="center", key="hd_socials"):
-        st.markdown('<div class="pf-h2">Social Media Accounts</div>', unsafe_allow_html=True)
+        st.markdown('<div class="pf-h2">Social Media Contacts</div>', unsafe_allow_html=True)
         if st.button("", key="edit_socials", icon=":material/edit:"):
             st.session_state.draft_socials = list(_p()["socials"])
             socials_dialog()
@@ -404,16 +483,87 @@ def _socials():
         st.markdown(_chip_html(_p()["socials"], wide=True), unsafe_allow_html=True)
 
 
+# ------------------------------------------------------------ my listings
+def _find_listing(lid: int):
+    return next(l for l in st.session_state.listings if l["id"] == lid)
+
+
+@st.dialog("Edit listing")
+def edit_listing_dialog(lid: int):
+    l = _find_listing(lid)
+    name = st.text_input("Title", value=l["name"], key=f"lst_name_{lid}")
+    price = st.number_input("Price per hour", min_value=0, value=l["price"], step=1, key=f"lst_price_{lid}")
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button("Cancel", key="lst_cancel"):
+            st.rerun()
+        if st.button("Save", key="lst_save"):
+            l["name"] = name.strip() or l["name"]
+            l["price"] = int(price)
+            # TODO: persist to your backend here
+            st.rerun()
+
+
+@st.dialog("Close this listing?")
+def close_listing_dialog(lid: int):
+    l = _find_listing(lid)
+    st.write(f"“{l['name']}” will no longer be visible to other students. You can reopen it later.")
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button("Cancel", key="lst_close_no"):
+            st.rerun()
+        if st.button("Yes, close it", key="lst_close_yes"):
+            l["status"] = "closed"
+            # TODO: persist to your backend here
+            st.rerun()
+
+
+@st.dialog("Delete this listing?")
+def delete_listing_dialog(lid: int):
+    l = _find_listing(lid)
+    st.write(f"“{l['name']}” will be permanently deleted. This can’t be undone.")
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button("Cancel", key="lst_del_no"):
+            st.rerun()
+        if st.button("Delete listing", key="lst_del_yes"):
+            st.session_state.listings = [x for x in st.session_state.listings if x["id"] != lid]
+            # TODO: delete in your backend here
+            st.rerun()
+
+
+def _listing_card(l: dict):
+    lid = l["id"]
+    closed = l["status"] == "closed"
+    with st.container(key=f"lcard_{lid}"):
+        badge = "Closed" if closed else f'{l["price"]}/hr'
+        st.markdown(
+            f'<div class="pf-thumb{" is-closed" if closed else ""}"><span class="pf-price">{badge}</span></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(f'<div class="pf-listing-name">{html.escape(l["name"])}</div>', unsafe_allow_html=True)
+        # Rendered last; CSS floats it over the top-left of the image.
+        with st.container(key=f"menu_{lid}"):
+            with st.popover("Options"):
+                if st.button("Edit listing", key=f"mi_edit_{lid}", icon=":material/edit:", width="stretch"):
+                    edit_listing_dialog(lid)
+                if closed:
+                    if st.button("Reopen listing", key=f"mi_open_{lid}", icon=":material/lock_open:", width="stretch"):
+                        l["status"] = "open"
+                        st.rerun()
+                else:
+                    if st.button("Close listing", key=f"mi_close_{lid}", icon=":material/block:", width="stretch"):
+                        close_listing_dialog(lid)
+                if st.button("Delete listing", key=f"mi_del_{lid}", icon=":material/delete:", width="stretch"):
+                    delete_listing_dialog(lid)
+
+
 def _listings():
-    t1, t2 = st.tabs(["Active Listing", "Reviews"])
+    t1, t2 = st.tabs(["My Listings", "Reviews"])
     with t1:
-        cols = st.columns(4)
-        for col in cols:
-            col.markdown(
-                '<div class="pf-listing"><div class="pf-thumb"><span class="pf-price">20/hr</span></div>'
-                '<div class="pf-listing-name">Tutoring Something idk</div></div>',
-                unsafe_allow_html=True,
-            )
+        if not st.session_state.listings:
+            st.markdown('<div class="pf-about" style="color:#8a949c">You have no listings yet.</div>', unsafe_allow_html=True)
+        else:
+            with st.container(horizontal=True, key="listing_row"):
+                for l in st.session_state.listings:
+                    _listing_card(l)
     with t2:
         for who, text in [("Student A", "Clear explanations and always on time."),
                           ("Student B", "Helped me finally understand recursion.")]:
@@ -421,23 +571,22 @@ def _listings():
 
 
 def _summary_tab():
-    # Row 1: profile banner on the left, About me on the right
-    banner_col, about_col = st.columns([1.5, 1.3])
-    with banner_col:
-        _banner()
-    with about_col:
-        _about()
+    # Row 1: profile banner across the full width
+    _banner()
 
-    # Row 2: Portfolio & Links and Social Media share most of the width, Skills on the right
-    portfolio_col, socials_col, skills_col = st.columns([1.5, 1.5, 1])
+    # Row 2: About me across the full width
+    _about()
+
+    # Row 3: Portfolio & Links on the left, Social Media and Skills stacked on the right
+    portfolio_col, right_col = st.columns([1.5, 2.5])
     with portfolio_col:
         _portfolio()
-    with socials_col:
+    with right_col:
         _socials()
-    with skills_col:
         _skills()
 
     _listings()
+
 
 # ------------------------------------------------------------ settings tab
 def _settings_tab():
@@ -489,7 +638,7 @@ def render_profile():
 
     st.title("Profile Information")
     st.caption("Keep your profile up to date to build trust with other students")
-    
+
     summary, settings = st.tabs(["Summary", "Settings"])
     with summary:
         _summary_tab()

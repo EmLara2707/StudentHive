@@ -62,11 +62,6 @@ st.markdown(
         border-radius: 1rem;
     }
 
-    /* Softer borders on the other boxes so they suit a white page */
-    [data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"] {
-        border-color: #E2E6EA;
-    }
-
     .avatar-placeholder {
         width: 90px;
         height: 90px;
@@ -117,6 +112,9 @@ st.markdown(
     }
 
     /* ---------- Mini calendar ---------- */
+    .st-key-cal_box {
+        padding: 0.5rem 0.25rem;
+    }
     .st-key-cal_box [data-testid="stVerticalBlock"],
     .st-key-cal_box [data-testid="stHorizontalBlock"] {
         gap: 0.25rem;
@@ -272,6 +270,19 @@ st.markdown(
     }
 
     /* ---------- Listings ---------- */
+    /* scrolling list box, no border (replaces st.container(height=...)) */
+    .st-key-list_box {
+        height: 665px !important;
+        min-height: 665px !important;
+        max-height: 665px !important;
+        flex: 0 0 665px !important;      /* stops the flex layout from shrinking it */
+        overflow-y: auto;
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        padding: 0.25rem 0.5rem;
+    }
+
     .listing-grid {
         display: grid;
         grid-template-columns: 1fr;   /* one card per row */
@@ -538,11 +549,16 @@ with left_col:
         {"image": "https://placehold.co/200", "name": "Studio Apartment", "label": "Rental", "price": "₱8,000/mo"},
         {"image": "https://placehold.co/200", "name": "Dog Walking", "label": "Gig", "price": "₱100/hr"},
         {"image": "https://placehold.co/200", "name": "Cleaning", "label": "Gig", "price": "₱100/hr"},
+        {"image": "https://placehold.co/200", "name": "Math Tutoring", "label": "Gig", "price": "₱150/hr"},
+        {"image": "https://placehold.co/200", "name": "Studio Apartment", "label": "Rental", "price": "₱8,000/mo"},
+        {"image": "https://placehold.co/200", "name": "Dog Walking", "label": "Gig", "price": "₱100/hr"},
+        {"image": "https://placehold.co/200", "name": "Cleaning", "label": "Gig", "price": "₱100/hr"},
     ]
 
     cards_html = "".join(listing_card(item) for item in listings)
 
-    with st.container(height=665, border=True):
+    # keyed container + CSS scrolling (no Streamlit border)
+    with st.container(key="list_box"):
         st.markdown(
             f'<div class="listing-grid">{cards_html}</div>',
             unsafe_allow_html=True,
@@ -555,7 +571,7 @@ with right_col:
     view = st.session_state.cal_month
     clicked = None
 
-    with st.container(border=True, key="cal_box"):
+    with st.container(border=False, key="cal_box"):
         prev_col, title_col, next_col = st.columns([1, 4, 1], vertical_alignment="center")
         prev_col.button("‹", key="cal_prev", on_click=shift_month, args=("cal_month", -1), use_container_width=True)
         title_col.markdown(f'<div class="cal-title">{view:%B %Y}</div>', unsafe_allow_html=True)
