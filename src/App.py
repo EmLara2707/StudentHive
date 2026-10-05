@@ -189,12 +189,31 @@ elif st.session_state.logged_in:
     # Hide Streamlit's built-in menu, we draw our own below
     pg = st.navigation(list(pages.values()), position="hidden")
 
+    # Keep the current page's link highlighted (each link sits in its own keyed container)
+    current = next(n for n, p in pages.items() if p.title == pg.title)
+    active = f'.st-key-nav_{current} [data-testid="stPageLink-NavLink"]'
+    st.markdown(
+        f"""
+        <style>
+        {active}, {active}:hover {{
+            background-color: #B0CDE1 !important;
+        }}
+        {active} p, {active} span {{
+            color: #1F1F1F;
+            font-weight: 600;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     with st.sidebar:
         st.title("StudentHive")
         st.divider()
 
         for name, page in pages.items():
-            st.page_link(page, label=name, use_container_width=True)
+            with st.container(key=f"nav_{name}"):
+                st.page_link(page, label=name, use_container_width=True)
 
         # Keyed container so the CSS above can pin it to the bottom
         with st.container(key="logout_box"):

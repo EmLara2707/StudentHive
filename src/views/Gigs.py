@@ -3,8 +3,17 @@ import re
 from collections import defaultdict
 from datetime import date, timedelta
 from html import escape
+from views.UserProfileView import render_user_profile
 
 import streamlit as st
+
+def close_profile() -> None:
+    st.session_state.viewing_profile = None
+
+
+if st.session_state.get("viewing_profile"):
+    render_user_profile(st.session_state.viewing_profile, on_back=close_profile)
+    st.stop()
 
 # ---------- Layout sizes (px) ----------
 # Tune these to fit your screen. The page itself never scrolls;
@@ -587,6 +596,78 @@ st.markdown(
     [data-testid="stMain"] [class*="st-key-todobtn_"] button [data-testid="stMarkdownContainer"] p {
         opacity: 0;
     }
+
+    /* ---------- Clickable client/student row in the details panel ---------- */
+  .st-key-detail_panel {
+        gap: 0;
+        width: 100%;
+        flex-shrink: 0 !important;
+    }
+    /* never let the blocks squash into each other; the scroll box scrolls instead */
+    .st-key-detail_panel > div,
+    .st-key-detail_panel [data-testid="stElementContainer"]:not([class*="st-key-userbtn_"]),
+    [class*="st-key-userrow_"],
+    [class*="st-key-userrow_"] > div:not([class*="st-key-userbtn_"]) {
+        flex-shrink: 0 !important;
+        height: auto !important;
+        min-height: fit-content !important;
+    }
+    .st-key-detail_panel > div,
+    .st-key-detail_panel [data-testid="stMarkdownContainer"] {
+        width: 100% !important;
+    }
+    .st-key-detail_panel .det-img {
+        width: 100% !important;
+    }
+    [class*="st-key-userrow_"] {
+        position: relative;
+        cursor: pointer;
+    }
+    [class*="st-key-userrow_"]:hover .det-row { background: #F4F6F8; }
+    .det-link { color: #0f6b62 !important; }
+
+    [class*="st-key-userbtn_"] {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0;
+        z-index: 5;
+    }
+    [class*="st-key-userbtn_"] > div,
+    [class*="st-key-userbtn_"] .stButton {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    [class*="st-key-userbtn_"] button {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        padding: 0;
+        border: none;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        cursor: pointer;
+    }
+    [class*="st-key-userbtn_"] button:hover,
+    [class*="st-key-userbtn_"] button:focus:not(:active),
+    [class*="st-key-userbtn_"] button:active {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+    }
+    [data-testid="stMain"] [class*="st-key-userbtn_"] button [data-testid="stMarkdownContainer"] p {
+        opacity: 0;
+    }
+    /* cancel Streamlit's negative bottom margin on markdown blocks in the details panel */
+    .st-key-detail_panel [data-testid="stMarkdown"],
+    .st-key-detail_panel [data-testid="stMarkdownContainer"],
+    [class*="st-key-userrow_"] [data-testid="stMarkdown"],
+    [class*="st-key-userrow_"] [data-testid="stMarkdownContainer"] {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -740,6 +821,27 @@ def confirm_reject_dialog(rid: int) -> None:
         update_gig(rid, "Cancelled", "me", f"Rejected request for {r['item']}")
         st.rerun()
 
+@st.dialog("Accept this request?")
+def confirm_accept_dialog(rid: int) -> None:
+    r = get_gig(rid)
+    st.write(f"{r['with']} will take “{r['item']}” from {fmt_range(r)}.")
+    c1, c2 = st.columns(2)
+    if c1.button("Not yet", key="dlg_accept_no", use_container_width=True):
+        st.rerun()
+    if c2.button("Yes, accept", key="dlg_accept_yes", type="primary", use_container_width=True):
+        update_gig(rid, "Active", None, f"Accepted {r['with']}'s request for {r['item']}")
+        st.rerun()
+
+@st.dialog("Complete this gig?")
+def confirm_complete_dialog(rid: int) -> None:
+    r = get_gig(rid)
+    st.write(f"Mark “{r['item']}” with {r['with']} as completed? This can’t be undone.")
+    c1, c2 = st.columns(2)
+    if c1.button("Not yet", key="dlg_complete_no", use_container_width=True):
+        st.rerun()
+    if c2.button("Yes, complete it", key="dlg_complete_yes", type="primary", use_container_width=True):
+        update_gig(rid, "Completed", None, f"Marked {r['item']} as completed")
+        st.rerun()
 
 @st.dialog("Cancel this gig?")
 def confirm_cancel_dialog(rid: int) -> None:
@@ -947,7 +1049,27 @@ def render_todos(todos: list) -> None:
 
 # ----- details panel -----
 
-def detail_html(r: dict) -> str:
+def open_profile(name: str) -> None:
+    st.session_state.viewing_profile = name
+
+
+def detail_top_html(r: dict) -> str:
+    return (
+        f'<img class="det-img" src="{escape(r["image"])}">'
+        f'<div class="det-title">{escape(r["item"])}</div>'
+        f'<div class="det-badges">{badges_html(r)}</div>'
+    )
+
+
+def detail_client_row_html(r: dict) -> str:
+    label = "Client" if r["role"] == "Doing" else "Student"
+    return (
+        f'<div class="det-row"><span class="det-label">{label}</span>'
+        f'<span class="det-value det-link">{escape(r["with"])} ›</span></div>'
+    )
+
+
+def detail_bottom_html(r: dict) -> str:
     days = (r["end"] - r["start"]).days + 1
     rate = daily_rate(r)
     doing = r["role"] == "Doing"
@@ -974,20 +1096,20 @@ def detail_html(r: dict) -> str:
         ("Duration", plural(days, "day")),
         ("Rate", r["price"]),
         ("Estimated total", f"₱{rate * days:,}"),
-        ("Client" if doing else "Student", r["with"]),
     ]
     rows_html = "".join(
         f'<div class="det-row"><span class="det-label">{label}</span>'
         f'<span class="det-value">{escape(value)}</span></div>'
         for label, value in rows
     )
-    return (
-        f'<img class="det-img" src="{escape(r["image"])}">'
-        f'<div class="det-title">{escape(r["item"])}</div>'
-        f'<div class="det-badges">{badges_html(r)}</div>'
-        f'{rows_html}'
-        f'<div class="det-note{note_cls}">{escape(note)}</div>'
-    )
+    return f'{rows_html}<div class="det-note{note_cls}">{escape(note)}</div>'
+
+
+def render_user_row(r: dict) -> None:
+    """The Client / Student row; clicking anywhere on it opens that user's profile."""
+    with st.container(key=f"userrow_{r['id']}"):
+        st.button("View profile", key=f"userbtn_{r['id']}", on_click=open_profile, args=(r["with"],))
+        st.markdown(detail_client_row_html(r), unsafe_allow_html=True)
 
 
 def render_actions(r: dict) -> None:
@@ -997,11 +1119,8 @@ def render_actions(r: dict) -> None:
     # Someone asked to take MY gig -> I decide
     if r["status"] == "Pending" and r["role"] == "Hiring":
         c1, c2 = st.columns(2)
-        c1.button(
-            "Accept", key="act_accept", on_click=update_gig,
-            args=(rid, "Active", None, f"Accepted {r['with']}'s request for {r['item']}"),
-            use_container_width=True,
-        )
+        if c1.button("Accept", key="act_accept", use_container_width=True):
+            confirm_accept_dialog(rid)
         if c2.button("Reject", key="act_reject", use_container_width=True):
             confirm_reject_dialog(rid)
 
@@ -1014,18 +1133,14 @@ def render_actions(r: dict) -> None:
         if today >= r["start"]:
             # already started -> can be completed or cancelled
             c1, c2 = st.columns(2)
-            c1.button(
-                "Complete", key="act_complete", on_click=update_gig,
-                args=(rid, "Completed", None, f"Marked {r['item']} as completed"),
-                use_container_width=True,
-            )
+            if c1.button("Complete", key="act_complete", use_container_width=True):
+                confirm_complete_dialog(rid)
             if c2.button("Cancel", key="act_cancel", use_container_width=True):
                 confirm_cancel_dialog(rid)
         else:
             # hasn't begun yet -> can only be cancelled
             if st.button("Cancel", key="act_cancel", use_container_width=True):
                 confirm_cancel_dialog(rid)
-
 
 # ==========================================
 # SESSION STATE
@@ -1198,8 +1313,12 @@ with right_col:
         with st.container(height=TODO_H, border=False):
             # the "sort_" key prefix reuses the pill-button style
             st.button("← Back to To-Do", key="sort_back", on_click=close_gig)
-            st.markdown(detail_html(selected), unsafe_allow_html=True)
-            render_actions(selected)
+            with st.container(key="detail_panel"):
+                st.markdown(detail_top_html(selected), unsafe_allow_html=True)
+                render_user_row(selected)
+                st.markdown(detail_bottom_html(selected), unsafe_allow_html=True)
+                st.markdown('<div style="height:0.8rem"></div>', unsafe_allow_html=True)
+                render_actions(selected)
     else:
         st.subheader("To-Do")
         todos = build_todos()
