@@ -300,22 +300,24 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     justify-content: center;
 }
 [data-testid="stFileUploaderDropzoneInstructions"] { display: none !important; }
-[data-testid="stFileUploaderDropzone"] button {
-    font-size: 0 !important;
+/* only the dropzone's own button (the real browse button) becomes "Browse Computer" */
+[data-testid="stFileUploaderDropzone"] > button {
     background: #ffffff !important;
     border: 3px solid #3a3d3f !important;
     border-radius: 22px !important;
     padding: 0.6rem 1.6rem !important;
     min-height: 56px;
+    white-space: nowrap;
 }
-[data-testid="stFileUploaderDropzone"] button::after {
+/* hide its stock icon and label */
+[data-testid="stFileUploaderDropzone"] > button > * { display: none !important; }
+[data-testid="stFileUploaderDropzone"] > button::after {
     content: "Browse Computer";
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
     font-size: 1.3rem;
     color: #000000;
 }
-
 /* small screens: stack the panels */
 @media (max-width: 900px) {
     .st-key-ob_left { position: static; width: 100%; height: auto; padding: 2.5rem 1.5rem; }

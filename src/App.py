@@ -23,11 +23,16 @@ st.markdown(
         color: #1F1F1F;
     }
 
-    /* Bigger StudentHive title */
+    /* Bigger StudentHive title, in the brand green */
     [data-testid="stSidebar"] h1 {
         font-size: 2.6rem;
         font-weight: 800;
         padding-bottom: 0.5rem;
+    }
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h1 span,
+    [data-testid="stSidebar"] h1 a {
+        color: #0c9488 !important;
     }
 
     /* Dividers */
@@ -60,10 +65,17 @@ st.markdown(
         width: 100%;
     }
 
-    /* Hover for inactive buttons */
+    /* Hover / press for buttons (Logout) */
     [data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
-        background-color: #F3F3F3;
+        background-color: #D3E3EE !important;
         color: #1F1F1F;
+    }
+    [data-testid="stSidebar"] .stButton > button[kind="secondary"]:active,
+    [data-testid="stSidebar"] .stButton > button[kind="secondary"]:focus:not(:active) {
+        background-color: #B0CDE1 !important;
+        color: #1F1F1F;
+        box-shadow: none;
+        outline: none;
     }
 
     /* ---------- Nav links (st.page_link) ---------- */
@@ -78,19 +90,29 @@ st.markdown(
         text-decoration: none;
     }
 
+    /* hover: soft tint, lighter than the selected color */
     [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"]:hover {
-        background-color: #F3F3F3;
+        background-color: #D3E3EE !important;
     }
 
-    /* Active page */
+    /* pressing: same as the selected color */
+    [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"]:active,
+    [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"]:focus:not(:active) {
+        background-color: #B0CDE1 !important;
+        outline: none;
+        box-shadow: none;
+    }
+
+    /* Active page: light blue with dark text, like the design */
     [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"][aria-current="page"],
     [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"][aria-current="page"]:hover {
-        background-color: #FF4B4B;
+        background-color: #B0CDE1 !important;
     }
 
     [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"][aria-current="page"] p,
     [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"][aria-current="page"] span {
-        color: #FFFFFF;
+        color: #1F1F1F;
+        font-weight: 600;
     }
 
     /* ---------- Bigger button text ---------- */
