@@ -6,6 +6,7 @@ import streamlit as st
 # make `src/` importable so `views.Listing` can be found
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+from views.CreateListing import render_create_listing, reset_wizard
 from views.Listing import get_marketplace, render_listing_grid
 
 # ==========================================
@@ -65,6 +66,12 @@ st.markdown(
         background-color: #ffffff;
     }
     [data-testid="stTextInput"] [data-baseweb="input"] { border: 1.5px solid var(--muted); }
+    /* newer Streamlit versions: same pill look without data-baseweb */
+    [data-testid="stTextInputRootElement"] {
+        border: 1.5px solid var(--muted);
+        border-radius: 999px;
+        background-color: #ffffff;
+    }
     [data-testid="stTextInput"] input { color: var(--ink); }
 
     /* ---------- filter pills (Gig / Rentals) ---------- */
@@ -131,20 +138,6 @@ st.markdown(
         background: var(--teal-hover);
         border: none;
         color: #ffffff;
-    }
-
-    /* post button inside the dialog */
-    [data-testid="stDialog"] [data-testid="stFormSubmitButton"] button {
-        background: var(--teal);
-        border: none;
-        border-radius: 999px;
-    }
-    [data-testid="stDialog"] [data-testid="stFormSubmitButton"] button p {
-        color: #ffffff;
-        font-weight: 600;
-    }
-    [data-testid="stDialog"] [data-testid="stFormSubmitButton"] button:hover {
-        background: var(--teal-hover);
     }
 
     /* ---------- listing cards ---------- */
@@ -379,6 +372,39 @@ st.markdown(
     [class*="st-key-request_booking_"] button { background: #ffc65c; }
     [class*="st-key-request_booking_"] button p { color: #1b1b1b; font-weight: 700; font-size: 0.85rem; }
     [class*="st-key-request_booking_"] button:hover { background: #f5b23c; border: none; }
+    
+    /* ---------- Gallery tiles (the button IS the tile) ---------- */
+    .st-key-gal_css { display: none; }
+
+    [class*="st-key-gal_big_"], [class*="st-key-gal_thumb_"],
+    [class*="st-key-gal_big_"] [data-testid="stButton"], [class*="st-key-gal_thumb_"] [data-testid="stButton"] {
+        width: 100% !important;
+    }
+
+    /* heights: wrapper + button, so nothing collapses */
+    [class*="st-key-gal_big_"], [class*="st-key-gal_big_"] [data-testid="stButton"], [class*="st-key-gal_big_"] button {
+        height: 368px !important; min-height: 368px !important;
+    }
+    [class*="st-key-gal_thumb_"], [class*="st-key-gal_thumb_"] [data-testid="stButton"], [class*="st-key-gal_thumb_"] button {
+        height: 176px !important; min-height: 176px !important;
+    }
+
+    [class*="st-key-gal_big_"] button, [class*="st-key-gal_thumb_"] button {
+        width: 100% !important; padding: 0 !important; border: none !important; border-radius: 14px !important;
+        background-color: #cfd8dc !important; background-size: cover !important; background-position: center !important;
+        background-repeat: no-repeat !important; cursor: zoom-in;
+    }
+    [class*="st-key-gal_big_"] button p, [class*="st-key-gal_thumb_"] button p {
+        color: #fff !important; font: 600 2rem 'Montserrat', sans-serif !important; margin: 0 !important;
+    }
+    [class*="st-key-gal_big_"] button:hover, [class*="st-key-gal_thumb_"] button:hover { filter: brightness(.9); }
+    [class*="st-key-gal_big_"] button:focus, [class*="st-key-gal_thumb_"] button:focus { outline: none !important; box-shadow: none !important; }
+
+    /* ---------- Lightbox ---------- */
+    .sh-lb-img { display: block; width: 100%; max-height: 70vh; object-fit: contain; border-radius: 12px; background: #111; }
+    .sh-lb-count { text-align: center; color: var(--muted); margin-top: .5rem; font-size: .9rem; }
+    .st-key-lb_prev button, .st-key-lb_next button { border-radius: 50%; width: 44px; height: 44px; padding: 0; background: var(--teal); color: #fff; border: none; }
+    .st-key-lb_prev button:hover, .st-key-lb_next button:hover { background: var(--teal-hover); }
     </style>
     """,
     unsafe_allow_html=True,
@@ -399,29 +425,19 @@ def close_listing() -> None:
     st.session_state.selected_listing_id = None
 
 
-@st.dialog("Add a Listing")
-def add_listing_dialog() -> None:
-    with st.form("add_listing_form", border=False):
-        title = st.text_input("Title")
-        category = st.radio("Type", ["Gig", "Rental"], horizontal=True)
-        price = st.number_input("Price (\u20b1)", min_value=0.0, step=50.0, value=100.0,
-                                help="Gigs are priced per hour, Rentals per day.")
-        course = st.text_input("Course")
-        description = st.text_area("Description")
-        submitted = st.form_submit_button("Post Listing", width="stretch")
-
-    if submitted:
-        if not title.strip():
-            st.error("Please add a title.")
-        else:
-            owner = (st.session_state.get("user") or {}).get("name", "User")
-            market.add_listing(title, category, price, course, owner, description)
-            st.rerun()
+def open_create() -> None:
+    """'Add a Listing' clicked: start a fresh wizard and show the Create page."""
+    reset_wizard()
+    st.session_state.creating_listing = True
 
 
 selected_id = st.session_state.get("selected_listing_id")
 
-if selected_id is None:
+if st.session_state.get("creating_listing"):
+    # ---------- create a listing (4-step wizard) ----------
+    render_create_listing(market)
+
+elif selected_id is None:
     # ---------- header: title left, search + filters right ----------
     left, right = st.columns([3, 2], vertical_alignment="top")
     with left:
@@ -433,8 +449,8 @@ if selected_id is None:
                               label_visibility="collapsed", key="market_search")
         add_col, pills_col = st.columns([1.3, 2], vertical_alignment="center")
         with add_col:
-            if st.button("Add a Listing", icon=":material/add:", key="add_listing_btn"):
-                add_listing_dialog()
+            st.button("Add a Listing", icon=":material/add:", key="add_listing_btn",
+                      on_click=open_create)
         with pills_col:
             with st.container(key="filter_pills"):
                 chosen = st.pills("Filter", ["Gig", "Rentals"], selection_mode="multi",

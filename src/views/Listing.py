@@ -1,8 +1,14 @@
+import base64
 from dataclasses import dataclass, field
 from html import escape
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Tuple
 
 import streamlit as st
+
+MAX_IMAGES = 10
+GALLERY_PREVIEW = 3   # tiles shown before the "+N" overlay
+
+ALLOWED_MIMES = ("image/jpeg", "image/png", "image/webp")
 
 
 @dataclass
@@ -18,6 +24,13 @@ class Listing:
     description: List[str] = field(default_factory=list)
     subjects: List[str] = field(default_factory=list)
     requirements: List[str] = field(default_factory=list)
+    deliverable: str = ""          # Gigs only: Service / Project Deliverables
+    images: List[str] = field(default_factory=list)   # uploaded photos as data URIs (max 3)
+
+    @staticmethod
+    def _bg(uri: str) -> str:
+        """Inline CSS that shows an uploaded photo as a covering background."""
+        return f"background:url('{uri}') center/cover no-repeat;"
 
     @property
     def price_label(self) -> str:
@@ -37,9 +50,11 @@ class Listing:
             f"<span class='sh-badge sh-badge-{escape(self.category.lower())}'>"
             f"{escape(self.category)}</span>" if badge else ""
         )
+        cloud = "" if self.images else "<div class='sh-cloud'></div>"
+        photo = self._bg(self.images[0]) if self.images else ""
         st.markdown(
-            f"<div class='sh-image' style='height:{height}px'>"
-            f"{badge_html}<div class='sh-cloud'></div></div>",
+            f"<div class='sh-image' style=\"height:{height}px;{photo}\">"
+            f"{badge_html}{cloud}</div>",
             unsafe_allow_html=True,
         )
 
@@ -72,17 +87,48 @@ class Listing:
     # ------------------------------------------------------------------
     # Listing detail page
     # ------------------------------------------------------------------
+    def render_breadcrumb(self) -> None:
+        """'Marketplace > Title' next to the Back button."""
+        st.markdown(
+            f"<div class='sh-crumbs'>Marketplace<span>&gt;</span>{escape(self.title)}</div>",
+            unsafe_allow_html=True,
+        )
 
-    def render_gallery(self) -> None:
-        """One big picture and two stacked thumbnails (placeholders)."""
-        scene = "<div class='sh-image'><div class='sh-cloud'></div></div>"
-        st.markdown(f"<div class='sh-gallery'>{scene}{scene}{scene}</div>",
-                    unsafe_allow_html=True)
+    def render_gallery(self):
+        total = len(self.images)
+        hidden = max(0, total - GALLERY_PREVIEW)
 
+        # one hidden block that sets each tile button's photo as its background
+        rules = []
+        for i in range(min(total, GALLERY_PREVIEW)):
+            size = "big" if i == 0 else "thumb"
+            shade = "linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)), " if (i == 2 and hidden) else ""
+            rules.append(f".st-key-gal_{size}_{self.id}_{i} button{{background-image:{shade}url('{self.images[i]}');}}")
+        with st.container(key="gal_css"):
+            st.markdown(f"<style>{''.join(rules)}</style>", unsafe_allow_html=True)
+
+        big, side = st.columns([2, 1], gap="small")
+        with big:
+            self._gallery_tile(0, "big")
+        with side:
+            self._gallery_tile(1, "thumb")
+            self._gallery_tile(2, "thumb", extra=hidden)
+
+    def _gallery_tile(self, i, size, extra=0):
+        if i >= len(self.images):
+            # keep your existing placeholder scene here
+            st.markdown(f'<div class="sh-gal-tile sh-gal-{size} sh-gal-ph"></div>', unsafe_allow_html=True)
+            return
+        label = f"+{extra}" if extra else " "
+        if st.button(label, key=f"gal_{size}_{self.id}_{i}", width="stretch"):
+            st.session_state.lb_index = i
+            lightbox_dialog(self.id)
+    
     def render_detail(self) -> None:
         """Main column: gallery, title, meta line, About section."""
         self.render_gallery()
-        meta = " &bull; ".join(escape(x) for x in (self.owner, self.course, self.category))
+        meta = " &bull; ".join(escape(x) for x in
+                               (self.owner, self.course, self.category, self.deliverable) if x)
         paragraphs = "".join(
             f"<div class='sh-about-text'>{escape(p)}</div>" for p in self.description
         ) or "<div class='sh-about-text'>No description provided.</div>"
@@ -172,18 +218,26 @@ class Marketplace:
         return results
 
     def add_listing(self, title: str, category: str, price: float,
-                    course: str, owner: str, description: str = "") -> Listing:
-        """Create a new listing (newest first). Gigs are per hour, Rentals per day."""
+                    course: str, owner: str, description: str = "",
+                    unit: Optional[str] = None, deliverable: str = "",
+                    images: Optional[List[Tuple[bytes, str]]] = None) -> Listing:
+        """Create a new listing (newest first). Unit defaults to hr for Gigs, day for Rentals."""
         new_id = max((l.id for l in self._listings), default=0) + 1
         listing = Listing(
             id=new_id,
             title=title.strip(),
             category=category,
             price=price,
-            unit="hr" if category == "Gig" else "day",
+            unit=unit or ("hr" if category == "Gig" else "day"),
             owner=owner,
             course=course.strip() or "N/A",
             description=[description.strip()] if description.strip() else [],
+            deliverable=deliverable,
+            images=[
+                f"data:{mime if mime in ALLOWED_MIMES else 'image/jpeg'};base64,"
+                f"{base64.b64encode(raw).decode()}"
+                for raw, mime in (images or [])[:MAX_IMAGES]
+            ],
         )
         self._listings.insert(0, listing)
         return listing
@@ -216,3 +270,18 @@ def render_listing_grid(listings: List[Listing],
         for col, listing in zip(cols, listings[start:start + columns]):
             with col:
                 listing.render_card(on_view=on_view, key_prefix=key_prefix)
+
+def _lb_step(delta, n):
+    st.session_state.lb_index = (st.session_state.get("lb_index", 0) + delta) % n
+
+@st.dialog("Photos", width="large")
+def lightbox_dialog(listing_id):
+    listing = get_marketplace().get_listing(listing_id)
+    imgs = listing.images
+    n = len(imgs)
+    idx = st.session_state.get("lb_index", 0) % n
+    left, mid, right = st.columns([1, 10, 1], vertical_alignment="center")
+    left.button("", icon=":material/chevron_left:", key="lb_prev", on_click=_lb_step, args=(-1, n))
+    mid.markdown(f'<img class="sh-lb-img" src="{imgs[idx]}">', unsafe_allow_html=True)
+    right.button("", icon=":material/chevron_right:", key="lb_next", on_click=_lb_step, args=(1, n))
+    mid.markdown(f'<div class="sh-lb-count">{idx + 1} / {n}</div>', unsafe_allow_html=True)
