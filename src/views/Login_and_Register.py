@@ -236,6 +236,9 @@ with right_col:
                         "name": school_email.split("@")[0],
                         "email": school_email,
                     }
+                    # returning user -> skip onboarding
+                    # TODO: use the user's saved "onboarded" flag from your database
+                    st.session_state.onboarding_complete = True
                     st.rerun()
 
         # ---------------- SIGN-UP ----------------
@@ -270,4 +273,13 @@ with right_col:
                     st.error("Passwords do not match.")
                 else:
                     # TODO: save the account to your database
-                    st.success("Account created! Check your school email to verify it.")
+                    st.session_state.logged_in = True
+                    st.session_state.user = {
+                        "name": full_name,
+                        "email": new_email,
+                    }
+                    # new user -> start onboarding from step 1 with empty data
+                    st.session_state.onboarding_complete = False
+                    st.session_state.pop("ob_step", None)
+                    st.session_state.pop("ob_data", None)
+                    st.rerun()
