@@ -851,6 +851,37 @@ def confirm_complete_dialog(rid: int) -> None:
         st.rerun()
     if c2.button("Yes, complete it", key="dlg_complete_yes", type="primary", use_container_width=True):
         update_rental(rid, "Completed", None, f"Marked {r['item']} as completed")
+        st.session_state.review_rid = rid   # tells the page to open the review dialog next
+        st.rerun()
+
+
+@st.dialog("Leave a review")
+def review_dialog(rid: int) -> None:
+    r = get_rental(rid)
+    who = "owner" if r["role"] == "Renting" else "renter"
+    st.write(f"How was “{r['item']}” with {r['with']}?")
+
+    # st.feedback returns 0-4 (index of the chosen star), or None if nothing is picked yet
+    stars = st.feedback("stars", key=f"rv_stars_{rid}")
+    text = st.text_area(
+        "Your review (optional)",
+        key=f"rv_text_{rid}",
+        max_chars=500,
+        placeholder=f"Share your experience with the {who}...",
+    )
+
+    c1, c2 = st.columns(2)
+    if c1.button("Skip", key=f"rv_skip_{rid}", use_container_width=True):
+        st.rerun()
+    if c2.button("Submit review", key=f"rv_submit_{rid}", type="primary",
+                 use_container_width=True, disabled=stars is None):
+        st.session_state.reviews[rid] = {
+            "rating": stars + 1,          # 1-5
+            "text": text.strip(),
+            "reviewed": r["with"],
+        }
+        # TODO: save the review in your backend here
+        st.session_state.toast = f"Review for {r['with']} submitted"
         st.rerun()
 
 @st.dialog("Cancel this request?")
@@ -1154,11 +1185,18 @@ st.session_state.setdefault("asc_done", False)
 st.session_state.setdefault("asc_cancel", False)
 st.session_state.setdefault("selected_rental", None)  # id shown in the details panel
 st.session_state.setdefault("selected_day", None)     # day shown in the expanded calendar view
+st.session_state.setdefault("reviews", {})            # rental id -> {"rating", "text", "reviewed"}
 
 
 # ==========================================
 # PAGE
 # ==========================================
+
+# After "Yes, complete it", open the review dialog once.
+# pop() clears the flag, so closing the dialog with the X won't make it reappear.
+_review_rid = st.session_state.pop("review_rid", None)
+if _review_rid is not None:
+    review_dialog(_review_rid)
 
 if "toast" in st.session_state:
     st.toast(st.session_state.pop("toast"))
