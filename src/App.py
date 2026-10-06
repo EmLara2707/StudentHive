@@ -167,7 +167,7 @@ if st.session_state.logged_in and not st.session_state.onboarding_complete:
     pg = st.navigation(
         [
             st.Page(
-                "views/OnBoarding.py",
+                "views/pages/onboarding.py",
                 title="Onboarding",
                 url_path="onboarding",
                 default=True,
@@ -224,7 +224,7 @@ else:
     pg = st.navigation(
         [
             st.Page(
-                "views/Login_and_Register.py",
+                "views/pages/login_and_register.py",
                 title="Login",
                 url_path="login",
                 default=True,
