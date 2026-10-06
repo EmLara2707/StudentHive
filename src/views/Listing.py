@@ -15,6 +15,9 @@ ALLOWED_MIMES = ("image/jpeg", "image/png", "image/webp")
 def open_profile(name: str) -> None:
     st.session_state.viewing_market_profile = name
 
+def open_booking(listing_id: int) -> None:
+    st.session_state.booking_listing_id = listing_id
+
 @dataclass
 class Listing:
     """A single Gig or Rental posted on StudentHive."""
@@ -204,8 +207,7 @@ class Listing:
 
             if st.button("Message Owner", key=f"message_owner_{self.id}", width="stretch"):
                 st.toast("Messaging is coming soon.")
-            if st.button(cta, key=f"request_booking_{self.id}", width="stretch"):
-                st.toast(f"{cta} is coming soon.")
+            st.button(cta, key=f"request_booking_{self.id}", width="stretch", on_click=open_booking, args=(self.id,))
 
 
 @dataclass
@@ -214,7 +216,9 @@ class Booking:
     listing_id: int
     counterpart: str
     date: str
-    status: str = "Pending"   # Pending / Confirmed / Completed
+    status: str = "Pending"
+    total: float = 0.0
+    details: dict = field(default_factory=dict)
 
 
 class Marketplace:
@@ -293,6 +297,14 @@ class Marketplace:
         )
         self._listings.insert(0, listing)
         return listing
+
+    def add_booking(self, listing_id: int, counterpart: str, date: str,
+                    total: float = 0.0, details: Optional[dict] = None) -> Booking:
+        """Create a new booking request (newest first)."""
+        new_id = max((b.id for b in self._bookings), default=0) + 1
+        booking = Booking(new_id, listing_id, counterpart, date, "Pending", total, details or {})
+        self._bookings.insert(0, booking)
+        return booking
 
     def get_gig_bookings(self) -> List[Booking]:
         return [b for b in self._bookings

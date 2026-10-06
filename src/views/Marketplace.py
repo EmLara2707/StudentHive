@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from views.CreateListing import render_create_listing, reset_wizard
 from views.Listing import get_marketplace, render_listing_grid
 from views.UserProfileView import render_user_profile
+from views.BookingRequest import render_booking_request
 
 def close_profile() -> None:
     st.session_state.viewing_market_profile = None
@@ -510,18 +511,21 @@ def open_listing(listing_id: int) -> None:
 def close_listing() -> None:
     st.session_state.selected_listing_id = None
 
-
 def open_create() -> None:
     """'Add a Listing' clicked: start a fresh wizard and show the Create page."""
     reset_wizard()
     st.session_state.creating_listing = True
 
-
 selected_id = st.session_state.get("selected_listing_id")
+booking_id = st.session_state.get("booking_listing_id")
 
 if st.session_state.get("creating_listing"):
     # ---------- create a listing (4-step wizard) ----------
     render_create_listing(market)
+
+elif booking_id is not None:
+    # ---------- booking / project request ----------
+    render_booking_request(market, booking_id)
 
 elif selected_id is None:
     # ---------- header: title left, search + filters right ----------
