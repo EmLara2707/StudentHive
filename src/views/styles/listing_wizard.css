@@ -1,12 +1,5 @@
 /* Create-a-Listing wizard (views/components/listing_wizard.py).
    Moved verbatim from CreateListing.py. Uses --orange from marketplace.css. */
-:root {
-    --wiz-line: #c5ced6;
-    --wiz-gray: #c9d0d8;
-    --wiz-teal: #0b9488;
-    --wiz-btn: #e8edf1;
-}
-
 /* ---------- page heading ---------- */
 .sh-wiz-title {
     font-family: 'Montserrat', sans-serif;

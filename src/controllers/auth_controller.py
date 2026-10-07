@@ -3,6 +3,8 @@ it takes plain values in and returns an AuthResult for the view to act on."""
 from dataclasses import dataclass
 
 from models.user import User
+from repositories.listing_repository import ListingRepository
+from repositories.review_repository import ReviewRepository
 from repositories.user_repository import UserRepository
 from utils.security import hash_password, verify_password
 
@@ -26,8 +28,11 @@ class AuthController:
     MIN_PASSWORD_LENGTH = 8
     DELETE_CONFIRMATION = "DELETE"
 
-    def __init__(self, users: UserRepository) -> None:
+    def __init__(self, users: UserRepository, listings: ListingRepository,
+                 reviews: ReviewRepository) -> None:
         self._users = users
+        self._listings = listings
+        self._reviews = reviews
 
     def login(self, email: str, password: str) -> AuthResult:
         email = (email or "").strip()
@@ -86,8 +91,9 @@ class AuthController:
     def delete_account(self, email: str, confirmation: str) -> AuthResult:
         if (confirmation or "").strip() != self.DELETE_CONFIRMATION:
             return AuthResult.failure(f"Type {self.DELETE_CONFIRMATION} to confirm.")
-        # TODO: also delete this user's listings and reviews once those
-        # repositories are final (cascade belongs in a dedicated service).
         if not self._users.delete(email):
             return AuthResult.failure("Account not found.")
+        # Cascade: the account's listings and the reviews written about it go too.
+        self._listings.delete_by_owner(email)
+        self._reviews.delete_for_user(email)
         return AuthResult.success()

@@ -1,13 +1,6 @@
 /* Editable listing form: same look as the wizard's Review screen.
    Scoped to .st-key-listing_form (a keyed container inside the dialog).
    The CreateListing step will reuse this file for the wizard cards. */
-:root {
-    --wiz-line: #c5ced6;
-    --wiz-gray: #c9d0d8;
-    --wiz-teal: #0b9488;
-    --wiz-btn: #e8edf1;
-}
-
 /* ---------- type row (read-only) ---------- */
 .lf-typerow { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: var(--muted); margin-bottom: 0.3rem; }
 .lf-pill { background: var(--wiz-teal); color: #ffffff; font-weight: 700; font-size: 0.8rem; padding: 0.25rem 1.1rem; border-radius: 999px; }
