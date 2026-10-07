@@ -48,6 +48,9 @@ class Listing:
     def is_closed(self) -> bool:
         return self.status == ListingStatus.CLOSED
 
+    def is_owned_by(self, email: str) -> bool:
+        return self.owner_email == (email or "").strip().lower()
+
     @property
     def is_gig(self) -> bool:
         return self.category == GIG

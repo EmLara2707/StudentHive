@@ -1,0 +1,197 @@
+/* Booking Request page (views/components/booking_request.py).
+   Moved verbatim from BookingRequest.py. Relies on .sh-badge, .sh-avatar and .sh-image
+   from marketplace.css, which the Marketplace page always loads. */
+:root {
+    --bk-line: #c5ced6;
+    --bk-teal: #0b9488;
+    --bk-soft: #e8edf1;
+}
+
+.sh-bk-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 2.4rem;
+    line-height: 1.2;
+    color: var(--ink);
+    margin: 0.4rem 0 1rem;
+}
+
+/* ---------- form card (left) ---------- */
+.st-key-book_form {
+    border: 1px solid var(--bk-line);
+    border-radius: 34px;
+    padding: 1.8rem 1.8rem 1.4rem !important;
+    gap: 0.7rem;
+}
+/* Streamlit gives markdown a -1rem bottom margin; remove it */
+.st-key-book_form [data-testid="stMarkdownContainer"],
+.st-key-book_summary [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+
+.sh-bk-notice {
+    background: var(--bk-soft);
+    border-radius: 20px;
+    padding: 0.9rem 1.4rem;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: var(--ink);
+}
+.sh-bk-lbl { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; }
+.sh-bk-h {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #4b5560;
+    margin-top: 0.2rem;
+}
+.sh-bk-fine {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+
+.st-key-book_form [data-testid="stWidgetLabel"] p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0;
+}
+/* pill-shaped date + time fields */
+.st-key-book_form [data-testid="stDateInput"] [data-baseweb="input"],
+.st-key-book_form [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    border: 1px solid var(--bk-line) !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+}
+.st-key-book_form [data-testid="stDateInput"] input,
+.st-key-book_form [data-testid="stSelectbox"] input {
+    text-align: center;
+}
+.st-key-book_form [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    justify-content: center;
+}
+/* rounded text areas */
+.st-key-book_form [data-testid="stTextAreaRootElement"],
+.st-key-book_form [data-testid="stTextArea"] [data-baseweb="textarea"] {
+    border: 1px solid var(--bk-line) !important;
+    border-radius: 22px !important;
+    background: #ffffff !important;
+}
+/* teal focus instead of Streamlit's default red */
+.st-key-book_form [data-testid="stTextAreaRootElement"]:focus-within,
+.st-key-book_form [data-testid="stDateInput"] [data-baseweb="input"]:focus-within {
+    border-color: var(--bk-teal) !important;
+    box-shadow: 0 0 0 1px var(--bk-teal) !important;
+}
+
+/* ---------- meeting mode cards (invisible button stretched over the card) ---------- */
+[class*="st-key-mode_"] { position: relative; gap: 0; }
+[class*="st-key-mode_"] [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+[class*="st-key-modepick_"] {
+    position: absolute !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    z-index: 5;
+}
+[class*="st-key-modepick_"] [data-testid="stButton"],
+[class*="st-key-modepick_"] button {
+    position: static;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.sh-mode {
+    border: 1px solid var(--bk-line);
+    border-radius: 20px;
+    padding: 1rem 1.1rem;
+    background: #ffffff;
+    text-align: left;
+    min-height: 5.6rem;
+    transition: border-color 0.15s;
+}
+.sh-mode .ttl {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 1.35rem;
+    line-height: 1.2;
+    color: var(--ink);
+}
+.sh-mode .sub {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    color: #4b5560;
+    margin-top: 0.3rem;
+}
+[class*="st-key-mode_"]:hover .sh-mode { border-color: var(--bk-teal); }
+.sh-mode.selected { background: var(--bk-teal); border-color: var(--bk-teal); }
+.sh-mode.selected .ttl, .sh-mode.selected .sub { color: #ffffff; }
+
+/* ---------- submit buttons ---------- */
+[class*="st-key-book_submit"] button {
+    background: var(--bk-teal);
+    border: none;
+    border-radius: 10px;
+    min-height: 2.2rem;
+}
+[class*="st-key-book_submit"] button p {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+[class*="st-key-book_submit"] button:hover,
+[class*="st-key-book_submit"] button:focus:not(:active) {
+    background: var(--teal-hover, #0b5750);
+    border: none;
+    color: #ffffff;
+}
+
+/* ---------- summary card (right) ---------- */
+.st-key-book_summary {
+    border: 1px solid var(--bk-line);
+    border-radius: 34px;
+    overflow: hidden;
+    padding: 0 !important;
+    gap: 0;
+}
+.st-key-book_summary .sh-image { border-radius: 0; }
+.st-key-book_summary_btn { padding: 0 1.1rem 1.1rem !important; }
+
+.sh-bk-body { padding: 0.9rem 1.1rem 0.4rem; }
+.sh-bk-badges { display: flex; gap: 6px; margin-bottom: 0.5rem; }
+.sh-bk-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.2;
+    color: var(--ink);
+}
+.sh-bk-owner { display: flex; align-items: center; gap: 0.6rem; margin: 0.6rem 0; }
+.sh-bk-owner .nm { font-weight: 700; font-size: 0.8rem; color: var(--ink); line-height: 1.2; }
+.sh-bk-owner .rt { font-size: 0.65rem; color: var(--muted); }
+.sh-bk-owner .rt b { color: #f5b23c; }
+.sh-bk-hr { border: none; border-top: 1px solid #8a939b; margin: 0.5rem 0; }
+.sh-bk-ps { font-weight: 700; font-size: 0.75rem; color: var(--ink); }
+.sh-bk-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.8rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin: 0.35rem 0;
+}
+.sh-bk-row span:last-child { white-space: nowrap; }
+.sh-bk-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+}
+.sh-bk-total .lbl { font-size: 1.15rem; color: var(--ink); }
+.sh-bk-total .amt { font-size: 1.5rem; color: var(--bk-teal); }
+.sh-bk-note { font-size: 0.7rem; color: var(--muted); margin: 0.7rem 0.4rem 0; }

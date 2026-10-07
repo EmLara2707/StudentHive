@@ -1,6 +1,5 @@
-"""Marketplace use-cases: browse, view a listing, send a booking request.
-Never imports streamlit."""
-from models.booking import Booking
+"""Marketplace use-cases: browse and view listings (booking requests live in
+BookingController). Never imports streamlit."""
 from models.listing import GIG, RENTAL, Listing, ListingEntry, OwnerInfo
 
 UNKNOWN_OWNER = "Unknown"
@@ -15,10 +14,9 @@ _CATEGORY_BY_FILTER = {FILTER_GIG: GIG, FILTER_RENTALS: RENTAL}
 
 
 class MarketplaceController:
-    def __init__(self, listings, users, bookings) -> None:
+    def __init__(self, listings, users) -> None:
         self._listings = listings      # ListingRepository
         self._users = users            # UserRepository
-        self._bookings = bookings      # BookingRepository
 
     # ---- owner display info ----
     def _owner(self, email: str) -> OwnerInfo:
@@ -78,12 +76,3 @@ class MarketplaceController:
         category = _CATEGORY_BY_FILTER.get(filter_choice)
         kind = kind_choice if self.shows_kind_filter(filter_choice) else None
         return self.search(query, [category] if category else None, deliverable_kind=kind)
-
-    # ---- booking ----
-    def add_booking(self, listing_id: int, date: str, total: float = 0.0,
-                    details: dict | None = None) -> Booking | None:
-        """Send a booking request for an open listing. None if it is no longer available."""
-        entry = self.get_entry(listing_id)
-        if entry is None:
-            return None
-        return self._bookings.add(listing_id, entry.owner.name, date, total, details)

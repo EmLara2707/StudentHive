@@ -8,7 +8,7 @@ import streamlit as st
 
 from models.listing import Listing, ListingEntry
 from views.components.user_profile import open_profile
-from views.session import get_marketplace_controller
+from views.session import get_booking_controller, get_current_email, get_marketplace_controller
 
 GALLERY_PREVIEW = 3   # tiles shown before the "+N" overlay
 
@@ -193,8 +193,11 @@ def render_side_panel(entry: ListingEntry) -> None:
 
         if st.button("Message Owner", key=f"message_owner_{listing.id}", width="stretch"):
             st.toast("Messaging is coming soon.")
-        st.button(cta, key=f"request_booking_{listing.id}", width="stretch",
-                  on_click=open_booking, args=(listing.id,))
+        if get_booking_controller().can_book(listing, get_current_email()):
+            st.button(cta, key=f"request_booking_{listing.id}", width="stretch",
+                      on_click=open_booking, args=(listing.id,))
+        else:
+            st.caption("This is your listing, so you can't book it.")
 
 
 # ------------------------------------------------------------ lightbox

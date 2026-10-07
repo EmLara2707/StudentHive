@@ -3,6 +3,7 @@ Only the view layer talks to session_state; controllers never do."""
 import streamlit as st
 
 from controllers.auth_controller import AuthController
+from controllers.booking_controller import BookingController
 from controllers.dashboard_controller import DashboardController
 from controllers.listing_controller import ListingController
 from controllers.listing_wizard_controller import ListingWizardController
@@ -78,13 +79,22 @@ def get_listing_wizard_controller() -> ListingWizardController:
 
 
 def get_marketplace_controller() -> MarketplaceController:
-    return MarketplaceController(
-        get_listing_repository(), get_user_repository(), get_booking_repository()
+    return MarketplaceController(get_listing_repository(), get_user_repository())
+
+
+def get_booking_controller() -> BookingController:
+    return BookingController(
+        get_marketplace_controller(), get_review_repository(), get_booking_repository()
     )
 
 
 def get_dashboard_controller() -> DashboardController:
     return DashboardController(get_listing_repository(), get_event_repository())
+
+
+def get_current_email() -> str:
+    """Email of the logged-in user ('' when nobody is logged in)."""
+    return (st.session_state.get("user") or {}).get("email", "")
 
 
 # ---- session lifecycle ----
