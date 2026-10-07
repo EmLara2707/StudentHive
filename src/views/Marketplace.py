@@ -5,14 +5,10 @@ from views.components.listing_components import (
 )
 from views.CreateListing import render_create_listing, reset_wizard
 from views.session import get_marketplace_controller
-from views.UserProfileView import render_user_profile
+from views.components.user_profile import render_open_profile
 from views.BookingRequest import render_booking_request
 
-def close_profile() -> None:
-    st.session_state.viewing_market_profile = None
-
-if st.session_state.get("viewing_market_profile"):
-    render_user_profile(st.session_state.viewing_market_profile, on_back=close_profile)
+if render_open_profile("market"):
     st.stop()
 # ==========================================
 # STYLES (Marketplace page only)

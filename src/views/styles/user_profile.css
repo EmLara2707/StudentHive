@@ -1,0 +1,26 @@
+/* ---------- space between a section heading and its box ---------- */
+.pf-h2 { padding-bottom: 0.75rem; }
+
+/* ---------- back button (top left) ---------- */
+.st-key-up_back button {
+    background: #ffffff !important;
+    border: 1.5px solid var(--teal) !important;
+    border-radius: 999px !important;
+    min-height: 1.9rem;
+    padding: 0 1.1rem !important;
+    box-shadow: none;
+}
+.st-key-up_back button p { color: var(--teal) !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-up_back button:hover { background: #effaf8 !important; }
+
+/* ---------- avatar initial (no photo) ---------- */
+.pf-avatar {
+    width: 128px; height: 128px; border-radius: 50%; border: 3px solid var(--mint);
+    background: #f3f6f8 center/cover no-repeat; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 3rem; color: var(--teal);
+}
+
+/* ---------- link pills ---------- */
+.pf-pill a { color: var(--teal) !important; text-decoration: none; font-weight: 600; }
+.pf-pill a:hover { text-decoration: underline; }

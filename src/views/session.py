@@ -8,6 +8,7 @@ from controllers.listing_controller import ListingController
 from controllers.marketplace_controller import MarketplaceController
 from controllers.onboarding_controller import OnboardingController
 from controllers.profile_controller import ProfileController
+from controllers.public_profile_controller import PublicProfileController
 from models.user import User
 from repositories.booking_repository import BookingRepository
 from repositories.event_repository import EventRepository
@@ -58,6 +59,12 @@ def get_onboarding_controller() -> OnboardingController:
 
 def get_profile_controller() -> ProfileController:
     return ProfileController(get_user_repository(), get_review_repository())
+
+
+def get_public_profile_controller() -> PublicProfileController:
+    return PublicProfileController(
+        get_user_repository(), get_review_repository(), get_listing_repository()
+    )
 
 
 def get_listing_controller() -> ListingController:

@@ -95,9 +95,4 @@ class ProfileController:
         return self._reviews.get_for_user(email)
 
     def get_rating_summary(self, email: str) -> RatingSummary:
-        reviews = self._reviews.get_for_user(email)
-        if not reviews:
-            return RatingSummary(average=0.0, count=0)
-        return RatingSummary(
-            average=sum(r.rating for r in reviews) / len(reviews), count=len(reviews)
-        )
+        return RatingSummary.from_reviews(self._reviews.get_for_user(email))

@@ -1,5 +1,6 @@
 """In-memory review storage."""
 from models.review import Review
+from repositories.seed_data import SAMPLE_REVIEWS, SAMPLE_STUDENTS
 from repositories.user_repository import DEMO_EMAIL
 
 
@@ -19,4 +20,7 @@ class ReviewRepository:
         repo = cls()
         repo.add(Review("Student A", DEMO_EMAIL, 5.0, "Clear explanations and always on time."))
         repo.add(Review("Student B", DEMO_EMAIL, 5.0, "Helped me finally understand recursion."))
+        for s in SAMPLE_STUDENTS:
+            for (reviewer, text), rating in zip(SAMPLE_REVIEWS, s.review_ratings):
+                repo.add(Review(reviewer, s.email, rating, text))
         return repo

@@ -7,6 +7,9 @@ import streamlit as st
 
 from models.listing import MAX_IMAGES, RATE_TYPES
 from models.profile import Profile
+from views.components.profile_components import (
+    chip_html, empty_html, rating_html, render_reviews, thumb_html,
+)
 from views.components.styles import load_css
 from views.session import (
     end_session,
@@ -206,13 +209,7 @@ def _inline_text(field: str, edit_name: str, display_cls: str):
 
 
 def _rating_html() -> str:
-    summary = get_profile_controller().get_rating_summary(_email())
-    if summary.count == 0:
-        label = "No reviews yet"
-    else:
-        noun = "review" if summary.count == 1 else "reviews"
-        label = f"{summary.average:.1f} ({summary.count} {noun})"
-    return f'<div class="pf-rating"><span class="star">★</span>{label}</div>'
+    return rating_html(get_profile_controller().get_rating_summary(_email()))
 
 
 def _banner(profile: Profile):
@@ -249,13 +246,6 @@ def _about(profile: Profile):
             st.markdown(f'<div class="pf-about">{_e(profile.bio)}</div>', unsafe_allow_html=True)
 
 
-def _chip_html(items, wide=False):
-    if not items:
-        return '<div class="pf-about" style="color:#8a949c">Nothing added yet.</div>'
-    cls = "pf-chip wide" if wide else "pf-chip"
-    return "".join(f'<span class="{cls}">{_e(i)}</span>' for i in items)
-
-
 def _skills(profile: Profile):
     with st.container(horizontal=True, vertical_alignment="center", key="hd_skills"):
         st.markdown('<div class="pf-h2">Skills</div>', unsafe_allow_html=True)
@@ -263,7 +253,7 @@ def _skills(profile: Profile):
             st.session_state.draft_skills = list(profile.skills)
             skills_dialog()
     with st.container(key="card_skills"):
-        st.markdown(_chip_html(profile.skills), unsafe_allow_html=True)
+        st.markdown(chip_html(profile.skills), unsafe_allow_html=True)
 
 
 def _portfolio(profile: Profile):
@@ -295,7 +285,7 @@ def _socials(profile: Profile):
             st.session_state.draft_socials = list(profile.socials)
             socials_dialog()
     with st.container(key="card_socials"):
-        st.markdown(_chip_html(profile.socials, wide=True), unsafe_allow_html=True)
+        st.markdown(chip_html(profile.socials, wide=True), unsafe_allow_html=True)
 
 
 # ------------------------------------------------------------ my listings
@@ -446,14 +436,7 @@ def _listing_card(l):
     lid = l.id
     with st.container(key=f"lcard_{lid}"):
         badge = "Closed" if l.is_closed else l.price_label
-        cover = (
-            f' style="background-image:url({l.images[0]});background-size:cover;background-position:center"'
-            if l.images else ""
-        )
-        st.markdown(
-            f'<div class="pf-thumb{" is-closed" if l.is_closed else ""}"{cover}><span class="pf-price">{badge}</span></div>',
-            unsafe_allow_html=True,
-        )
+        st.markdown(thumb_html(l, badge, closed=l.is_closed), unsafe_allow_html=True)
         st.markdown(f'<div class="pf-listing-name">{html.escape(l.title)}</div>', unsafe_allow_html=True)
 
         # Rendered last; CSS floats both over the image (three dots, then the open menu).
@@ -479,19 +462,13 @@ def _listings():
     t1, t2 = st.tabs(["My Listings", "Reviews"])
     with t1:
         if not listings:
-            st.markdown('<div class="pf-about" style="color:#8a949c">You have no listings yet.</div>', unsafe_allow_html=True)
+            st.markdown(empty_html("You have no listings yet."), unsafe_allow_html=True)
         else:
             with st.container(horizontal=True, key="listing_row"):
                 for l in listings:
                     _listing_card(l)
     with t2:
-        if not reviews:
-            st.markdown('<div class="pf-about" style="color:#8a949c">No reviews yet.</div>', unsafe_allow_html=True)
-        for r in reviews:
-            st.markdown(
-                f'<div class="pf-review"><b>{_e(r.reviewer)}</b> · ★ {r.rating:.1f}<br>{_e(r.text)}</div>',
-                unsafe_allow_html=True,
-            )
+        render_reviews(reviews)
 
 
 def _summary_tab(profile: Profile):

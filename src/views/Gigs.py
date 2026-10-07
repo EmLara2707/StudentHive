@@ -3,16 +3,11 @@ import re
 from collections import defaultdict
 from datetime import date, timedelta
 from html import escape
-from views.UserProfileView import render_user_profile
+from views.components.user_profile import open_profile_by_name, render_open_profile
 
 import streamlit as st
 
-def close_profile() -> None:
-    st.session_state.viewing_profile = None
-
-
-if st.session_state.get("viewing_profile"):
-    render_user_profile(st.session_state.viewing_profile, on_back=close_profile)
+if render_open_profile("gigs"):
     st.stop()
 
 # ---------- Layout sizes (px) ----------
@@ -1080,10 +1075,6 @@ def render_todos(todos: list) -> None:
 
 # ----- details panel -----
 
-def open_profile(name: str) -> None:
-    st.session_state.viewing_profile = name
-
-
 def detail_top_html(r: dict) -> str:
     return (
         f'<img class="det-img" src="{escape(r["image"])}">'
@@ -1139,7 +1130,7 @@ def detail_bottom_html(r: dict) -> str:
 def render_user_row(r: dict) -> None:
     """The Client / Student row; clicking anywhere on it opens that user's profile."""
     with st.container(key=f"userrow_{r['id']}"):
-        st.button("View profile", key=f"userbtn_{r['id']}", on_click=open_profile, args=(r["with"],))
+        st.button("View profile", key=f"userbtn_{r['id']}", on_click=open_profile_by_name, args=(r["with"], "gigs"))
         st.markdown(detail_client_row_html(r), unsafe_allow_html=True)
 
 

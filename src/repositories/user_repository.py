@@ -4,6 +4,7 @@ import secrets
 
 from models.profile import Profile
 from models.user import User
+from repositories.seed_data import SAMPLE_STUDENTS
 from utils.security import hash_password
 
 DEMO_EMAIL = "demo@mmcm.edu.ph"
@@ -22,6 +23,12 @@ class UserRepository:
 
     def get_by_email(self, email: str) -> User | None:
         return self._users.get(self._key(email))
+
+    def find_by_name(self, name: str) -> User | None:
+        """First user with this display name (case-insensitive). Names are not unique,
+        so this only exists for the old Gigs/Rentals sample data. TEMP."""
+        wanted = (name or "").strip().lower()
+        return next((u for u in self._users.values() if u.name.lower() == wanted), None)
 
     def exists(self, email: str) -> bool:
         return self._key(email) in self._users
@@ -42,7 +49,7 @@ class UserRepository:
 
     @classmethod
     def seeded(cls) -> "UserRepository":
-        """Repository with one demo account (already onboarded, sample profile)."""
+        """Demo account (already onboarded) plus the sample students."""
         repo = cls()
         repo.add(User(
             name="Demo Student",
@@ -56,15 +63,16 @@ class UserRepository:
                 socials=["stdnt@hive.com"],
             ),
         ))
-        repo.add(User(
-            name="Ana R.",
-            email=SAMPLE_SELLER_EMAIL,
-            password_hash=hash_password(secrets.token_hex(16)),
-            onboarded=True,
-            profile=Profile(
-                major="Bachelor of Mathematics",
-                skills=["Calculus", "Statistics", "Tutoring"],
-                socials=["ana@hive.com"],
-            ),
-        ))
+        # nobody can log in as a sample student: one random, discarded password for all
+        unusable_hash = hash_password(secrets.token_hex(16))
+        for s in SAMPLE_STUDENTS:
+            repo.add(User(
+                name=s.name,
+                email=s.email,
+                password_hash=unusable_hash,
+                onboarded=True,
+                profile=Profile(
+                    major=s.major, bio=s.bio, skills=list(s.skills), socials=s.socials,
+                ),
+            ))
         return repo
