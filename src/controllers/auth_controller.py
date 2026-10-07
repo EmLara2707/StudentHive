@@ -14,7 +14,7 @@ class AuthResult:
     error: str | None = None
 
     @classmethod
-    def success(cls, user: User) -> "AuthResult":
+    def success(cls, user: User | None = None) -> "AuthResult":
         return cls(ok=True, user=user)
 
     @classmethod
@@ -23,6 +23,9 @@ class AuthResult:
 
 
 class AuthController:
+    MIN_PASSWORD_LENGTH = 8
+    DELETE_CONFIRMATION = "DELETE"
+
     def __init__(self, users: UserRepository) -> None:
         self._users = users
 
@@ -51,3 +54,40 @@ class AuthController:
                     password_hash=hash_password(password), onboarded=False)
         self._users.add(user)
         return AuthResult.success(user)
+
+    # ---- password change ----
+    def validate_password_change(self, email: str, current: str, new: str,
+                                 verify: str) -> str | None:
+        """Return an error message, or None if the change is allowed."""
+        if not (current and new and verify):
+            return "Fill in all three password fields."
+        if len(new) < self.MIN_PASSWORD_LENGTH:
+            return f"New password must be at least {self.MIN_PASSWORD_LENGTH} characters."
+        if new != verify:
+            return "New passwords don’t match."
+        if new == current:
+            return "New password must be different from your current one."
+        user = self._users.get_by_email(email)
+        if user is None or not verify_password(current, user.password_hash):
+            return "Current password is incorrect."
+        return None
+
+    def change_password(self, email: str, current: str, new: str,
+                        verify: str) -> AuthResult:
+        error = self.validate_password_change(email, current, new, verify)
+        if error:
+            return AuthResult.failure(error)
+        user = self._users.get_by_email(email)
+        user.password_hash = hash_password(new)
+        self._users.save(user)
+        return AuthResult.success(user)
+
+    # ---- account deletion ----
+    def delete_account(self, email: str, confirmation: str) -> AuthResult:
+        if (confirmation or "").strip() != self.DELETE_CONFIRMATION:
+            return AuthResult.failure(f"Type {self.DELETE_CONFIRMATION} to confirm.")
+        # TODO: also delete this user's listings and reviews once those
+        # repositories are final (cascade belongs in a dedicated service).
+        if not self._users.delete(email):
+            return AuthResult.failure("Account not found.")
+        return AuthResult.success()

@@ -1,3 +1,8 @@
+html, body, .stApp, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    background: #ffffff;
+}
+
 :root {
     --teal-bg: #0e9486;
     --teal-line: #0b6b62;

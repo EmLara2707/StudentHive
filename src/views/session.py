@@ -3,18 +3,35 @@ Only the view layer talks to session_state; controllers never do."""
 import streamlit as st
 
 from controllers.auth_controller import AuthController
+from controllers.listing_controller import ListingController
 from controllers.onboarding_controller import OnboardingController
+from controllers.profile_controller import ProfileController
 from models.user import User
+from repositories.listing_repository import ListingRepository
+from repositories.review_repository import ReviewRepository
 from repositories.user_repository import UserRepository
 
 
+# ---- repositories: one of each per browser session ----
 def get_user_repository() -> UserRepository:
-    """One repository per browser session, shared by every controller."""
     if "user_repository" not in st.session_state:
         st.session_state.user_repository = UserRepository.seeded()
     return st.session_state.user_repository
 
 
+def get_listing_repository() -> ListingRepository:
+    if "listing_repository" not in st.session_state:
+        st.session_state.listing_repository = ListingRepository.seeded()
+    return st.session_state.listing_repository
+
+
+def get_review_repository() -> ReviewRepository:
+    if "review_repository" not in st.session_state:
+        st.session_state.review_repository = ReviewRepository.seeded()
+    return st.session_state.review_repository
+
+
+# ---- controllers (stateless, cheap to build) ----
 def get_auth_controller() -> AuthController:
     return AuthController(get_user_repository())
 
@@ -23,6 +40,15 @@ def get_onboarding_controller() -> OnboardingController:
     return OnboardingController(get_user_repository())
 
 
+def get_profile_controller() -> ProfileController:
+    return ProfileController(get_user_repository(), get_review_repository())
+
+
+def get_listing_controller() -> ListingController:
+    return ListingController(get_listing_repository())
+
+
+# ---- session lifecycle ----
 def start_session(user: User, reset_onboarding: bool = False) -> None:
     st.session_state.logged_in = True
     st.session_state.user = user.to_session_dict()
@@ -30,6 +56,19 @@ def start_session(user: User, reset_onboarding: bool = False) -> None:
     if reset_onboarding:
         st.session_state.pop("ob_step", None)
         st.session_state.pop("ob_data", None)
+
+
+def end_session() -> None:
+    st.session_state.logged_in = False
+    st.session_state.user = None
+    st.session_state.onboarding_complete = False
+    st.session_state.pop("ob_step", None)
+    st.session_state.pop("ob_data", None)
+
+
+def refresh_session_user(user: User) -> None:
+    """Keep session_state.user (read by other pages) in sync after a profile edit."""
+    st.session_state.user = user.to_session_dict()
 
 
 def finish_onboarding() -> None:

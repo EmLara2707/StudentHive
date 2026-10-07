@@ -1,7 +1,10 @@
 """In-memory user storage. Swap this class for a DB-backed one later;
 controllers only depend on these method names."""
+from models.profile import Profile
 from models.user import User
 from utils.security import hash_password
+
+DEMO_EMAIL = "demo@mmcm.edu.ph"
 
 
 class UserRepository:
@@ -29,14 +32,23 @@ class UserRepository:
         """Persist changes to an existing user (a DB repo would UPDATE here)."""
         self._users[self._key(user.email)] = user
 
+    def delete(self, email: str) -> bool:
+        return self._users.pop(self._key(email), None) is not None
+
     @classmethod
     def seeded(cls) -> "UserRepository":
-        """Repository with one demo account (already onboarded) for testing."""
+        """Repository with one demo account (already onboarded, sample profile)."""
         repo = cls()
         repo.add(User(
             name="Demo Student",
-            email="admin",
-            password_hash=hash_password("admin"),
+            email=DEMO_EMAIL,
+            password_hash=hash_password("demo1234"),
             onboarded=True,
+            profile=Profile(
+                major="Bachelor of Computer Science",
+                bio=("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 6).strip(),
+                skills=["Figma", "Python", "Tutoring"],
+                socials=["stdnt@hive.com"],
+            ),
         ))
         return repo

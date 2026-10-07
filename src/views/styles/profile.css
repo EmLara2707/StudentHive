@@ -1,0 +1,198 @@
+:root {
+    --mint: #4ccfc0;
+    --field: #e8edf1;
+    --chip: #9fd9f5;
+    --danger: #ff3131;
+    --danger-btn: #e32626;
+    --danger-bg: #fde4e4;
+}
+
+/* ---------- main area (same frame as Marketplace) ---------- */
+[data-testid="stMain"] { background: #ffffff; color: var(--ink); }
+[data-testid="stMain"] p,
+[data-testid="stMain"] button,
+[data-testid="stMain"] input,
+[data-testid="stMain"] textarea,
+[data-testid="stDialog"] p,
+[data-testid="stDialog"] button,
+[data-testid="stDialog"] input { font-family: 'Inter', sans-serif; }
+[data-testid="stMain"] h1 { font-family: 'Montserrat', sans-serif; font-weight: 800; color: var(--ink); padding-bottom: 0; }
+[data-testid="stMain"] h2, [data-testid="stMain"] h3 { color: var(--ink); }
+[data-testid="stDialog"] h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--ink); }
+
+[data-testid="stMainBlockContainer"] { padding-top: 2rem !important; padding-bottom: 3rem !important; }
+[data-testid="stMainBlockContainer"], .block-container {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    max-width: 100% !important;
+}
+
+.pf-h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; color: var(--ink); line-height: 1.2; margin: 0; }
+.pf-h2.danger { color: var(--danger); }
+
+/* ---------- tabs (same selectors and colors as Rentals / Gigs) ---------- */
+[data-testid="stMain"] [data-testid="stTab"] {
+    background: transparent;
+    min-width: 11rem;
+    justify-content: center;
+    padding: 0.6rem 1rem;
+}
+
+/* unselected tab text */
+[data-testid="stMain"] [data-testid="stTab"] [data-testid="stMarkdownContainer"] p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    color: #3a3d3f !important;
+    font-weight: 600;
+}
+
+/* hover */
+[data-testid="stMain"] [data-testid="stTab"]:hover [data-testid="stMarkdownContainer"] p {
+    color: #0f6b62 !important;
+}
+
+/* selected tab text */
+[data-testid="stMain"] [data-testid="stTab"][aria-selected="true"] [data-testid="stMarkdownContainer"] p {
+    color: #0f6b62 !important;
+    font-weight: 700;
+}
+
+/* underline under the selected tab */
+[data-testid="stMain"] [data-testid="stTab"] .react-aria-SelectionIndicator,
+[data-testid="stMain"] [data-baseweb="tab-highlight"] {
+    background-color: #0f6b62 !important;
+}
+/* ---------- banner ---------- */
+.st-key-banner { background: var(--field); border-radius: 18px; padding: 1.3rem 2rem 1.8rem 2rem; margin-top: 0.5rem; }
+.st-key-avatar { position: relative; width: 128px !important; min-width: 128px !important; max-width: 128px !important; height: 128px; flex: 0 0 128px !important; margin-right: 0 !important; }
+.pf-avatar { width: 128px; height: 128px; border-radius: 50%; border: 3px solid var(--mint); background: #f3f6f8 center/cover no-repeat; box-sizing: border-box; }
+.st-key-cam_btn { position: absolute !important; right: 0 !important; bottom: 0 !important; left: auto !important; top: auto !important; width: 38px !important; height: 38px !important; margin: 0 !important; z-index: 2; }
+.st-key-cam_btn [data-testid="stButton"] { width: 38px; margin: 0; }
+.st-key-cam_btn button { width: 38px; height: 38px; min-height: 0; padding: 0 !important; display: flex; align-items: center; justify-content: center; border-radius: 50% !important; background: #ffffff !important; border: 2px solid #111 !important; }
+.st-key-cam_btn button p { display: none; }
+.st-key-cam_btn button span { font-size: 1.1rem !important; color: #111 !important; }
+.pf-name { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.9rem; line-height: 1.2; color: var(--ink); }
+.pf-major { font-size: 1rem; color: var(--ink); }
+.pf-rating { font-size: 0.9rem; color: var(--muted); margin-top: 0.3rem; }
+.pf-rating .star { color: #fbc02d; margin-right: 0.4rem; }
+.st-key-banner_row > [data-testid="stLayoutWrapper"]:has(.st-key-avatar) {
+    flex: 0 0 128px !important;
+    width: 128px !important;
+    min-width: 128px !important;
+}
+.st-key-banner_row > [data-testid="stLayoutWrapper"]:has(.st-key-banner_info) {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0;
+}
+.st-key-banner_row { gap: 3rem !important; }
+
+/* ---------- pencil buttons ---------- */
+[class*="st-key-edit_"] { width: auto !important; flex: 0 0 auto; }
+[class*="st-key-edit_"] button { min-height: 0; padding: 0.1rem 0.3rem !important; background: transparent !important; border: none !important; box-shadow: none !important; }
+[class*="st-key-edit_"] button span { font-size: 1.1rem !important; color: var(--ink) !important; }
+[class*="st-key-edit_"] button:hover { background: rgba(0, 0, 0, 0.06) !important; }
+
+/* nudge the pencil without affecting layout: negative X = left, positive Y = down */
+[class*="st-key-edit_"] button { transform: translate(-12px, 8px); }
+/* ---------- section cards (same look as listing cards) ---------- */
+[class*="st-key-card_"] { background: #ffffff; border-radius: 18px; padding: 1rem 1.2rem 1.3rem 1.2rem !important; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); gap: 0.5rem; }
+.st-key-card_skills, .st-key-card_socials { padding-bottom: 0.5rem !important; }
+.st-key-card_about { padding-bottom: 2rem !important; }
+.st-key-card_portfolio [data-testid="stWidgetLabel"] p { font-size: 1rem !important; }
+.st-key-card_portfolio [data-baseweb="input"] input { font-size: 1.05rem; }
+.st-key-card_portfolio { padding-bottom: 1.9rem !important; padding-top: 0.6rem !important; }
+.pf-about { font-size: 0.9rem; line-height: 1.5; color: var(--ink); white-space: pre-wrap; }
+.pf-chip { display: inline-block; background: var(--field); border-radius: 999px; padding: 0.3rem 0.9rem; margin: 0 0.5rem 0.5rem 0; font-weight: 500; font-size: 0.8rem; color: var(--ink); }
+.pf-chip.wide { padding: 0.4rem 1.3rem; }
+.pf-label { font-weight: 600; font-size: 1rem; color: var(--ink); margin: 0 0 0.3rem 0.3rem; }
+.pf-pill { background: var(--field); border-radius: 999px; padding: 0.6rem 1.1rem; text-align: center; font-size: 1.05rem; word-break: break-all; min-height: 2.6rem; }
+
+/* ---------- inputs ---------- */
+[data-testid="stMain"] [data-testid="stWidgetLabel"] p,
+[data-testid="stDialog"] [data-testid="stWidgetLabel"] p { font-size: 0.85rem !important; font-weight: 600; color: var(--ink); }
+[data-baseweb="input"], [data-baseweb="base-input"], [data-baseweb="textarea"], [data-baseweb="textarea"] > div { background: var(--field) !important; border-radius: 14px !important; }
+[data-baseweb="input"], [data-baseweb="textarea"] { border: 1.5px solid transparent !important; }
+[data-baseweb="input"] input { padding: 0.3rem 1rem !important; color: var(--ink); font-size: 0.9rem; }
+[data-baseweb="textarea"] textarea { padding: 0.8rem 1rem !important; color: var(--ink); font-size: 0.9rem; }
+[data-baseweb="input"]:focus-within, [data-baseweb="textarea"]:focus-within { border-color: var(--teal-soft) !important; }
+
+/* ---------- chips inside dialogs ---------- */
+[class*="st-key-chips_"] { flex-wrap: wrap; gap: 0.5rem !important; margin-top: 0.3rem; }
+[class*="st-key-chip_"] button { background: var(--chip) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0.1rem 0.9rem !important; }
+[class*="st-key-chip_"] button p { color: #1e2a32 !important; font-size: 0.8rem; font-weight: 500; }
+[class*="st-key-chip_"] button:hover { filter: brightness(0.95); }
+
+/* ---------- action buttons: teal pills like "Add a Listing" ---------- */
+.st-key-pw_confirm button, .st-key-dlg_save button, .st-key-pw_yes button, .st-key-photo_save button, [class*="st-key-save_"] button {
+    background: var(--teal) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; white-space: nowrap; }
+.st-key-pw_confirm button p, .st-key-dlg_save button p, .st-key-pw_yes button p, .st-key-photo_save button p, [class*="st-key-save_"] button p { color: #ffffff !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-pw_confirm button:hover, .st-key-dlg_save button:hover, .st-key-pw_yes button:hover, .st-key-photo_save button:hover, [class*="st-key-save_"] button:hover { background: var(--teal-hover) !important; }
+.st-key-dlg_save button:disabled, .st-key-photo_save button:disabled { opacity: 0.4; }
+
+.st-key-dlg_cancel button, .st-key-pw_no button, .st-key-del_no button, .st-key-photo_cancel button {
+    background: #ffffff !important; border: 1.5px solid var(--teal) !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
+.st-key-dlg_cancel button p, .st-key-pw_no button p, .st-key-del_no button p, .st-key-photo_cancel button p { color: var(--teal) !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-dlg_cancel button:hover, .st-key-pw_no button:hover, .st-key-del_no button:hover, .st-key-photo_cancel button:hover { background: #effaf8 !important; }
+
+/* ---------- danger zone ---------- */
+.st-key-card_danger { background: var(--danger-bg); border-top: 4px solid var(--danger); box-shadow: 0 2px 12px rgba(255, 49, 49, 0.12); margin-top: 0.6rem; padding: 1.1rem 1.2rem !important; }
+.st-key-card_danger [data-testid="stHorizontalBlock"] { align-items: center !important; }
+.st-key-card_danger [data-testid="stElementContainer"],
+.st-key-card_danger [data-testid="stMarkdown"],
+.st-key-card_danger [data-testid="stMarkdownContainer"],
+.st-key-card_danger [data-testid="stMarkdownContainer"] p { margin: 0 !important; padding: 0 !important; min-height: 0; }
+.st-key-card_danger .stButton { margin: 0; }
+.pf-danger-title { font-weight: 700; font-size: 1rem; color: var(--ink); }
+.pf-danger-sub { font-size: 0.8rem; color: var(--ink); }
+.st-key-delete_btn button, .st-key-del_yes button { background: var(--danger-btn) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
+.st-key-delete_btn button p, .st-key-del_yes button p { color: #ffffff !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-delete_btn button:hover, .st-key-del_yes button:hover { background: #bd1c1c !important; }
+.st-key-del_yes button:disabled { opacity: 0.4; }
+
+/* ---------- listings (same card as Marketplace) ---------- */
+.pf-thumb { position: relative; height: 150px; border-radius: 14px; overflow: hidden;
+    background:
+      radial-gradient(ellipse 55% 38% at 22% 108%, #c5dc7a 0 98%, transparent 100%),
+      radial-gradient(ellipse 75% 45% at 72% 112%, #8aa300 0 98%, transparent 100%),
+      linear-gradient(#bee3fa, #e8f5fd); }
+.pf-price { position: absolute; top: 10px; right: 10px; background: #fff; border-radius: 999px; padding: 2px 12px; font-size: 0.75rem; font-weight: 600; color: var(--ink); }
+.pf-listing-name { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1rem; line-height: 1.3; color: var(--ink); margin-top: 1rem; }
+.pf-review { background: #fff; border-radius: 18px; padding: 1rem 1.2rem; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); margin-bottom: 0.8rem; font-size: 0.9rem; line-height: 1.5; color: var(--ink); }
+
+/* ---------- my listings: horizontal scroller ---------- */
+.st-key-listing_row { flex-wrap: nowrap !important; overflow-x: auto; gap: 1rem !important; padding: 0.5rem 0.5rem 1.2rem 0.5rem; }
+.st-key-listing_row > * { flex: 0 0 340px !important; width: 340px !important; min-width: 340px !important; }
+[class*="st-key-lcard_"] { position: relative; background: #fff; border-radius: 18px; padding: 0.8rem 0.8rem 1.3rem 0.8rem !important; box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14); gap: 1.3rem; }
+[class*="st-key-lcard_"] .pf-thumb { height: 190px; display: block; flex-shrink: 0; }
+[class*="st-key-lcard_"] .pf-listing-name { margin: 0; padding: 0.2rem 0.5rem 0.4rem 0.5rem; font-size: 1.1rem; line-height: 1.35; min-height: 3.2rem; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.pf-thumb.is-closed { filter: grayscale(1); opacity: 0.6; }
+
+/* three-dots button: floats over the top-left of the image */
+[class*="st-key-lcard_"] [data-testid="stLayoutWrapper"]:has([class*="st-key-menu_"]) { position: absolute !important; top: 1.35rem; left: 1.35rem; width: auto !important; z-index: 5; }
+[class*="st-key-menu_"] { width: auto !important; }
+[class*="st-key-menu_"] button { min-height: 0; width: 34px; height: 34px; padding: 0 !important; display: flex; align-items: center; justify-content: center; background: #ffffff !important; border: none !important; border-radius: 999px !important; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.22) !important; }
+[class*="st-key-menu_"] button { gap: 0 !important; }
+/* hide everything Streamlit puts in the button (label, icon, chevron) and draw three dots instead */
+[class*="st-key-menu_"] button > * { display: none !important; }
+[class*="st-key-menu_"] button::before { content: ""; display: block; width: 18px; height: 4px; background: radial-gradient(circle, var(--ink) 1.8px, transparent 2.2px) 0 50% / 6px 4px repeat-x; }
+[class*="st-key-menu_"] button:hover { background: #f1f4f6 !important; }
+
+/* dropdown panel: drawn inside the card and floated under the three dots */
+[class*="st-key-lcard_"] [data-testid="stLayoutWrapper"]:has([class*="st-key-lpanel_"]) { position: absolute !important; top: 3.6rem; left: 1.35rem; width: auto !important; z-index: 6; }
+[class*="st-key-lpanel_"] { background: #ffffff; border-radius: 12px; padding: 0.35rem !important; gap: 0.1rem !important; width: auto !important; min-width: 11rem; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18); }
+
+/* dropdown items */
+[class*="st-key-mi_"] button { white-space: nowrap; justify-content: flex-start; border: none !important; background: transparent !important; padding: 0.35rem 0.6rem !important; min-height: 0; }
+[class*="st-key-mi_"] button:hover { background: var(--field) !important; }
+[class*="st-key-mi_del_"] button, [class*="st-key-mi_del_"] button span { color: var(--danger-btn) !important; }
+
+/* listing dialog buttons */
+.st-key-lst_close_yes button { background: var(--teal) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; white-space: nowrap; }
+.st-key-lst_close_yes button p { color: #fff !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-lst_close_yes button:hover { background: var(--teal-hover) !important; }
+.st-key-lst_close_no button, .st-key-lst_del_no button { background: #fff !important; border: 1.5px solid var(--teal) !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
+.st-key-lst_close_no button p, .st-key-lst_del_no button p { color: var(--teal) !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-lst_del_yes button { background: var(--danger-btn) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
+.st-key-lst_del_yes button p { color: #fff !important; font-weight: 600; font-size: 0.85rem; }
+.st-key-lst_del_yes button:hover { background: #bd1c1c !important; }

@@ -1,0 +1,85 @@
+/* Editable listing form: same look as the wizard's Review screen.
+   Scoped to .st-key-listing_form (a keyed container inside the dialog).
+   The CreateListing step will reuse this file for the wizard cards. */
+:root {
+    --wiz-line: #c5ced6;
+    --wiz-gray: #c9d0d8;
+    --wiz-teal: #0b9488;
+    --wiz-btn: #e8edf1;
+}
+
+/* ---------- type row (read-only) ---------- */
+.lf-typerow { display: flex; align-items: center; gap: 0.6rem; font-size: 0.95rem; color: var(--muted); margin-bottom: 0.3rem; }
+.lf-pill { background: var(--wiz-teal); color: #ffffff; font-weight: 700; font-size: 0.8rem; padding: 0.25rem 1.1rem; border-radius: 999px; }
+.lf-pill.rental { background: var(--orange, #F5A03C); }
+.lf-chip { background: var(--wiz-btn); color: var(--ink); font-weight: 600; font-size: 0.75rem; padding: 0.25rem 0.9rem; border-radius: 999px; }
+.lf-label { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; }
+
+/* ---------- labels ---------- */
+.st-key-listing_form [data-testid="stWidgetLabel"] p {
+    font-size: 0.85rem !important;
+    font-weight: 400;
+    color: var(--muted);
+    margin-bottom: 0;
+}
+
+/* ---------- pill inputs ---------- */
+.st-key-listing_form [data-testid="stTextInputRootElement"],
+.st-key-listing_form [data-testid="stNumberInputContainer"],
+.st-key-listing_form [data-testid="stSelectbox"] > div > div,
+.st-key-listing_form [data-testid="stTextInput"] [data-baseweb="input"],
+.st-key-listing_form [data-testid="stNumberInput"] [data-baseweb="input"],
+.st-key-listing_form [data-testid="stSelectbox"] [data-baseweb="select"] > div {
+    border: 1px solid var(--wiz-line) !important;
+    border-radius: 999px !important;
+    background: #ffffff !important;
+    padding-left: 0.4rem;
+}
+.st-key-listing_form [data-baseweb="base-input"] { background: #ffffff !important; border-radius: 999px !important; }
+/* description: rounded rectangle */
+.st-key-listing_form [data-testid="stTextAreaRootElement"],
+.st-key-listing_form [data-testid="stTextArea"] [data-baseweb="textarea"] {
+    border: 1px solid var(--wiz-line) !important;
+    border-radius: 22px !important;
+    background: #ffffff !important;
+}
+.st-key-listing_form [data-baseweb="textarea"] > div { background: #ffffff !important; border-radius: 22px !important; }
+/* teal focus */
+.st-key-listing_form [data-testid="stTextInputRootElement"]:focus-within,
+.st-key-listing_form [data-testid="stNumberInputContainer"]:focus-within,
+.st-key-listing_form [data-testid="stSelectbox"] > div > div:focus-within,
+.st-key-listing_form [data-testid="stTextAreaRootElement"]:focus-within {
+    border-color: var(--wiz-teal) !important;
+    box-shadow: 0 0 0 1px var(--wiz-teal) !important;
+}
+
+/* ---------- images ---------- */
+.st-key-listing_form [data-testid="stFileUploaderDropzone"] {
+    border: 1px solid var(--wiz-line);
+    border-radius: 22px;
+    background: #ffffff;
+    min-height: 6rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+.st-key-listing_form [data-testid="stImage"] { gap: 0.5rem; flex-wrap: wrap; }
+.st-key-lf_thumbs { flex-wrap: wrap; gap: 0.7rem !important; margin: 0.3rem 0; }
+[class*="st-key-lf_thumb_"] { position: relative; width: 96px !important; flex: 0 0 96px; gap: 0; }
+.lf-thumb { width: 96px; height: 96px; border-radius: 14px; border: 1px solid var(--wiz-line); background-color: var(--wiz-btn); background-size: cover; background-position: center; background-repeat: no-repeat; }
+[class*="st-key-lf_rm_"] { position: absolute !important; top: 4px; right: 4px; width: 24px !important; z-index: 2; margin: 0 !important; }
+[class*="st-key-lf_rm_"] button { min-height: 0; width: 24px; height: 24px; padding: 0 !important; display: flex; align-items: center; justify-content: center; border-radius: 50% !important; background: #ffffff !important; border: 1px solid var(--wiz-line) !important; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important; }
+[class*="st-key-lf_rm_"] button p { color: var(--ink) !important; font-size: 0.7rem; font-weight: 700; }
+[class*="st-key-lf_rm_"] button:hover { background: #f1f4f6 !important; }
+.lf-count { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+
+/* ---------- Cancel / Save ---------- */
+.st-key-lf_cancel button, .st-key-lf_save button { border: none !important; border-radius: 8px !important; min-height: 2.1rem; min-width: 7.5rem; padding: 0 1.3rem !important; }
+.st-key-lf_cancel button { background: var(--wiz-btn) !important; }
+.st-key-lf_cancel button p { color: #1b1b1b !important; font-weight: 700; font-size: 0.8rem; }
+.st-key-lf_cancel button:hover { background: #dbe3e9 !important; }
+.st-key-lf_save button { background: var(--wiz-teal) !important; }
+.st-key-lf_save button p { color: #ffffff !important; font-weight: 700; font-size: 0.8rem; }
+.st-key-lf_save button:hover { background: var(--teal-hover) !important; }

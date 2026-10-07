@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800&display=swap');
 
 :root {
     --teal: #0f6b62;
@@ -7,9 +7,4 @@
     --ink: #3a3d3f;
     --muted: #5b6770;
     --line: #dcdfe2;
-}
-
-html, body, .stApp, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-    background: #ffffff;
 }
