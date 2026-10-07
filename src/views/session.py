@@ -3,10 +3,14 @@ Only the view layer talks to session_state; controllers never do."""
 import streamlit as st
 
 from controllers.auth_controller import AuthController
+from controllers.dashboard_controller import DashboardController
 from controllers.listing_controller import ListingController
+from controllers.marketplace_controller import MarketplaceController
 from controllers.onboarding_controller import OnboardingController
 from controllers.profile_controller import ProfileController
 from models.user import User
+from repositories.booking_repository import BookingRepository
+from repositories.event_repository import EventRepository
 from repositories.listing_repository import ListingRepository
 from repositories.review_repository import ReviewRepository
 from repositories.user_repository import UserRepository
@@ -31,6 +35,18 @@ def get_review_repository() -> ReviewRepository:
     return st.session_state.review_repository
 
 
+def get_booking_repository() -> BookingRepository:
+    if "booking_repository" not in st.session_state:
+        st.session_state.booking_repository = BookingRepository()
+    return st.session_state.booking_repository
+
+
+def get_event_repository() -> EventRepository:
+    if "event_repository" not in st.session_state:
+        st.session_state.event_repository = EventRepository.seeded()
+    return st.session_state.event_repository
+
+
 # ---- controllers (stateless, cheap to build) ----
 def get_auth_controller() -> AuthController:
     return AuthController(get_user_repository())
@@ -46,6 +62,16 @@ def get_profile_controller() -> ProfileController:
 
 def get_listing_controller() -> ListingController:
     return ListingController(get_listing_repository())
+
+
+def get_marketplace_controller() -> MarketplaceController:
+    return MarketplaceController(
+        get_listing_repository(), get_user_repository(), get_booking_repository()
+    )
+
+
+def get_dashboard_controller() -> DashboardController:
+    return DashboardController(get_listing_repository(), get_event_repository())
 
 
 # ---- session lifecycle ----

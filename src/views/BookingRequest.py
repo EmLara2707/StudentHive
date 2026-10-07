@@ -13,6 +13,8 @@ from html import escape
 
 import streamlit as st
 
+from views.components.listing_components import render_listing_image
+
 # ==========================================
 # STYLES (Booking Request page only)
 # ==========================================
@@ -281,7 +283,7 @@ def _notice(unit: str) -> str:
     return "This item is listed with a one-time payment. The total stays the same for any dates you choose."
 
 
-def _summary_html(listing, is_rental: bool, is_project: bool, qty, subtotal) -> str:
+def _summary_html(listing, owner_name: str, is_rental: bool, is_project: bool, qty, subtotal) -> str:
     """Price summary box for the right-hand card."""
     unit = listing.unit
     rate_lbl = "Rental Rate" if is_rental else "Base Rate"
@@ -315,8 +317,8 @@ def _summary_html(listing, is_rental: bool, is_project: bool, qty, subtotal) -> 
         f"<div class='sh-bk-body'>"
         f"<div class='sh-bk-badges'>{badges}</div>"
         f"<div class='sh-bk-name'>{escape(listing.title)}</div>"
-        f"<div class='sh-bk-owner'><div class='sh-avatar'>{escape(listing.owner[:1].upper())}</div>"
-        f"<div><div class='nm'>{escape(listing.owner)}</div>"
+        f"<div class='sh-bk-owner'><div class='sh-avatar'>{escape(owner_name[:1].upper())}</div>"
+        f"<div><div class='nm'>{escape(owner_name)}</div>"
         f"<div class='rt'><b>\u2605</b> 4.8 (124 reviews)</div></div></div>"
         f"<hr class='sh-bk-hr'><div class='sh-bk-ps'>Price Summary</div>{rows_html}"
         f"<hr class='sh-bk-hr'>"
@@ -331,11 +333,12 @@ def _summary_html(listing, is_rental: bool, is_project: bool, qty, subtotal) -> 
 
 def render_booking_request(market, listing_id: int) -> None:
     """Draw the whole Booking Request / Project Request page."""
-    listing = market.get_listing(listing_id)
-    if listing is None:
+    entry = market.get_entry(listing_id)
+    if entry is None:
         st.session_state.booking_listing_id = None
         st.rerun()
         return
+    listing = entry.listing
 
     st.markdown(f"<style>{BOOKING_CSS}</style>", unsafe_allow_html=True)
     st.session_state.setdefault("bk_mode", ONLINE)
@@ -436,8 +439,8 @@ def render_booking_request(market, listing_id: int) -> None:
     # ---------------- right: summary card ----------------
     with right:
         with st.container(key="book_summary"):
-            listing.render_image(height=130, badge=False)
-            st.markdown(_summary_html(listing, is_rental, is_project, qty, subtotal),
+            render_listing_image(listing, height=130, badge=False)
+            st.markdown(_summary_html(listing, entry.owner.name, is_rental, is_project, qty, subtotal),
                         unsafe_allow_html=True)
             with st.container(key="book_summary_btn"):
                 submit_side = st.button(cta, key="book_submit_side", width="stretch")
@@ -481,8 +484,8 @@ def render_booking_request(market, listing_id: int) -> None:
                     "location": location.strip(),
                 }
                 when = start_d.isoformat()
-            market.add_booking(listing_id=listing.id, counterpart=listing.owner,
-                               date=when, total=subtotal, details=info)
+            market.add_booking(listing_id=listing.id, date=when,
+                               total=subtotal, details=info)
             st.session_state.booking_listing_id = None
             st.session_state.selected_listing_id = None   # back to the Marketplace grid
             st.session_state.pop("bk_mode", None)

@@ -1,18 +1,77 @@
-"""TEMPORARY listing use-cases for the Profile page (edit / close / reopen / delete).
-Will be merged with the marketplace listing controller when Listing.py is restructured."""
-from models.listing import MAX_IMAGES, RATE_UNITS, ListingStatus, ListingSummary
+"""Listing use-cases for owners: create, edit, close, reopen, delete.
+Browsing and booking live in MarketplaceController. Never imports streamlit."""
+from dataclasses import dataclass
+
+from models.listing import (
+    ALLOWED_MIMES, CATEGORIES, GIG, MAX_IMAGES, RATE_UNITS, Listing, ListingStatus,
+)
 from repositories.listing_repository import ListingRepository
 from utils.images import compress_image, to_data_uri
+
+
+@dataclass
+class ListingResult:
+    ok: bool
+    listing: Listing | None = None
+    error: str | None = None
+
+
+def _to_data_uris(images: list[tuple[bytes, str]]) -> list[str]:
+    """Compress raw uploads (bytes, mime) and turn them into data URIs."""
+    uris = []
+    for raw, mime in images:
+        data, out_mime = compress_image(raw, mime)
+        uris.append(to_data_uri(data, out_mime if out_mime in ALLOWED_MIMES else "image/jpeg"))
+    return uris
 
 
 class ListingController:
     def __init__(self, listings: ListingRepository) -> None:
         self._listings = listings
 
-    def get_for_owner(self, owner_email: str) -> list[ListingSummary]:
+    def create(
+        self,
+        owner_email: str,
+        title: str,
+        category: str,
+        rate_type: str,
+        rate: float,
+        description: str = "",
+        deliverable: str = "",
+        images: list[tuple[bytes, str]] | None = None,
+    ) -> ListingResult:
+        """Post a new listing (inserted first). Same rules as the create wizard:
+        a category (and, for Gigs, a deliverable), a title, and a rate above 0."""
+        if category not in CATEGORIES:
+            return ListingResult(False, error="Please choose a listing type.")
+        if category == GIG and not (deliverable or "").strip():
+            return ListingResult(False, error="Please choose a deliverable type.")
+        title = (title or "").strip()
+        if not title:
+            return ListingResult(False, error="Please add a title.")
+        if rate is None or float(rate) <= 0:
+            return ListingResult(False, error="Please enter a rate greater than 0.")
+        if rate_type not in RATE_UNITS:
+            return ListingResult(False, error="Please choose a rate type.")
+
+        listing = Listing(
+            id=self._listings.next_id(),
+            owner_email=(owner_email or "").strip().lower(),
+            title=title,
+            price=float(rate),
+            category=category,
+            deliverable=(deliverable or "").strip() if category == GIG else "",
+            unit=RATE_UNITS[rate_type],
+            description=(description or "").strip(),
+            images=_to_data_uris((images or [])[:MAX_IMAGES]),
+        )
+        self._listings.add(listing)
+        return ListingResult(True, listing)
+
+    def get_for_owner(self, owner_email: str) -> list[Listing]:
         return self._listings.get_by_owner(owner_email)
 
-    def get(self, owner_email: str, listing_id: int) -> ListingSummary | None:
+    def get(self, owner_email: str, listing_id: int) -> Listing | None:
         listing = self._listings.get(listing_id)
         if listing is None or listing.owner_email != owner_email.strip().lower():
             return None            # not found, or not yours
@@ -43,10 +102,8 @@ class ListingController:
             return "Please choose a rate type."
 
         images = list(kept_images)[:MAX_IMAGES]
-        for raw, mime in new_images:
-            if len(images) >= MAX_IMAGES:
-                break
-            images.append(to_data_uri(*compress_image(raw, mime)))
+        room = MAX_IMAGES - len(images)
+        images += _to_data_uris(new_images[:room])
 
         listing.title = title
         listing.unit = RATE_UNITS[rate_type]

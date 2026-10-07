@@ -1,13 +1,10 @@
-import sys
-from pathlib import Path
-
 import streamlit as st
 
-# make `src/` importable so `views.Listing` can be found
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
+from views.components.listing_components import (
+    render_listing_detail, render_listing_grid, render_side_panel,
+)
 from views.CreateListing import render_create_listing, reset_wizard
-from views.Listing import get_marketplace, render_listing_grid
+from views.session import get_marketplace_controller
 from views.UserProfileView import render_user_profile
 from views.BookingRequest import render_booking_request
 
@@ -501,7 +498,7 @@ st.markdown(
 # PAGE LOGIC
 # ==========================================
 
-market = get_marketplace()
+market = get_marketplace_controller()
 
 
 def open_listing(listing_id: int) -> None:
@@ -564,18 +561,18 @@ elif selected_id is None:
     else:
         categories = []
 
-    results = market.search(query, categories)
-
     # Service / Project narrows the Gigs; nothing selected = all gigs
-    if kind_choice:
-        results = [l for l in results if l.deliverable_kind == kind_choice]
+    results = market.search(query, categories, deliverable_kind=kind_choice)
 
     # ---------- grid ----------
     render_listing_grid(results, open_listing, key_prefix="market")
 
 else:
     # ---------- detail view ----------
-    listing = market.get_listing(selected_id)
+    entry = market.get_entry(selected_id)
+    if entry is None:                      # deleted or closed in the meantime
+        close_listing()
+        st.rerun()
 
     back_col, crumb_col = st.columns([1.4, 6], vertical_alignment="center")
     with back_col:
@@ -583,6 +580,6 @@ else:
 
     main_col, side_col = st.columns([2.7, 1], gap="large")
     with main_col:
-        listing.render_detail()
+        render_listing_detail(entry)
     with side_col:
-        listing.render_side_panel()
+        render_side_panel(entry)

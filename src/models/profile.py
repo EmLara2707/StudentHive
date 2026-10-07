@@ -13,7 +13,7 @@ class IdVerificationStatus(str, Enum):
 
 @dataclass
 class Profile:
-    MAX_BIO_LENGTH: ClassVar[int] = 150        # onboarding form cap
+    MAX_BIO_LENGTH: ClassVar[int] = 500        # onboarding form cap
     MAX_BIO_EDIT_LENGTH: ClassVar[int] = 500   # Profile page editor cap
 
     major: str = ""
