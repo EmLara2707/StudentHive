@@ -11,12 +11,12 @@ from controllers.marketplace_controller import MarketplaceController
 from controllers.onboarding_controller import OnboardingController
 from controllers.profile_controller import ProfileController
 from controllers.public_profile_controller import PublicProfileController
+from controllers.transaction_controller import TransactionController
 from models.listing_draft import ListingDraft
 from models.user import User
-from repositories.booking_repository import BookingRepository
-from repositories.event_repository import EventRepository
 from repositories.listing_repository import ListingRepository
 from repositories.review_repository import ReviewRepository
+from repositories.transaction_repository import TransactionRepository
 from repositories.user_repository import UserRepository
 
 
@@ -39,16 +39,10 @@ def get_review_repository() -> ReviewRepository:
     return st.session_state.review_repository
 
 
-def get_booking_repository() -> BookingRepository:
-    if "booking_repository" not in st.session_state:
-        st.session_state.booking_repository = BookingRepository()
-    return st.session_state.booking_repository
-
-
-def get_event_repository() -> EventRepository:
-    if "event_repository" not in st.session_state:
-        st.session_state.event_repository = EventRepository.seeded()
-    return st.session_state.event_repository
+def get_transaction_repository() -> TransactionRepository:
+    if "transaction_repository" not in st.session_state:
+        st.session_state.transaction_repository = TransactionRepository.seeded()
+    return st.session_state.transaction_repository
 
 
 # ---- controllers (stateless, cheap to build) ----
@@ -84,12 +78,18 @@ def get_marketplace_controller() -> MarketplaceController:
 
 def get_booking_controller() -> BookingController:
     return BookingController(
-        get_marketplace_controller(), get_review_repository(), get_booking_repository()
+        get_marketplace_controller(), get_review_repository(), get_transaction_repository()
     )
 
 
 def get_dashboard_controller() -> DashboardController:
-    return DashboardController(get_listing_repository(), get_event_repository())
+    return DashboardController(get_listing_repository(), get_transaction_repository())
+
+
+def get_transaction_controller() -> TransactionController:
+    return TransactionController(
+        get_transaction_repository(), get_user_repository(), get_review_repository()
+    )
 
 
 def get_current_email() -> str:

@@ -3,20 +3,33 @@ from collections import defaultdict
 from datetime import date
 
 from models.event import CalendarEvent, EventKind
+from models.transaction import TransactionKind, TransactionStatus
 
 UPCOMING_LIMIT = 3
 
 
 class DashboardController:
-    def __init__(self, listings, events) -> None:
-        self._listings = listings      # ListingRepository
-        self._events = events          # EventRepository
+    def __init__(self, listings, transactions) -> None:
+        self._listings = listings            # ListingRepository
+        self._transactions = transactions    # TransactionRepository
 
     def get_listings(self, owner_email: str) -> list:
         return self._listings.get_by_owner(owner_email) if owner_email else []
 
     def get_events(self, owner_email: str) -> list[CalendarEvent]:
-        return self._events.get_for_user(owner_email) if owner_email else []
+        """One event per day of every accepted Gig / Rental the user is part of."""
+        if not owner_email:
+            return []
+        owner = owner_email.strip().lower()
+        events = []
+        for tx in self._transactions.get_for_user(owner):
+            if tx.status is not TransactionStatus.ACTIVE:
+                continue
+            kind = EventKind.GIG if tx.kind is TransactionKind.GIG else EventKind.RENTAL
+            for day in tx.days():
+                events.append(CalendarEvent(owner, day, tx.item, kind,
+                                            tx.time_label, tx.price, tx.unit))
+        return sorted(events, key=lambda e: e.date)
 
     @staticmethod
     def group_by_day(events: list[CalendarEvent]) -> dict[date, list[CalendarEvent]]:
