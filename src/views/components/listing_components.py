@@ -1,5 +1,5 @@
 """Listing UI pieces: marketplace card, grid, detail page, gallery, lightbox.
-Markup and widget keys are unchanged, so the CSS in Marketplace.py still applies.
+Markup and widget keys are unchanged, so the CSS in views/styles/marketplace.css still applies.
 Data comes from MarketplaceController as ListingEntry (listing + owner)."""
 from html import escape
 from typing import Callable, Optional

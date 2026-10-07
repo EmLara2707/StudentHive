@@ -1,9 +1,9 @@
 """Marketplace page: browse, listing detail, create-listing wizard, booking request.
 Layout and navigation only; search/filter rules live in MarketplaceController.
 
-Which sub-view shows is decided by three session flags that the sub-views and
-the listing components set (creating_listing, booking_listing_id,
-selected_listing_id). Page styles: views/styles/marketplace.css."""
+Which sub-view shows is decided by session state that the sub-views and the
+listing components set: the wizard draft (is_creating_listing), booking_listing_id
+and selected_listing_id. Page styles: views/styles/marketplace.css."""
 from enum import Enum, auto
 
 import streamlit as st
@@ -15,8 +15,10 @@ from views.components.listing_components import (
 )
 from views.components.styles import load_css
 from views.components.user_profile import render_open_profile
-from views.CreateListing import render_create_listing, reset_wizard
-from views.session import get_marketplace_controller
+from views.components.listing_wizard import render_create_listing
+from views.session import (
+    get_marketplace_controller, is_creating_listing, start_listing_wizard,
+)
 
 # NOTE: do NOT call st.set_page_config here. App.py already does it.
 
@@ -30,7 +32,7 @@ class _View(Enum):
 
 def _current_view() -> _View:
     """Priority: wizard, then booking request, then listing detail, else the grid."""
-    if st.session_state.get("creating_listing"):
+    if is_creating_listing():
         return _View.CREATE
     if st.session_state.get("booking_listing_id") is not None:
         return _View.BOOKING
@@ -50,8 +52,7 @@ def _close_listing() -> None:
 
 def _open_create() -> None:
     """'Add a Listing' clicked: start a fresh wizard and show the Create page."""
-    reset_wizard()
-    st.session_state.creating_listing = True
+    start_listing_wizard()
 
 
 # ------------------------------------------------------------ browse
@@ -115,7 +116,7 @@ def render_marketplace() -> None:
     view = _current_view()
 
     if view is _View.CREATE:
-        render_create_listing(market)
+        render_create_listing()
     elif view is _View.BOOKING:
         render_booking_request(market, st.session_state.booking_listing_id)
     elif view is _View.DETAIL:

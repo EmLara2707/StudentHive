@@ -5,10 +5,12 @@ import streamlit as st
 from controllers.auth_controller import AuthController
 from controllers.dashboard_controller import DashboardController
 from controllers.listing_controller import ListingController
+from controllers.listing_wizard_controller import ListingWizardController
 from controllers.marketplace_controller import MarketplaceController
 from controllers.onboarding_controller import OnboardingController
 from controllers.profile_controller import ProfileController
 from controllers.public_profile_controller import PublicProfileController
+from models.listing_draft import ListingDraft
 from models.user import User
 from repositories.booking_repository import BookingRepository
 from repositories.event_repository import EventRepository
@@ -71,6 +73,10 @@ def get_listing_controller() -> ListingController:
     return ListingController(get_listing_repository())
 
 
+def get_listing_wizard_controller() -> ListingWizardController:
+    return ListingWizardController(get_listing_controller())
+
+
 def get_marketplace_controller() -> MarketplaceController:
     return MarketplaceController(
         get_listing_repository(), get_user_repository(), get_booking_repository()
@@ -106,3 +112,24 @@ def refresh_session_user(user: User) -> None:
 
 def finish_onboarding() -> None:
     st.session_state.onboarding_complete = True
+
+
+# ---- create-a-listing wizard: one draft while the wizard is open, else None ----
+_DRAFT_KEY = "listing_draft"
+
+
+def start_listing_wizard() -> None:
+    """'Add a Listing' clicked: open the wizard with a fresh draft."""
+    st.session_state[_DRAFT_KEY] = get_listing_wizard_controller().new_draft()
+
+
+def close_listing_wizard() -> None:
+    st.session_state[_DRAFT_KEY] = None
+
+
+def is_creating_listing() -> bool:
+    return st.session_state.get(_DRAFT_KEY) is not None
+
+
+def get_listing_draft() -> ListingDraft | None:
+    return st.session_state.get(_DRAFT_KEY)

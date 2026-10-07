@@ -10,9 +10,20 @@ GIG = "Gig"
 RENTAL = "Rental"
 CATEGORIES = (GIG, RENTAL)
 
+SERVICE_DELIVERABLE = "Service Deliverables"
+PROJECT_DELIVERABLE = "Project Deliverables"
+DELIVERABLES = (SERVICE_DELIVERABLE, PROJECT_DELIVERABLE)
+
 RATE_TYPES = ["Hourly Rate", "Daily Rate", "One Time Payment"]
 RATE_UNITS = {"Hourly Rate": "hr", "Daily Rate": "day", "One Time Payment": "once"}
 _RATE_TYPE_BY_UNIT = {unit: name for name, unit in RATE_UNITS.items()}
+DEFAULT_GIG_RATE_TYPE = "Hourly Rate"
+DEFAULT_RENTAL_RATE_TYPE = "Daily Rate"
+
+
+def default_rate_type(category: str) -> str:
+    """Rate type pre-selected for a new listing: Gigs hourly, Rentals daily."""
+    return DEFAULT_GIG_RATE_TYPE if category == GIG else DEFAULT_RENTAL_RATE_TYPE
 
 
 class ListingStatus(str, Enum):

@@ -9,7 +9,8 @@ _LIST_FIELDS = {"skills", "socials"}
 
 
 class ProfileController:
-    MAX_PHOTO_BYTES = 5 * 1024 * 1024
+    MAX_PHOTO_MB = 10
+    MAX_PHOTO_BYTES = MAX_PHOTO_MB * 1024 * 1024
 
     def __init__(self, users: UserRepository, reviews: ReviewRepository) -> None:
         self._users = users
@@ -78,7 +79,7 @@ class ProfileController:
     # ---- photo ----
     def photo_error(self, size_bytes: int) -> str | None:
         if size_bytes > self.MAX_PHOTO_BYTES:
-            return "File is larger than 5MB. Please choose a smaller image."
+            return f"File is larger than {self.MAX_PHOTO_MB}MB. Please choose a smaller image."
         return None
 
     def update_photo(self, email: str, data: bytes, mime: str) -> str | None:
