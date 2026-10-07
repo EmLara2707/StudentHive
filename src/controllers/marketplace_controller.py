@@ -1,10 +1,17 @@
 """Marketplace use-cases: browse, view a listing, send a booking request.
 Never imports streamlit."""
 from models.booking import Booking
-from models.listing import Listing, ListingEntry, OwnerInfo
+from models.listing import GIG, RENTAL, Listing, ListingEntry, OwnerInfo
 
 UNKNOWN_OWNER = "Unknown"
 NO_COURSE = "N/A"
+
+# The filter pills on the browse page, and what each one means for the data.
+FILTER_GIG = "Gig"
+FILTER_RENTALS = "Rentals"                  # the pill says "Rentals", the data says "Rental"
+FILTER_OPTIONS = [FILTER_GIG, FILTER_RENTALS]
+KIND_OPTIONS = ["Service", "Project"]       # only offered while the Gig pill is on
+_CATEGORY_BY_FILTER = {FILTER_GIG: GIG, FILTER_RENTALS: RENTAL}
 
 
 class MarketplaceController:
@@ -54,6 +61,23 @@ class MarketplaceController:
                 or q in e.owner.course.lower()
             ]
         return entries
+
+    def shows_kind_filter(self, filter_choice: str | None) -> bool:
+        """Service / Project pills only make sense while the Gig pill is selected."""
+        return filter_choice == FILTER_GIG
+
+    def browse(
+        self,
+        query: str = "",
+        filter_choice: str | None = None,
+        kind_choice: str | None = None,
+    ) -> list[ListingEntry]:
+        """What the browse page shows, from its raw widget values: the search text,
+        the selected pill (None = everything) and the selected Gig type. A Gig type
+        left over from an earlier selection is ignored unless the Gig pill is on."""
+        category = _CATEGORY_BY_FILTER.get(filter_choice)
+        kind = kind_choice if self.shows_kind_filter(filter_choice) else None
+        return self.search(query, [category] if category else None, deliverable_kind=kind)
 
     # ---- booking ----
     def add_booking(self, listing_id: int, date: str, total: float = 0.0,
