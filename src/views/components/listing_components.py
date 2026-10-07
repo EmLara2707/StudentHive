@@ -7,16 +7,13 @@ from typing import Callable, Optional
 import streamlit as st
 
 from models.listing import Listing, ListingEntry
+from views.components.user_profile import open_profile
 from views.session import get_marketplace_controller
 
 GALLERY_PREVIEW = 3   # tiles shown before the "+N" overlay
 
 
 # ------------------------------------------------------------ callbacks
-def open_profile(name: str) -> None:
-    st.session_state.viewing_market_profile = name
-
-
 def open_booking(listing_id: int) -> None:
     st.session_state.booking_listing_id = listing_id
 
@@ -185,7 +182,7 @@ def render_side_panel(entry: ListingEntry) -> None:
         # clicking anywhere on the owner box opens their profile
         with st.container(key=f"profilerow_{listing.id}"):
             st.button("View profile", key=f"profilebtn_{listing.id}",
-                      on_click=open_profile, args=(owner.name,))
+                      on_click=open_profile, args=(owner.email, "market"))
             st.markdown(
                 f"<div class='sh-panel-user'>"
                 f"<div class='sh-avatar sh-avatar-lg'>{escape(owner.name[:1].upper())}</div>"
