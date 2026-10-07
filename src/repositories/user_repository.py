@@ -24,12 +24,6 @@ class UserRepository:
     def get_by_email(self, email: str) -> User | None:
         return self._users.get(self._key(email))
 
-    def find_by_name(self, name: str) -> User | None:
-        """First user with this display name (case-insensitive). Names are not unique,
-        so this only exists for the old Gigs/Rentals sample data. TEMP."""
-        wanted = (name or "").strip().lower()
-        return next((u for u in self._users.values() if u.name.lower() == wanted), None)
-
     def exists(self, email: str) -> bool:
         return self._key(email) in self._users
 

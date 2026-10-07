@@ -26,15 +26,6 @@ def open_profile(email: str, scope: str) -> None:
     st.session_state[_STATE_KEY] = {"scope": scope, "email": email}
 
 
-def open_profile_by_name(name: str, scope: str) -> None:
-    """Same, from a display name. TEMP: only for the old Gigs/Rentals sample data."""
-    email = get_public_profile_controller().find_email_by_name(name)
-    if email is None:
-        st.toast("This profile isn't available.")
-        return
-    open_profile(email, scope)
-
-
 def close_profile() -> None:
     st.session_state.pop(_STATE_KEY, None)
 

@@ -1,0 +1,652 @@
+  /* ---------- page header (same look as the Marketplace page) ---------- */
+  [data-testid="stMain"] p,
+  [data-testid="stMain"] button,
+  [data-testid="stMain"] input {
+      font-family: 'Inter', sans-serif;
+  }
+  [data-testid="stMain"] .st-key-page_header [data-testid="stMarkdownContainer"] h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 800;
+      color: #3a3d3f !important;
+      padding-bottom: 0;
+  }
+  [data-testid="stMain"] .st-key-page_header [data-testid="stCaptionContainer"],
+  [data-testid="stMain"] .st-key-page_header [data-testid="stCaptionContainer"] * {
+      color: rgba(49, 51, 63, 0.6) !important;
+  }
+
+  /* ---------- no page scrolling ---------- */
+  html, body,
+  [data-testid="stAppViewContainer"],
+  [data-testid="stMain"] {
+      overflow: hidden !important;
+  }
+  [data-testid="stMainBlockContainer"] {
+      padding-top: 1.5rem !important;
+      padding-bottom: 0 !important;
+  }
+  [data-testid="stMainBlockContainer"],
+  .block-container {
+      padding-left: 1.5rem !important;
+      padding-right: 1.5rem !important;
+      max-width: 100% !important;
+  }
+
+  /* Dark text everywhere in the main area */
+  [data-testid="stMain"],
+  [data-testid="stMain"] label,
+  [data-testid="stMain"] [data-testid="stCaptionContainer"],
+  [data-testid="stMain"] [data-testid="stMarkdownContainer"],
+  [data-testid="stMain"] [data-testid="stMarkdownContainer"] :is(h1, h2, h3, h4, h5, h6, p, span, li, strong, em) {
+      color: #1F1F1F !important;
+  }
+  [data-testid="stMain"] [data-testid="stMarkdownContainer"] .badge.badge {
+      color: #FFFFFF !important;
+  }
+
+  /* White background */
+  [data-testid="stAppViewContainer"],
+  [data-testid="stMain"],
+  [data-testid="stHeader"] {
+      background-color: #FFFFFF !important;
+  }
+
+  [data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"] {
+      border-color: #E2E6EA;
+  }
+
+  /* ---------- Tabs ---------- */
+  [data-testid="stMain"] [data-testid="stTab"] {
+      background: transparent;
+  }
+
+  /* unselected tab text: same ink color as the page text */
+  [data-testid="stMain"] [data-testid="stTab"] [data-testid="stMarkdownContainer"] p {
+      color: #3a3d3f !important;
+      font-weight: 600;
+  }
+
+  /* hover */
+  [data-testid="stMain"] [data-testid="stTab"]:hover [data-testid="stMarkdownContainer"] p {
+      color: #0f6b62 !important;
+  }
+
+  /* selected tab text */
+  [data-testid="stMain"] [data-testid="stTab"][aria-selected="true"] [data-testid="stMarkdownContainer"] p {
+      color: #0f6b62 !important;
+      font-weight: 700;
+  }
+
+  /* underline under the selected tab */
+  [data-testid="stMain"] [data-testid="stTab"] .react-aria-SelectionIndicator,
+  [data-testid="stMain"] [data-baseweb="tab-highlight"] {
+      background-color: #0f6b62 !important;
+  }
+
+  /* ---------- Filter / view pills (same look as Marketplace Gig / Rentals) ---------- */
+  [class*="st-key-pills_"] button {
+      border-radius: 999px;
+      border: 1.5px solid #3a3d3f;
+      background: #ffffff;
+      min-height: 1.8rem;
+      padding: 0 0.9rem;
+      box-shadow: none;
+  }
+  [data-testid="stMain"] [class*="st-key-pills_"] button [data-testid="stMarkdownContainer"] p {
+      color: #3a3d3f !important;
+  }
+
+  /* hover: teal outline + teal text */
+  [class*="st-key-pills_"] button:hover {
+      border-color: #0f6b62;
+      background: #ffffff;
+  }
+  [data-testid="stMain"] [class*="st-key-pills_"] button:hover [data-testid="stMarkdownContainer"] p {
+      color: #0f6b62 !important;
+  }
+
+  /* selected: solid teal with white text */
+  [class*="st-key-pills_"] [data-testid="stBaseButton-pillsActive"],
+  [class*="st-key-pills_"] button[kind="pillsActive"],
+  [class*="st-key-pills_"] button[aria-pressed="true"],
+  [class*="st-key-pills_"] button[aria-checked="true"] {
+      background: #0f6b62 !important;
+      border-color: #0f6b62 !important;
+  }
+  [data-testid="stMain"] [class*="st-key-pills_"] [data-testid="stBaseButton-pillsActive"] [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-pills_"] button[kind="pillsActive"] [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-pills_"] button[aria-pressed="true"] [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-pills_"] button[aria-checked="true"] [data-testid="stMarkdownContainer"] p {
+      color: #ffffff !important;
+  }
+  [class*="st-key-pills_"] [data-testid="stBaseButton-pillsActive"]:hover,
+  [class*="st-key-pills_"] button[kind="pillsActive"]:hover {
+      background: #0b5750 !important;
+      border-color: #0b5750 !important;
+  }
+
+  /* focus ring after clicking (replaces Streamlit's default red) */
+  [class*="st-key-pills_"] button:focus,
+  [class*="st-key-pills_"] button:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 0.15rem rgba(15, 107, 98, 0.25) !important;
+  }
+
+  /* ---------- Sort toggle button (also used by the Back buttons) ---------- */
+  [class*="st-key-sort_"] button {
+      border-radius: 999px;
+      border: 1.5px solid #3a3d3f;
+      background: #ffffff;
+      min-height: 1.8rem;
+      padding: 0 0.9rem;
+      box-shadow: none;
+  }
+  [class*="st-key-sort_"] button:hover {
+      background: #E7EDF1;
+      border-color: #3a3d3f;
+  }
+  [class*="st-key-sort_"] button p {
+      font-size: 0.8rem;
+      font-weight: 600;
+  }
+
+  /* ---------- Calendar (my gigs) ---------- */
+  [class*="st-key-nav_"] .stButton > button {
+      min-height: 2.2rem;
+      border: 1px solid #E2E6EA;
+      border-radius: 0.6rem;
+      background: #F4F6F8;
+      box-shadow: none;
+  }
+  [class*="st-key-nav_"] .stButton > button:hover {
+      background: #E7EDF1;
+  }
+  .cal-title {
+      text-align: center;
+      font-weight: 800;
+      font-size: 1.4rem;
+  }
+  .dhead {
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #6B7785;
+      line-height: 1.4;
+  }
+  /* Streamlit collapses the weekday row to ~7px, so the first week slides under it.
+     Give that first row a real height so every week row starts below the labels. */
+  [class*="st-key-calgrid"] > div:first-child {
+      min-height: 1.8rem;
+  }
+  [class*="st-key-calgrid"] { gap: 0.8rem; }
+  [class*="st-key-dc_"] {
+      position: relative;          /* the invisible click button is stretched over this */
+      height: 95px;               /* fixed height, so a cell can never grow into its neighbours */
+      min-height: 95px;
+      max-height: 95px;
+      padding: 0.4rem 0.4rem;
+      border-radius: 0.6rem;
+      background: #F4F6F8;
+      gap: 0.2rem;
+      overflow: hidden;            /* nothing can spill into the next day */
+      min-width: 0;
+      cursor: pointer;
+  }
+  [class*="st-key-dc_"]:hover { background: #E7EDF1; }
+  [class*="st-key-dc_today_"] { box-shadow: inset 0 0 0 2px #0F9D8A; }
+  [class*="st-key-dc_"] > div,
+  [class*="st-key-dc_"] [data-testid="stMarkdownContainer"] {
+      min-width: 0;
+      max-width: 100%;
+  }
+  /* never squash the day number / tags / rows into each other:
+     if the calendar is taller than its box, the box scrolls instead */
+  [class*="st-key-dc_"] > div:not([class*="st-key-daybtn_"]) {
+      flex-shrink: 0 !important;
+      height: auto !important;
+  }
+  [class*="st-key-dc_"] { flex-shrink: 0; }
+  [class*="st-key-calgrid"] > div,
+  [class*="st-key-calgrid"] [data-testid="stHorizontalBlock"] {
+      flex-shrink: 0 !important;
+  }
+  .dnum {
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.1;
+  }
+
+  /* invisible button stretched over the whole day cell */
+  [class*="st-key-daybtn_"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0;
+      z-index: 5;
+  }
+  [class*="st-key-daybtn_"] > div,
+  [class*="st-key-daybtn_"] .stButton {
+      width: 100% !important;
+      height: 100% !important;
+  }
+  [class*="st-key-daybtn_"] button {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      padding: 0;
+      border: none;
+      border-radius: 0.6rem;
+      background: transparent;
+      box-shadow: none;
+      cursor: pointer;
+  }
+  [class*="st-key-daybtn_"] button:hover,
+  [class*="st-key-daybtn_"] button:focus:not(:active),
+  [class*="st-key-daybtn_"] button:active {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+  }
+  /* hide the button's own label; the day number is drawn by .dnum underneath */
+  [data-testid="stMain"] [class*="st-key-daybtn_"] button [data-testid="stMarkdownContainer"] p {
+      opacity: 0;
+  }
+
+  /* static (non-clickable) gig labels inside the calendar */
+  .chip {
+      display: block;
+      box-sizing: border-box;
+      max-width: 100%;
+      padding: 0.1rem 0.45rem;
+      margin: 0;
+      border-radius: 0.4rem;
+      color: #FFFFFF !important;
+      font-size: 0.78rem;
+      font-weight: 600;
+      line-height: 1.4;            /* fixed height per chip */
+      flex-shrink: 0;              /* chips never get squashed */
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+  .chip-doing   { background: #0F9D8A; }
+  .chip-renting { background: #0F9D8A; }
+  .chip-hiring  { background: #F5A03C; }
+  .chip-lending { background: #F5A03C; }
+  .chip-pending   { opacity: 0.55; }
+
+  .chip-more {
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: #6B7785;
+  }
+
+  /* stacks the chips with an even gap under the day number */
+  .chip-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin-top: 0.2rem;
+      overflow: hidden;            /* clips anything taller than the cell */
+      min-width: 0;
+  }
+  .cal-legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      font-size: 0.9rem;
+  }
+  .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+  }
+  .dot-doing    { background: #0F9D8A; }
+  .dot-renting  { background: #0F9D8A; }
+  .dot-hiring   { background: #F5A03C; margin-left: 0.6rem; }
+  .dot-lending  { background: #F5A03C; margin-left: 0.6rem; }
+
+  /* ---------- Gig cards (clickable) ---------- */
+  [class*="st-key-rcard_"] {
+      background: #FFFFFF;
+      border-radius: 1rem;
+      padding: 0 0.9rem 0 0;
+      box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14);
+      gap: 0;
+      overflow: hidden;
+  }
+  [class*="st-key-rcard_"] [data-testid="stHorizontalBlock"] { gap: 0; }
+  [class*="st-key-rcard_"] [data-testid="stMarkdownContainer"] { margin: 0; }
+  .rc-imgwrap {
+      line-height: 0;
+      margin: 0;
+  }
+  .rc-img {
+      width: 100%;
+      height: 134px;
+      object-fit: cover;
+      display: block;
+      margin: 0;
+  }
+  [class*="st-key-rcard_"] button {
+      background: #0f6b62;
+      border: none;
+      border-radius: 999px;
+      min-height: 2rem;
+      padding: 0 1rem;
+  }
+  [class*="st-key-rcard_"] button:hover,
+  [class*="st-key-rcard_"] button:focus:not(:active) {
+      background: #0b5750;
+      border: none;
+  }
+  [data-testid="stMain"] [class*="st-key-rcard_"] button [data-testid="stMarkdownContainer"] p {
+      color: #FFFFFF !important;
+      font-weight: 600;
+      font-size: 0.85rem;
+  }
+  .listing-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0 1rem;
+      min-width: 0;
+  }
+  .listing-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+  .listing-sub {
+      font-size: 0.8rem;
+      color: #6B7785 !important;
+  }
+  .listing-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+  }
+  .badge {
+      padding: 0.2rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #FFFFFF;
+  }
+  .badge-doing    { background: #0F9D8A; }
+  .badge-renting  { background: #0F9D8A; }
+  .badge-hiring   { background: #F5A03C; }
+  .badge-lending  { background: #F5A03C; }
+  .badge-pending   { background: #8A94A0; }
+  .badge-cancelled { background: #D64545; }
+  .listing-price {
+      font-weight: 700;
+      font-size: 0.9rem;
+  }
+
+  /* ---------- Gig details panel ---------- */
+  .det-img {
+      width: 100%;
+      height: 190px;
+      object-fit: cover;
+      border-radius: 1rem;
+      display: block;
+      margin-bottom: 0.8rem;
+  }
+  .det-title {
+      font-weight: 800;
+      font-size: 1.4rem;
+      margin-bottom: 0.4rem;
+  }
+  .det-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+  }
+  .det-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #E2E6EA;
+      font-size: 0.95rem;
+  }
+  .det-label { color: #6B7785 !important; }
+  .det-value { font-weight: 700; text-align: right; }
+  .det-note {
+      margin-top: 0.8rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 0.75rem;
+      background: #F4F6F8;
+      font-size: 0.9rem;
+      font-weight: 600;
+  }
+  .det-note-overdue { background: #FBE5E5; }
+
+  /* ---------- Action buttons in the details panel ---------- */
+  /* Accept / Complete: solid teal */
+  [class*="st-key-act_accept"] button,
+  [class*="st-key-act_complete"] button {
+      background: #0f6b62;
+      border: none;
+      border-radius: 999px;
+      min-height: 2.3rem;
+      padding: 0 1rem;
+      box-shadow: none;
+  }
+  [class*="st-key-act_accept"] button:hover,
+  [class*="st-key-act_accept"] button:focus:not(:active),
+  [class*="st-key-act_complete"] button:hover,
+  [class*="st-key-act_complete"] button:focus:not(:active) {
+      background: #0b5750;
+      border: none;
+  }
+  [data-testid="stMain"] [class*="st-key-act_accept"] button [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-act_complete"] button [data-testid="stMarkdownContainer"] p {
+      color: #FFFFFF !important;
+      font-weight: 600;
+      font-size: 0.9rem;
+  }
+
+  /* Reject / Cancel: white with a red outline */
+  [class*="st-key-act_reject"] button,
+  [class*="st-key-act_cancel"] button {
+      background: #FFFFFF;
+      border: 1.5px solid #D64545;
+      border-radius: 999px;
+      min-height: 2.3rem;
+      padding: 0 1rem;
+      box-shadow: none;
+  }
+  [class*="st-key-act_reject"] button:hover,
+  [class*="st-key-act_reject"] button:focus:not(:active),
+  [class*="st-key-act_cancel"] button:hover,
+  [class*="st-key-act_cancel"] button:focus:not(:active) {
+      background: #FBE5E5;
+      border: 1.5px solid #D64545;
+  }
+  [data-testid="stMain"] [class*="st-key-act_reject"] button [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-act_cancel"] button [data-testid="stMarkdownContainer"] p {
+      color: #D64545 !important;
+      font-weight: 600;
+      font-size: 0.9rem;
+  }
+
+  /* ---------- To-do panel ---------- */
+  .todo-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0.85rem;
+      margin-bottom: 0.5rem;            /* spacing is handled by the clickable container */
+      border-radius: 0.75rem;
+      background: #F4F6F8;
+      border-left: 5px solid #0F9D8A;
+  }
+  .todo-overdue { border-left-color: #D64545; }
+  .todo-soon    { border-left-color: #F5A03C; }
+  .todo-info {
+      flex: 1;
+      min-width: 0;
+  }
+  .todo-title {
+      font-weight: 700;
+      font-size: 1rem;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+  }
+  .todo-sub {
+      font-size: 0.85rem;
+      line-height: 1.3;
+      color: #6B7785 !important;
+  }
+  .todo-when {
+      font-size: 0.9rem;
+      font-weight: 800;
+      white-space: nowrap;
+  }
+  .todo-when-overdue { color: #D64545 !important; }
+  .todo-when-soon    { color: #D9822B !important; }
+
+  /* ---------- Vertical divider between left and right sides ---------- */
+  .vdivider {
+      width: 2px;
+      margin: 0 auto;
+      border-radius: 999px;
+      background: #E2E6EA;
+  }
+
+  /* ---------- Clickable to-do rows ---------- */
+  [class*="st-key-todo_"] {
+      position: relative;              /* the invisible button is stretched over this */
+      margin-bottom: 0.5rem;                /* spacing comes from Streamlit's normal gap between elements */
+      border-radius: 0.75rem;
+      cursor: pointer;
+  }
+  [class*="st-key-todo_"]:hover .todo-row { background: #E7EDF1; }
+
+  [class*="st-key-todobtn_"] {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0;
+      z-index: 5;
+  }
+  [class*="st-key-todobtn_"] > div,
+  [class*="st-key-todobtn_"] .stButton {
+      width: 100% !important;
+      height: 100% !important;
+  }
+  [class*="st-key-todobtn_"] button {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      padding: 0;
+      border: none;
+      border-radius: 0.75rem;
+      background: transparent;
+      box-shadow: none;
+      cursor: pointer;
+  }
+  [class*="st-key-todobtn_"] button:hover,
+  [class*="st-key-todobtn_"] button:focus:not(:active),
+  [class*="st-key-todobtn_"] button:active {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+  }
+  [data-testid="stMain"] [class*="st-key-todobtn_"] button [data-testid="stMarkdownContainer"] p {
+      opacity: 0;
+  }
+
+  /* ---------- Clickable client/student row in the details panel ---------- */
+.st-key-detail_panel {
+      gap: 0;
+      width: 100%;
+      flex-shrink: 0 !important;
+  }
+  /* never let the blocks squash into each other; the scroll box scrolls instead */
+  .st-key-detail_panel > div,
+  .st-key-detail_panel [data-testid="stElementContainer"]:not([class*="st-key-userbtn_"]),
+  [class*="st-key-userrow_"],
+  [class*="st-key-userrow_"] > div:not([class*="st-key-userbtn_"]) {
+      flex-shrink: 0 !important;
+      height: auto !important;
+      min-height: fit-content !important;
+  }
+  .st-key-detail_panel > div,
+  .st-key-detail_panel [data-testid="stMarkdownContainer"] {
+      width: 100% !important;
+  }
+  .st-key-detail_panel .det-img {
+      width: 100% !important;
+  }
+  [class*="st-key-userrow_"] {
+      position: relative;
+      cursor: pointer;
+  }
+  [class*="st-key-userrow_"]:hover .det-row { background: #F4F6F8; }
+  .det-link { color: #0f6b62 !important; }
+
+  [class*="st-key-userbtn_"] {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0;
+      z-index: 5;
+  }
+  [class*="st-key-userbtn_"] > div,
+  [class*="st-key-userbtn_"] .stButton {
+      width: 100% !important;
+      height: 100% !important;
+  }
+  [class*="st-key-userbtn_"] button {
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      cursor: pointer;
+  }
+  [class*="st-key-userbtn_"] button:hover,
+  [class*="st-key-userbtn_"] button:focus:not(:active),
+  [class*="st-key-userbtn_"] button:active {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+  }
+  [data-testid="stMain"] [class*="st-key-userbtn_"] button [data-testid="stMarkdownContainer"] p {
+      opacity: 0;
+  }
+  /* cancel Streamlit's negative bottom margin on markdown blocks in the details panel */
+  .st-key-detail_panel [data-testid="stMarkdown"],
+  .st-key-detail_panel [data-testid="stMarkdownContainer"],
+  [class*="st-key-userrow_"] [data-testid="stMarkdown"],
+  [class*="st-key-userrow_"] [data-testid="stMarkdownContainer"] {
+      margin-top: 0 !important;
+      margin-bottom: 0 !important;
+  }
+
+/* ---------- Long detail text (new in the Transaction refactor: project details) ---------- */
+.det-value-long {
+    font-weight: 500;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}

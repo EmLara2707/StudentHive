@@ -24,8 +24,3 @@ class PublicProfileController:
             reviews=reviews,
             listings=open_listings,
         )
-
-    def find_email_by_name(self, name: str) -> str | None:
-        """Display name -> email, for the old Gigs/Rentals sample data. TEMP."""
-        user = self._users.find_by_name(name)
-        return user.email if user else None

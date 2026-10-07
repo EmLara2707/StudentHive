@@ -1,17 +1,20 @@
 """Booking-request use-cases: load the listing being booked, price it,
-validate the form and send the request. Never imports streamlit."""
+validate the form and send the request (which becomes a pending Transaction
+for the listing's owner to answer). Never imports streamlit."""
 from dataclasses import dataclass, field
 from datetime import date
 
 from controllers.marketplace_controller import MarketplaceController
-from models.booking import Booking
 from models.booking_request import (
     BookingContext, BookingForm, BookingKind, MeetingMode, PriceQuote, quote_price,
 )
 from models.listing import Listing
 from models.review import RatingSummary
-from repositories.booking_repository import BookingRepository
+from models.transaction import (
+    PLACEHOLDER_IMAGE, Transaction, TransactionKind,
+)
 from repositories.review_repository import ReviewRepository
+from repositories.transaction_repository import TransactionRepository
 
 COMING_SOON_MESSAGE = "Coming soon!"
 OWN_LISTING_ERROR = "You can't book your own listing."
@@ -21,7 +24,7 @@ UNAVAILABLE_ERROR = "This listing is no longer available."
 @dataclass
 class BookingResult:
     ok: bool
-    booking: Booking | None = None
+    transaction: Transaction | None = None
     errors: list[str] = field(default_factory=list)
 
 
@@ -30,11 +33,11 @@ class BookingController:
         self,
         market: MarketplaceController,
         reviews: ReviewRepository,
-        bookings: BookingRepository,
+        transactions: TransactionRepository,
     ) -> None:
         self._market = market
         self._reviews = reviews
-        self._bookings = bookings      # TEMP: becomes pending Transactions later
+        self._transactions = transactions
 
     # ---- loading ----
     def get_context(self, listing_id: int) -> BookingContext | None:
@@ -94,22 +97,40 @@ class BookingController:
         if problems:
             return BookingResult(False, errors=problems)
 
+        transaction = self._build_transaction(context, form, requester_email,
+                                              today or date.today())
+        return BookingResult(True, self._transactions.add(transaction))
+
+    def _build_transaction(self, context: BookingContext, form: BookingForm,
+                           requester_email: str, today: date) -> Transaction:
+        """The pending Transaction a valid request turns into."""
+        listing = context.listing
+        quote = self.quote(context, form)
+        common = dict(
+            id=0,
+            kind=TransactionKind.GIG if listing.is_gig else TransactionKind.RENTAL,
+            item=listing.title,
+            image=listing.images[0] if listing.images else PLACEHOLDER_IMAGE,
+            provider_email=listing.owner_email,
+            requester_email=requester_email.strip().lower(),
+            listing_id=listing.id,
+        )
         if context.kind is BookingKind.PROJECT:
-            info = {"project_details": form.details.strip(),
-                    "deadline": form.deadline.isoformat()}
-            when = form.deadline.isoformat()
-        else:
-            info = {
-                "start": form.start.isoformat(timespec="minutes"),
-                "end": form.end.isoformat(timespec="minutes"),
-                "meeting_mode": form.meeting_mode.value if form.meeting_mode else None,
-                "location": (form.location.strip()
-                             if self._needs_location(context.kind, form) else ""),
-            }
-            when = form.start_date.isoformat()
-        total = self.quote(context, form).subtotal
-        booking = self._bookings.add(context.listing.id, context.owner_name, when, total, info)
-        return BookingResult(True, booking)
+            # A project has no start/end: it runs from the request until the deadline.
+            return Transaction(
+                **common, start=today, end=form.deadline,
+                price=listing.price, unit="once", quantity=1, total=quote.subtotal,
+                project_details=form.details.strip(), deadline=form.deadline,
+            )
+        return Transaction(
+            **common, start=form.start_date, end=form.end_date,
+            price=listing.price, unit=listing.unit,
+            quantity=quote.quantity, total=quote.subtotal,
+            start_time=form.start_time if listing.unit == "hr" else None,
+            end_time=form.end_time if listing.unit == "hr" else None,
+            meeting_mode=form.meeting_mode.value if form.meeting_mode else None,
+            location=(form.location.strip() if self._needs_location(context.kind, form) else ""),
+        )
 
     @staticmethod
     def _needs_location(kind: BookingKind, form: BookingForm) -> bool:
