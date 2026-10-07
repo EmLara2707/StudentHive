@@ -1,10 +1,15 @@
 """In-memory user storage. Swap this class for a DB-backed one later;
 controllers only depend on these method names."""
+import secrets
+
 from models.profile import Profile
 from models.user import User
 from utils.security import hash_password
 
 DEMO_EMAIL = "demo@mmcm.edu.ph"
+# Sample seller that owns the seeded marketplace listings. Nobody can log in as
+# this account (its password is random), it only exists so listings have an owner.
+SAMPLE_SELLER_EMAIL = "ana.r@mmcm.edu.ph"
 
 
 class UserRepository:
@@ -49,6 +54,17 @@ class UserRepository:
                 bio=("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 6).strip(),
                 skills=["Figma", "Python", "Tutoring"],
                 socials=["stdnt@hive.com"],
+            ),
+        ))
+        repo.add(User(
+            name="Ana R.",
+            email=SAMPLE_SELLER_EMAIL,
+            password_hash=hash_password(secrets.token_hex(16)),
+            onboarded=True,
+            profile=Profile(
+                major="Bachelor of Mathematics",
+                skills=["Calculus", "Statistics", "Tutoring"],
+                socials=["ana@hive.com"],
             ),
         ))
         return repo

@@ -6,11 +6,12 @@ Flow:  1. Type (Gig / Rental)  ->  1b. Deliverable type (Gigs only)
 Colors and fonts (--teal, --orange, --ink, --muted, Montserrat, Inter) come
 from the style block at the top of Marketplace.py.
 """
-import io
 from html import escape
-from views.Listing import MAX_IMAGES
 
 import streamlit as st
+
+from models.listing import MAX_IMAGES, RATE_TYPES, RATE_UNITS
+from views.session import get_listing_controller
 
 # ==========================================
 # STYLES (Create a Listing page only)
@@ -305,8 +306,6 @@ WIZARD_CSS = """
 # WIZARD STATE
 # ==========================================
 
-RATE_TYPES = ["Hourly Rate", "Daily Rate", "One Time Payment"]
-RATE_UNITS = {"Hourly Rate": "hr", "Daily Rate": "day", "One Time Payment": "once"}
 STEP_NUMBER = {"type": 1, "deliverable": 1, "details": 2, "media": 3, "review": 4}
 PROGRESS_LABELS = ["Type of Listing", "Details", "Upload Images", "Review and Post"]
 
@@ -344,19 +343,6 @@ def _pick_category(value: str) -> None:
 
 def _pick_deliverable(value: str) -> None:
     st.session_state.wiz["deliverable"] = value
-
-
-def _compress(raw: bytes, mime: str):
-    """Shrink uploads so the page stays fast (falls back to the original)."""
-    try:
-        from PIL import Image
-        img = Image.open(io.BytesIO(raw))
-        img.thumbnail((1200, 1200))
-        buf = io.BytesIO()
-        img.convert("RGB").save(buf, format="JPEG", quality=82)
-        return buf.getvalue(), "image/jpeg"
-    except Exception:
-        return raw, mime
 
 
 # ==========================================
@@ -550,23 +536,24 @@ def _screen_review(w: dict, market) -> None:
         w["step"] = "media"
         st.rerun()
     if post:
-        images = [_compress(i["bytes"], i["mime"]) for i in w["images"]]
         user = st.session_state.get("user") or {}
-        listing = market.add_listing(
+        result = get_listing_controller().create(
+            owner_email=user.get("email", ""),
             title=w["title"],
             category=w["category"],
-            price=w["rate"],
-            course=user.get("course", "MMCM"),
-            owner=user.get("name", "User"),
+            rate_type=w["rate_type"],
+            rate=w["rate"],
             description=w["description"],
-            unit=RATE_UNITS[w["rate_type"]],
             deliverable=w["deliverable"] or "",
-            images=images,
+            images=[(i["bytes"], i["mime"]) for i in w["images"]],
         )
-        _exit()
-        st.session_state.selected_listing_id = listing.id   # open the new listing
-        st.toast("Your listing has been posted!")
-        st.rerun()
+        if not result.ok:
+            st.error(result.error)
+        else:
+            _exit()
+            st.session_state.selected_listing_id = result.listing.id   # open the new listing
+            st.toast("Your listing has been posted!")
+            st.rerun()
 
 
 SCREENS = {

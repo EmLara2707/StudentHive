@@ -1,0 +1,336 @@
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"] {
+    overflow: hidden !important;
+}
+
+[data-testid="stMainBlockContainer"] {
+    padding-top: 2rem !important;
+    padding-bottom: 0 !important;
+}
+[data-testid="stMainBlockContainer"],
+.block-container {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    max-width: 100% !important;
+}
+/* Dark text everywhere in the main area */
+[data-testid="stMain"],
+[data-testid="stMain"] label,
+[data-testid="stMain"] [data-testid="stCaptionContainer"],
+[data-testid="stMain"] [data-testid="stMarkdownContainer"],
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] :is(h1, h2, h3, h4, h5, h6, p, span, li, strong, em) {
+    color: #1F1F1F !important;
+}
+
+/* Keep the Gig / Rental badge text white */
+[data-testid="stMain"] [data-testid="stMarkdownContainer"] .badge.badge {
+    color: #FFFFFF !important;
+}
+
+/* White dashboard background (including Streamlit's top bar) */
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+[data-testid="stHeader"] {
+    background-color: #FFFFFF !important;
+}
+
+/* Dark text so it shows on white (:where keeps the badge text white) */
+[data-testid="stMain"] :where(h1, h2, h3, h4, p, label) {
+    color: #1F1F1F;
+}
+[data-testid="stToolbar"] {
+    color: #1F1F1F;
+}
+
+/* Top header: #e7edf1, no border */
+.st-key-header_box,
+[data-testid="stVerticalBlockBorderWrapper"]:has(.st-key-header_box) {
+    background-color: #e7edf1;
+    border: none;
+    border-radius: 1rem;
+}
+
+.avatar-placeholder {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto;          /* centers the circle in its column */
+    border-radius: 50%;
+    background: #F5B301;
+    border: 3px solid #E0A100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+/* ---------- Calendar dialog ---------- */
+
+/* The full-screen overlay: blur + dim the dashboard behind it */
+div[data-testid="stDialog"] {
+    background: rgba(255, 255, 255, 0.35) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* The actual dialog card: solid white */
+div[data-testid="stDialog"] > div {
+    background: #FFFFFF !important;
+    border-radius: 1rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+div[data-testid="stDialog"] * {
+    color: #1F1F1F !important;
+}
+
+div[data-testid="stDialog"] .stButton > button {
+    background: #F4F6F8 !important;
+    border: 1px solid #E2E6EA !important;
+    box-shadow: none !important;
+    color: #1F1F1F !important;
+}
+div[data-testid="stDialog"] .stButton > button:hover {
+    background: #E7EDF1 !important;
+}
+
+/* Close (×) button */
+div[data-testid="stDialog"] [data-testid="stBaseButton-header-no-border"],
+div[data-testid="stDialog"] button[aria-label="Close"] {
+    color: #1F1F1F !important;
+}
+
+/* ---------- Mini calendar ---------- */
+.st-key-cal_box {
+    padding: 0.5rem 0.25rem;
+}
+.st-key-cal_box [data-testid="stVerticalBlock"],
+.st-key-cal_box [data-testid="stHorizontalBlock"] {
+    gap: 0.25rem;
+}
+
+.st-key-cal_box .stButton > button {
+    position: relative;          /* lets the event dot sit inside the button */
+    min-height: 2.6rem;
+    padding: 0;
+    border: none;
+    border-radius: 0.6rem;
+    background: #F4F6F8;
+    box-shadow: none;
+}
+.st-key-cal_box .stButton > button:hover {
+    background: #E7EDF1;
+}
+.st-key-cal_box .stButton > button p {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.cal-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.cal-week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6B7785;
+}
+
+.cal-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+}
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-gig    { background: #0F9D8A; }
+.dot-rental { background: #F5A03C; margin-left: 0.6rem; }
+
+.next-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin: 0.6rem 0 0.4rem;
+}
+
+/* ---------- Event rows (Next up + dialog agenda) ---------- */
+.ev-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.6rem;
+    margin-bottom: 0.4rem;
+    border-radius: 0.75rem;
+    background: #F4F6F8;
+}
+.ev-date {
+    width: 2.6rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+.ev-mon {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6B7785;
+}
+.ev-day {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.ev-info {
+    flex: 1;
+    min-width: 0;
+}
+.ev-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ev-sub {
+    font-size: 0.75rem;
+    color: #6B7785;
+}
+
+/* ---------- Detailed calendar (dialog) ---------- */
+.dlg-title {
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.3rem;
+}
+.dgrid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+.dhead {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #6B7785;
+}
+.dcell {
+    min-height: 88px;
+    padding: 0.4rem;
+    border-radius: 0.6rem;
+    background: #F4F6F8;
+    overflow: hidden;
+}
+.dcell-empty { background: transparent; }
+.dcell-today { box-shadow: inset 0 0 0 2px #0F9D8A; }
+.dcell-sel   { background: #E7EDF1; }
+.dnum {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+.chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    padding: 0.1rem 0.4rem;
+    margin-bottom: 0.2rem;
+    border-radius: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.chip-gig    { background: #0F9D8A; }
+.chip-rental { background: #F5A03C; }
+.chip-more {
+    font-size: 0.7rem;
+    color: #6B7785;
+}
+
+/* ---------- Listings ---------- */
+/* scrolling list box, no border (replaces st.container(height=...)) */
+.st-key-list_box {
+    height: 665px !important;
+    min-height: 665px !important;
+    max-height: 665px !important;
+    flex: 0 0 665px !important;      /* stops the flex layout from shrinking it */
+    overflow-y: auto;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 0.25rem 0.5rem;
+}
+
+.listing-grid {
+    display: grid;
+    grid-template-columns: 1fr;   /* one card per row */
+    gap: 1rem;
+}
+
+.listing-card {
+    display: flex;
+    height: 134px;
+    background: #FFFFFF;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(27, 42, 65, 0.14);   /* slight black glow */
+}
+
+.listing-card img {
+    width: 38%;
+    height: 100%;
+    object-fit: cover; 
+    display: block;
+    flex-shrink: 0;
+}
+
+.listing-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0 1.25rem;
+    min-width: 0;
+}
+
+.listing-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #1F1F1F;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.listing-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.badge {
+    padding: 0.2rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+.badge-gig    { background: #0F9D8A; }
+.badge-rental { background: #F5A03C; }
+
+.listing-price {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1F1F1F;
+}
