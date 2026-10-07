@@ -15,6 +15,14 @@ class ReviewRepository:
         key = email.strip().lower()
         return [r for r in self._reviews if r.subject_email == key]
 
+    def delete_for_user(self, email: str) -> int:
+        """Remove every review written about the user; returns how many were removed."""
+        key = email.strip().lower()
+        kept = [r for r in self._reviews if r.subject_email != key]
+        removed = len(self._reviews) - len(kept)
+        self._reviews = kept
+        return removed
+
     @classmethod
     def seeded(cls) -> "ReviewRepository":
         repo = cls()

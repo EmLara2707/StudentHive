@@ -47,7 +47,9 @@ def get_transaction_repository() -> TransactionRepository:
 
 # ---- controllers (stateless, cheap to build) ----
 def get_auth_controller() -> AuthController:
-    return AuthController(get_user_repository())
+    return AuthController(
+        get_user_repository(), get_listing_repository(), get_review_repository()
+    )
 
 
 def get_onboarding_controller() -> OnboardingController:

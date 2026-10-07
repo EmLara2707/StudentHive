@@ -7,4 +7,10 @@
     --ink: #3a3d3f;
     --muted: #5b6770;
     --line: #dcdfe2;
+
+    /* shared by the listing form and the create-listing wizard */
+    --wiz-line: #c5ced6;
+    --wiz-gray: #c9d0d8;
+    --wiz-teal: #0b9488;
+    --wiz-btn: #e8edf1;
 }

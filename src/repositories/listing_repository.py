@@ -64,6 +64,14 @@ class ListingRepository:
     def delete(self, listing_id: int) -> bool:
         return self._items.pop(listing_id, None) is not None
 
+    def delete_by_owner(self, owner_email: str) -> int:
+        """Remove every listing the user owns; returns how many were removed."""
+        owner = owner_email.strip().lower()
+        doomed = [lid for lid, l in self._items.items() if l.owner_email == owner]
+        for lid in doomed:
+            del self._items[lid]
+        return len(doomed)
+
     @classmethod
     def seeded(cls) -> "ListingRepository":
         repo = cls()
