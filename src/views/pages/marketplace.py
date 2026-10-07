@@ -9,13 +9,13 @@ from enum import Enum, auto
 import streamlit as st
 
 from controllers.marketplace_controller import FILTER_OPTIONS, KIND_OPTIONS
-from views.BookingRequest import render_booking_request
+from views.components.booking_request import render_booking_request
 from views.components.listing_components import (
     render_listing_detail, render_listing_grid, render_side_panel,
 )
+from views.components.listing_wizard import render_create_listing
 from views.components.styles import load_css
 from views.components.user_profile import render_open_profile
-from views.components.listing_wizard import render_create_listing
 from views.session import (
     get_marketplace_controller, is_creating_listing, start_listing_wizard,
 )
@@ -118,7 +118,7 @@ def render_marketplace() -> None:
     if view is _View.CREATE:
         render_create_listing()
     elif view is _View.BOOKING:
-        render_booking_request(market, st.session_state.booking_listing_id)
+        render_booking_request(st.session_state.booking_listing_id)
     elif view is _View.DETAIL:
         _render_detail(market, st.session_state.selected_listing_id)
     else:
