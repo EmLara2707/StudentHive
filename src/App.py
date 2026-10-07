@@ -203,7 +203,7 @@ elif st.session_state.logged_in:
     pages = {
         "Profile": st.Page("views/pages/profile.py", title="Profile"),
         "Dashboard": st.Page("views/pages/dashboard.py", title="Dashboard", default=True),
-        "Marketplace": st.Page("views/Marketplace.py", title="Marketplace"),
+        "Marketplace": st.Page("views/pages/marketplace.py", title="Marketplace"),
         "Gigs": st.Page("views/Gigs.py", title="Gigs"),
         "Rentals": st.Page("views/Rentals.py", title="Rentals"),
         "Messages": st.Page("views/Messages.py", title="Messages"),
