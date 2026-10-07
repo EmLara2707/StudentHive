@@ -1,3 +1,8 @@
+html, body, .stApp, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    background: #ffffff;
+}
+
 /* ---------- page frame ---------- */
 /* no page scroll (also removes the scrollbar on the right) */
 html, body,

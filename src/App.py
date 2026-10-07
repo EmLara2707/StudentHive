@@ -1,5 +1,5 @@
 import streamlit as st
-
+from views.session import end_session
 st.set_page_config(page_title="StudentHive", layout="wide")
 
 
@@ -134,6 +134,26 @@ st.markdown(
         left: 1rem;
         right: 1rem;
     }
+        /* ---------- Logout confirmation dialog ---------- */
+    .st-key-logout_yes button {
+        background: #0f6b62 !important;
+        border: none !important;
+        border-radius: 999px !important;
+        min-height: 1.9rem;
+        padding: 0 1.3rem !important;
+    }
+    .st-key-logout_yes button p { color: #ffffff !important; font-weight: 600; font-size: 0.85rem; }
+    .st-key-logout_yes button:hover { background: #0b5750 !important; }
+
+    .st-key-logout_no button {
+        background: #ffffff !important;
+        border: 1.5px solid #0f6b62 !important;
+        border-radius: 999px !important;
+        min-height: 1.9rem;
+        padding: 0 1.3rem !important;
+    }
+    .st-key-logout_no button p { color: #0f6b62 !important; font-weight: 600; font-size: 0.85rem; }
+    .st-key-logout_no button:hover { background: #effaf8 !important; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -152,12 +172,15 @@ if "user" not in st.session_state:
 if "onboarding_complete" not in st.session_state:
     st.session_state.onboarding_complete = False
 
-def logout() -> None:
-    st.session_state.logged_in = False
-    st.session_state.user = None
-    st.session_state.onboarding_complete = False
-    st.session_state.pop("ob_step", None)
-    st.session_state.pop("ob_data", None)
+@st.dialog("Log out?")
+def confirm_logout_dialog() -> None:
+    st.write("You’ll need to sign in again to get back to your account.")
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button("Cancel", key="logout_no"):
+            st.rerun()
+        if st.button("Yes, log out", key="logout_yes"):
+            end_session()
+            st.rerun()
 
 # ==========================================
 # PAGES
@@ -178,7 +201,7 @@ if st.session_state.logged_in and not st.session_state.onboarding_complete:
 
 elif st.session_state.logged_in:
     pages = {
-        "Profile": st.Page("views/Profile.py", title="Profile"),
+        "Profile": st.Page("views/pages/profile.py", title="Profile"),
         "Dashboard": st.Page("views/Dashboard.py", title="Dashboard", default=True),
         "Marketplace": st.Page("views/Marketplace.py", title="Marketplace"),
         "Gigs": st.Page("views/Gigs.py", title="Gigs"),
@@ -218,7 +241,8 @@ elif st.session_state.logged_in:
         # Keyed container so the CSS above can pin it to the bottom
         with st.container(key="logout_box"):
             st.divider()
-            st.button("Logout", use_container_width=True, on_click=logout)
+            if st.button("Logout", use_container_width=True):
+                confirm_logout_dialog()
 
 else:
     pg = st.navigation(
