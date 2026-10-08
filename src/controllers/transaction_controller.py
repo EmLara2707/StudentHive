@@ -10,6 +10,7 @@ from models.transaction import (
     Counterpart, InvalidTransition, Role, TodoStep, TodoTask, Transaction,
     TransactionEntry, TransactionKind, TransactionStatus,
 )
+from utils.clock import today_manila
 
 NOT_FOUND_ERROR = "This transaction is no longer available."
 NOT_ALLOWED_ERROR = "That isn't available right now."
@@ -140,11 +141,11 @@ class TransactionController:
         return self._act(actor_email, transaction_id, lambda tx: tx.withdraw(actor_email))
 
     def complete(self, actor_email: str, transaction_id: int, today: date | None = None) -> ActionResult:
-        today = today or date.today()
+        today = today or today_manila()
         return self._act(actor_email, transaction_id, lambda tx: tx.complete(actor_email, today))
 
     def cancel(self, actor_email: str, transaction_id: int, today: date | None = None) -> ActionResult:
-        today = today or date.today()
+        today = today or today_manila()
         return self._act(actor_email, transaction_id, lambda tx: tx.cancel(actor_email, today))
 
     def _act(self, actor_email: str, transaction_id: int, change) -> ActionResult:

@@ -16,6 +16,7 @@ from models.transaction import (
 from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 from repositories.user_repository import UserRepository
+from utils.clock import now_manila
 
 COMING_SOON_MESSAGE = "Coming soon!"
 OWN_LISTING_ERROR = "You can't book your own listing."
@@ -88,8 +89,9 @@ class BookingController:
             return [LOGIN_REQUIRED_ERROR]
         if not self.can_book(context.listing, requester_email):
             return [OWN_LISTING_ERROR]
-        today = today or date.today()
-        clock = (now or datetime.now()).time()
+        now = now or now_manila()
+        today = today or now.date()
+        clock = now.time()
         problems: list[str] = []
         if context.kind is BookingKind.PROJECT:
             if not form.details.strip():
@@ -150,7 +152,8 @@ class BookingController:
         context = self.get_context(listing_id)
         if context is None:
             return BookingResult(False, errors=[UNAVAILABLE_ERROR])
-        today = today or date.today()
+        now = now or now_manila()
+        today = today or now.date()
         problems = self.validate(context, form, requester_email, today, now)
         if problems:
             return BookingResult(False, errors=problems)

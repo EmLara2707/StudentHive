@@ -9,7 +9,7 @@ Layout only. Pricing, validation and sending live in BookingController. Styles:
 views/styles/booking_request.css (uses .sh-badge / .sh-avatar / .sh-image from
 marketplace.css, --ink / --muted from base.css).
 """
-from datetime import date, datetime, time, timedelta
+from datetime import datetime, time, timedelta
 from html import escape
 
 import streamlit as st
@@ -18,6 +18,7 @@ from controllers.booking_controller import COMING_SOON_MESSAGE, OWN_LISTING_ERRO
 from models.booking_request import (
     BookingContext, BookingForm, BookingKind, MeetingMode, PriceQuote,
 )
+from utils.clock import today_manila
 from views.components.listing_components import render_listing_image
 from views.components.styles import load_css
 from views.session import get_booking_controller, get_current_email
@@ -182,16 +183,16 @@ def render_booking_request(listing_id: int) -> None:
                 form.details = st.text_area("Project details", height=170, key=f"bk_details_{lid}",
                                             label_visibility="collapsed")
                 st.markdown("<div class='sh-bk-h'>Deadline and Timeline</div>", unsafe_allow_html=True)
-                form.deadline = st.date_input("Deadline", value=date.today() + timedelta(days=7),
-                                              min_value=date.today(), format="MM/DD/YYYY",
+                form.deadline = st.date_input("Deadline", value=today_manila() + timedelta(days=7),
+                                              min_value=today_manila(), format="MM/DD/YYYY",
                                               key=f"bk_deadline_{lid}", label_visibility="collapsed")
             else:
                 st.markdown(f"<div class='sh-bk-notice'>{escape(_notice(unit))}</div>",
                             unsafe_allow_html=True)
                 c1, c2 = st.columns(2)
                 with c1:
-                    form.start_date = st.date_input(start_lbl, value=date.today(),
-                                                    min_value=date.today(), format="MM/DD/YYYY",
+                    form.start_date = st.date_input(start_lbl, value=today_manila(),
+                                                    min_value=today_manila(), format="MM/DD/YYYY",
                                                     key=f"bk_start_{lid}")
                     form.start_time = _to_time(st.selectbox(
                         "Start time", TIME_OPTIONS, index=TIME_OPTIONS.index(DEFAULT_TIME),
@@ -203,7 +204,7 @@ def render_booking_request(listing_id: int) -> None:
                         form.end_date = st.date_input(end_lbl, format="MM/DD/YYYY",
                                                       key=f"bk_end_{lid}", disabled=True)
                     else:
-                        default_end = date.today() + timedelta(days=1 if unit == "day" else 0)
+                        default_end = today_manila() + timedelta(days=1 if unit == "day" else 0)
                         form.end_date = st.date_input(end_lbl, value=default_end,
                                                       format="MM/DD/YYYY", key=f"bk_end_{lid}")
                     form.end_time = _to_time(st.selectbox(
