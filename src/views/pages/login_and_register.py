@@ -5,7 +5,7 @@ import os
 import streamlit as st
 
 from views.components.styles import load_css
-from views.session import get_auth_controller, start_session
+from views.session import get_auth_controller, start_session, store_auth_tokens
 
 # NOTE: do NOT call st.set_page_config here. App.py already does it.
 
@@ -63,6 +63,8 @@ with right_col:
             if login_button:
                 result = auth.login(school_email, password)
                 if result.ok:
+                    if result.tokens:
+                        store_auth_tokens(*result.tokens)
                     start_session(result.user)
                     st.rerun()
                 else:
@@ -95,7 +97,13 @@ with right_col:
 
             if signup_button:
                 result = auth.register(full_name, new_email, new_password, confirm_password)
-                if result.ok:
+                if result.ok and result.needs_confirmation:
+                    # Supabase email confirmation: not signed in until the link is clicked
+                    st.success("Account created! Check your school inbox and click the "
+                               "confirmation link, then log in.")
+                elif result.ok:
+                    if result.tokens:
+                        store_auth_tokens(*result.tokens)
                     # new user -> onboarding from step 1 with empty data
                     start_session(result.user, reset_onboarding=True)
                     st.rerun()

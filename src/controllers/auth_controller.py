@@ -4,11 +4,12 @@ import re
 from dataclasses import dataclass
 
 from models.user import User
+from repositories import auth_gateway as gw
+from repositories.errors import RepositoryError
 from repositories.listing_repository import ListingRepository
 from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 from repositories.user_repository import UserRepository
-from utils.security import hash_password, verify_password
 
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # StudentHive is for verified students: only addresses on these domains (or their
@@ -21,10 +22,14 @@ class AuthResult:
     ok: bool
     user: User | None = None
     error: str | None = None
+    # Added for Supabase Auth (the three fields above are unchanged):
+    needs_confirmation: bool = False        # signed up, but must click the email link first
+    tokens: tuple[str, str] | None = None   # (access, refresh) for the view to remember
 
     @classmethod
-    def success(cls, user: User | None = None) -> "AuthResult":
-        return cls(ok=True, user=user)
+    def success(cls, user: User | None = None, tokens: tuple[str, str] | None = None,
+                needs_confirmation: bool = False) -> "AuthResult":
+        return cls(ok=True, user=user, tokens=tokens, needs_confirmation=needs_confirmation)
 
     @classmethod
     def failure(cls, message: str) -> "AuthResult":
@@ -36,21 +41,47 @@ class AuthController:
     DELETE_CONFIRMATION = "DELETE"
 
     def __init__(self, users: UserRepository, listings: ListingRepository,
-                 reviews: ReviewRepository, transactions: TransactionRepository) -> None:
+                 reviews: ReviewRepository, transactions: TransactionRepository,
+                 gateway=None) -> None:
         self._users = users
         self._listings = listings
         self._reviews = reviews
         self._transactions = transactions
+        # SupabaseAuthGateway or InMemoryAuthGateway. views/session.py passes it; when it
+        # doesn't, fall back to the in-memory one so the app works either way.
+        self._gateway = gateway if gateway is not None else gw.InMemoryAuthGateway(users)
+
+    @staticmethod
+    def _message_for(outcome) -> str:
+        """Student-facing text for a failed gateway call. The existing messages are
+        kept word for word; only the Supabase-only states are new."""
+        code = outcome.error_code
+        if code == gw.INVALID_CREDENTIALS:
+            return "Invalid email or password."
+        if code == gw.EMAIL_NOT_CONFIRMED:
+            return "Please confirm your email first. Check your inbox for the link."
+        if code == gw.ALREADY_REGISTERED:
+            return "An account with this email already exists."
+        if code == gw.WEAK_PASSWORD:
+            return "That password is too weak. Try a longer one."
+        if code == gw.RATE_LIMITED:
+            return "Too many attempts. Please wait a moment and try again."
+        if code == gw.SIGNUP_REJECTED:
+            return "Please use your school email address (it ends in .edu.ph)."
+        return RepositoryError.DEFAULT_MESSAGE
 
     def login(self, email: str, password: str) -> AuthResult:
         email = (email or "").strip()
         if not email or not password:
             return AuthResult.failure("Please fill in all fields.")
 
+        outcome = self._gateway.sign_in(email, password)
+        if not outcome.ok:
+            return AuthResult.failure(self._message_for(outcome))
         user = self._users.get_by_email(email)
-        if user is None or not verify_password(password, user.password_hash):
+        if user is None:        # signed in, but no profile row: treat as a failed login
             return AuthResult.failure("Invalid email or password.")
-        return AuthResult.success(user)
+        return AuthResult.success(user, tokens=outcome.tokens)
 
     def register(self, full_name: str, email: str, password: str,
                  confirm_password: str) -> AuthResult:
@@ -70,10 +101,13 @@ class AuthController:
         if self._users.exists(email):
             return AuthResult.failure("An account with this email already exists.")
 
-        user = User(name=full_name, email=email,
-                    password_hash=hash_password(password), onboarded=False)
-        self._users.add(user)
-        return AuthResult.success(user)
+        outcome = self._gateway.sign_up(full_name, email, password)
+        if not outcome.ok:
+            return AuthResult.failure(self._message_for(outcome))
+        if outcome.needs_confirmation:      # Supabase: not signed in until the email link
+            return AuthResult.success(needs_confirmation=True)
+        user = self._users.get_by_email(email)
+        return AuthResult.success(user, tokens=outcome.tokens)
 
     @staticmethod
     def is_school_email(email: str) -> bool:
@@ -92,9 +126,12 @@ class AuthController:
             return "New passwords don’t match."
         if new == current:
             return "New password must be different from your current one."
-        user = self._users.get_by_email(email)
-        if user is None or not verify_password(current, user.password_hash):
-            return "Current password is incorrect."
+        # Check the current password by signing in again with it.
+        outcome = self._gateway.sign_in(email, current)
+        if not outcome.ok:
+            if outcome.error_code == gw.INVALID_CREDENTIALS:
+                return "Current password is incorrect."
+            return self._message_for(outcome)
         return None
 
     def change_password(self, email: str, current: str, new: str,
@@ -102,22 +139,35 @@ class AuthController:
         error = self.validate_password_change(email, current, new, verify)
         if error:
             return AuthResult.failure(error)
-        user = self._users.get_by_email(email)
-        user.password_hash = hash_password(new)
-        self._users.save(user)
-        return AuthResult.success(user)
+        outcome = self._gateway.update_password(new)
+        if not outcome.ok:
+            return AuthResult.failure(self._message_for(outcome))
+        return AuthResult.success(self._users.get_by_email(email))
 
     # ---- account deletion ----
     def delete_account(self, email: str, confirmation: str) -> AuthResult:
         if (confirmation or "").strip() != self.DELETE_CONFIRMATION:
             return AuthResult.failure(f"Type {self.DELETE_CONFIRMATION} to confirm.")
-        if not self._users.delete(email):
+        if self._users.get_by_email(email) is None:
             return AuthResult.failure("Account not found.")
-        # Cascade: nothing may be left behind for the next person who registers this
-        # email: its listings, its transactions (on both sides), the reviews written
-        # about it and the reviews it wrote.
-        self._listings.delete_by_owner(email)
-        self._transactions.delete_for_user(email)
-        self._reviews.delete_for_user(email)
-        self._reviews.delete_by_reviewer(email)
+        # The gateway deletes the account: in memory it removes the user, on Supabase it
+        # deletes the auth user and the foreign keys cascade to everything below it.
+        # Supabase side: only the signed-in person's own id is ever used.
+        user_id = self._gateway.current_user_id() or email
+        if "@" in user_id and user_id.lower() != email.strip().lower():
+            return AuthResult.failure("Account not found.")   # signed in as someone else
+        if not self._gateway.admin_delete_user(user_id).ok:
+            return AuthResult.failure("Account not found.")
+        # Cascade by email: nothing may be left behind for the next person who registers
+        # this email: its listings, its transactions (on both sides), the reviews written
+        # about it and the reviews it wrote. Kept until Person B's repositories are
+        # merged (A8 removes it). On Supabase the account is already gone and the
+        # database cascaded, so a failure here must not report the deletion as failed.
+        try:
+            self._listings.delete_by_owner(email)
+            self._transactions.delete_for_user(email)
+            self._reviews.delete_for_user(email)
+            self._reviews.delete_by_reviewer(email)
+        except RepositoryError:
+            pass
         return AuthResult.success()
