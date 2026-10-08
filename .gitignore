@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets: never commit keys (Supabase URL/keys, API tokens, passwords)
+.env
+.env.*
+.streamlit/secrets.toml
+
+# Tools / editors / OS
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

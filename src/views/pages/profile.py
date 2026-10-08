@@ -171,8 +171,8 @@ def confirm_password_dialog(current: str, new: str, verify: str):
 def confirm_delete_dialog():
     auth = get_auth_controller()
     st.write(
-        "This permanently deletes your profile, listings, and reviews. "
-        "This can’t be undone."
+        "This permanently deletes your profile, listings, gigs and rentals "
+        "(including past and pending ones), and reviews. This can’t be undone."
     )
     typed = st.text_input(f"Type {auth.DELETE_CONFIRMATION} to confirm", key="del_confirm_text")
     with st.container(horizontal=True, horizontal_alignment="distribute"):

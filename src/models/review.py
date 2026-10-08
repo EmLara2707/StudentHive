@@ -8,6 +8,7 @@ class Review:
     subject_email: str
     rating: float
     text: str
+    reviewer_email: str = ""      # "" for the sample reviews; used to clean up on account deletion
 
 
 @dataclass(frozen=True)

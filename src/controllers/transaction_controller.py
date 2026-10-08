@@ -181,6 +181,7 @@ class TransactionController:
             subject_email=entry.counterpart.email,
             rating=float(rating),
             text=(text or "").strip()[:MAX_REVIEW_CHARS],
+            reviewer_email=reviewer_email.strip().lower(),
         ))
         entry.transaction.mark_reviewed(reviewer_email)
         self._transactions.save(entry.transaction)
