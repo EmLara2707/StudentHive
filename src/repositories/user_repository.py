@@ -24,6 +24,18 @@ class UserRepository:
     def get_by_email(self, email: str) -> User | None:
         return self._users.get(self._key(email))
 
+    def get_many(self, emails) -> "dict[str, User]":
+        """Several users in one call: {lower-cased email: User}. Emails that match
+        nobody are simply missing from the result. Callers look up with
+        email.strip().lower()."""
+        found: dict[str, User] = {}
+        for email in emails:
+            key = self._key(email)
+            user = self._users.get(key)
+            if user is not None:
+                found[key] = user
+        return found
+
     def exists(self, email: str) -> bool:
         return self._key(email) in self._users
 
