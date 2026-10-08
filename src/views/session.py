@@ -14,35 +14,114 @@ from controllers.public_profile_controller import PublicProfileController
 from controllers.transaction_controller import TransactionController
 from models.listing_draft import ListingDraft
 from models.user import User
+from repositories import factory
 from repositories.listing_repository import ListingRepository
 from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 from repositories.user_repository import UserRepository
 
+# ---- Supabase: one client PER BROWSER SESSION, kept in session_state ----
+# Never cache a user's client with st.cache_resource: it carries that user's token.
+_CLIENT_KEY = "supabase_client"
+_ADMIN_KEY = "supabase_admin_client"
+_TOKENS_KEY = "auth_tokens"          # (access_token, refresh_token) of the signed-in user
+
+
+def _supabase_secrets() -> dict | None:
+    """The [supabase] section of .streamlit/secrets.toml, or None when this machine
+    has no Supabase configured (the app then runs on the in-memory repositories)."""
+    try:
+        section = st.secrets["supabase"]
+        return {
+            "url": section["url"],
+            "anon_key": section["anon_key"],
+            "service_key": section.get("service_key"),
+        }
+    except (FileNotFoundError, KeyError):
+        return None
+
+
+def get_supabase_client():
+    """This browser session's Supabase client (carrying the stored token, if any),
+    or None when Supabase isn't configured."""
+    client = st.session_state.get(_CLIENT_KEY)
+    if client is not None:
+        return client
+    config = _supabase_secrets()
+    if config is None:
+        return None
+    from repositories.supabase_client import create_client, with_token
+    client = create_client(config["url"], config["anon_key"])
+    tokens = st.session_state.get(_TOKENS_KEY)
+    if tokens:
+        try:
+            with_token(client, *tokens)
+        except Exception:                      # expired beyond refresh: sign in again
+            st.session_state.pop(_TOKENS_KEY, None)
+    st.session_state[_CLIENT_KEY] = client
+    return client
+
+
+def get_admin_client():
+    """Service-role client, or None if no service key is configured. Only for deleting
+    accounts and seed scripts; never pass it to a view."""
+    client = st.session_state.get(_ADMIN_KEY)
+    if client is not None:
+        return client
+    config = _supabase_secrets()
+    if config is None or not config["service_key"]:
+        return None
+    from repositories.supabase_client import create_admin_client
+    client = create_admin_client(config["url"], config["service_key"])
+    st.session_state[_ADMIN_KEY] = client
+    return client
+
+
+def store_auth_tokens(access_token: str, refresh_token: str) -> None:
+    """Remember the signed-in user's tokens for this browser session."""
+    st.session_state[_TOKENS_KEY] = (access_token, refresh_token)
+
+
+def get_auth_tokens() -> tuple[str, str] | None:
+    return st.session_state.get(_TOKENS_KEY)
+
 
 # ---- repositories: one of each per browser session ----
+# What gets built (in-memory or Supabase) is decided in repositories/factory_a.py
+# and factory_b.py: one flag per repository, each owned by one person.
 def get_user_repository() -> UserRepository:
     if "user_repository" not in st.session_state:
-        st.session_state.user_repository = UserRepository.seeded()
+        st.session_state.user_repository = factory.build_user_repository(get_supabase_client())
     return st.session_state.user_repository
 
 
 def get_listing_repository() -> ListingRepository:
     if "listing_repository" not in st.session_state:
-        st.session_state.listing_repository = ListingRepository.seeded()
+        st.session_state.listing_repository = factory.build_listing_repository(
+            get_supabase_client())
     return st.session_state.listing_repository
 
 
 def get_review_repository() -> ReviewRepository:
     if "review_repository" not in st.session_state:
-        st.session_state.review_repository = ReviewRepository.seeded()
+        st.session_state.review_repository = factory.build_review_repository(
+            get_supabase_client())
     return st.session_state.review_repository
 
 
 def get_transaction_repository() -> TransactionRepository:
     if "transaction_repository" not in st.session_state:
-        st.session_state.transaction_repository = TransactionRepository.seeded()
+        st.session_state.transaction_repository = factory.build_transaction_repository(
+            get_supabase_client())
     return st.session_state.transaction_repository
+
+
+def get_auth_gateway():
+    """What AuthController signs people in with (None until Person A's A2 lands)."""
+    if "auth_gateway" not in st.session_state:
+        st.session_state.auth_gateway = factory.build_auth_gateway(
+            get_supabase_client(), get_admin_client)
+    return st.session_state.auth_gateway
 
 
 # ---- controllers (stateless, cheap to build) ----
@@ -112,17 +191,33 @@ def start_session(user: User, reset_onboarding: bool = False) -> None:
 
 
 # The in-memory repositories ARE the "database" for now, so a logout must not wipe them
-# (registered accounts would disappear). Everything else belongs to the person who just
-# left: wizard draft, open booking page, typed text, open profile, selections, toasts...
+# (registered accounts would disappear). A Supabase-backed one (in_memory = False) is
+# tied to one person's client, so it IS dropped. Everything else belongs to the person
+# who just left: wizard draft, open booking page, typed text, open profile, selections...
 _REPOSITORY_KEYS = (
     "user_repository", "listing_repository", "review_repository", "transaction_repository",
+    "auth_gateway",
 )
+
+
+def _sign_out_of_supabase() -> None:
+    client = st.session_state.get(_CLIENT_KEY)
+    if client is None:
+        return
+    try:
+        client.auth.sign_out({"scope": "local"})   # this session only, not their other devices
+    except Exception:
+        pass            # token already expired or no network: the client is dropped anyway
 
 
 def end_session() -> None:
     """Log out and forget everything the previous person was doing."""
+    _sign_out_of_supabase()
+    keep = {key for key in _REPOSITORY_KEYS
+            if getattr(st.session_state.get(key), "in_memory", True)}
+    # everything else goes, including the Supabase client(s) and the stored tokens
     for key in list(st.session_state.keys()):
-        if key not in _REPOSITORY_KEYS:
+        if key not in keep:
             del st.session_state[key]
     st.session_state.logged_in = False
     st.session_state.user = None
