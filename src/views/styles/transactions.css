@@ -1,3 +1,11 @@
+/* ---------- role colors: the ONE place to change them (chips, legend dots, card badges) ---------- */
+  :root {
+      --role-doing:   #F5A03C;
+      --role-hiring:  #0F9D8A;
+      --role-renting: #0F9D8A;
+      --role-lending: #F5A03C;
+  }
+
   /* ---------- page header (same look as the Marketplace page) ---------- */
   [data-testid="stMain"] p,
   [data-testid="stMain"] button,
@@ -273,10 +281,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
   }
-  .chip-doing   { background: #0F9D8A; }
-  .chip-renting { background: #0F9D8A; }
-  .chip-hiring  { background: #F5A03C; }
-  .chip-lending { background: #F5A03C; }
+  .chip-doing   { background: var(--role-doing); }
+  .chip-renting { background: var(--role-renting); }
+  .chip-hiring  { background: var(--role-hiring); }
+  .chip-lending { background: var(--role-lending); }
   .chip-pending   { opacity: 0.55; }
 
   .chip-more {
@@ -307,10 +315,11 @@
       border-radius: 50%;
       display: inline-block;
   }
-  .dot-doing    { background: #0F9D8A; }
-  .dot-renting  { background: #0F9D8A; }
-  .dot-hiring   { background: #F5A03C; margin-left: 0.6rem; }
-  .dot-lending  { background: #F5A03C; margin-left: 0.6rem; }
+  .dot-doing    { background: var(--role-doing); }
+  .dot-renting  { background: var(--role-renting); }
+  .dot-hiring   { background: var(--role-hiring); }
+  .dot-lending  { background: var(--role-lending); }
+  .cal-legend .dot:not(:first-child) { margin-left: 0.6rem; }   /* gap between the two legend entries */
 
   /* ---------- Gig cards (clickable) ---------- */
   [class*="st-key-rcard_"] {
@@ -382,10 +391,10 @@
       font-weight: 700;
       color: #FFFFFF;
   }
-  .badge-doing    { background: #0F9D8A; }
-  .badge-renting  { background: #0F9D8A; }
-  .badge-hiring   { background: #F5A03C; }
-  .badge-lending  { background: #F5A03C; }
+  .badge-doing    { background: var(--role-doing); }
+  .badge-renting  { background: var(--role-renting); }
+  .badge-hiring   { background: var(--role-hiring); }
+  .badge-lending  { background: var(--role-lending); }
   .badge-pending   { background: #8A94A0; }
   .badge-cancelled { background: #D64545; }
   .listing-price {

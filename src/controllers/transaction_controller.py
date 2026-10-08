@@ -89,11 +89,15 @@ class TransactionController:
     # ------------------------------------------------------------ calendar
     @staticmethod
     def by_day(entries: list[TransactionEntry]) -> dict[date, list[TransactionEntry]]:
-        """Every entry listed under each day it covers."""
+        """Every entry listed under each day it covers. Within a day, the ones where I
+        am the requester (Hiring / Renting, shown in green) come before the ones where
+        I am the provider (Doing / Lending, orange); otherwise the order is unchanged."""
         grouped: dict[date, list[TransactionEntry]] = defaultdict(list)
         for e in entries:
             for day in e.transaction.days():
                 grouped[day].append(e)
+        for day_entries in grouped.values():
+            day_entries.sort(key=lambda e: e.is_provider)      # False (requester) first, stable
         return grouped
 
     @staticmethod
