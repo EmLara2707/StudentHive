@@ -156,8 +156,8 @@ def render_booking_request(listing_id: int) -> None:
     is_project = context.kind is BookingKind.PROJECT
     unit = listing.unit
     cta = "Request Project" if is_project else "Request Booking"
-    form_cta = ("Send Project Request" if is_project else
-                {"day": "Request for Daily Rates", "hr": "Request for Hourly Rates"}.get(unit, "Request Booking"))
+    form_cta = (None if is_project else
+                {"day": "Request for Hourly Rates", "hr": "Request for Daily Rates"}.get(unit, "Request Booking"))
     lid = listing.id
     # Rentals use pickup/return wording; Gig (Service) uses its own wording
     start_lbl = "Start / Pickup Date" if is_rental else "Start Date"
@@ -224,7 +224,8 @@ def render_booking_request(listing_id: int) -> None:
                 if needs_location:
                     form.location = st.text_area(loc_lbl, height=110, key=f"bk_loc_{lid}")
 
-            submit_main = st.button(form_cta, key="book_submit_main", width="stretch")
+            submit_main = (st.button(form_cta, key="book_submit_main", width="stretch")
+                           if form_cta else False)
             st.markdown(
                 "<div class='sh-bk-fine'>Kindly review the details as it can no longer be "
                 "edited as soon as you confirm.</div>",
