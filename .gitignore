@@ -13,7 +13,7 @@ env/
 # Secrets: never commit keys (Supabase URL/keys, API tokens, passwords)
 .env
 .env.*
-.streamlit/secrets.toml
+**/.streamlit/secrets.toml
 
 # Tools / editors / OS
 .pytest_cache/
