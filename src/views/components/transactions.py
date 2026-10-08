@@ -19,6 +19,7 @@ from models.transaction import (
     Action, Role, TodoStep, TodoTask, TransactionEntry, TransactionKind,
     TransactionStatus,
 )
+from utils.clock import today_manila
 from utils.dates import first_of_month, shift_month
 from views.components.styles import load_css
 from views.components.user_profile import open_profile, render_open_profile
@@ -324,7 +325,7 @@ def _shift(key: str, delta: int) -> None:
 
 
 def _go_today(key: str) -> None:
-    st.session_state[key] = first_of_month(date.today())
+    st.session_state[key] = first_of_month(today_manila())
 
 
 def _toggle_sort(key: str) -> None:
@@ -575,7 +576,7 @@ def render_actions(ctx: _Ctx, r: TransactionEntry) -> None:
 
 # ------------------------------------------------------------ page
 def _context(kind: TransactionKind) -> _Ctx:
-    return _Ctx(kind, _COPY[kind], get_transaction_controller(), get_current_email(), date.today())
+    return _Ctx(kind, _COPY[kind], get_transaction_controller(), get_current_email(), today_manila())
 
 
 def _init_state(ctx: _Ctx) -> None:

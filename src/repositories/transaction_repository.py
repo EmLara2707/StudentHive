@@ -7,6 +7,7 @@ from models.transaction import (
 )
 from repositories.seed_data import email_for
 from repositories.user_repository import DEMO_EMAIL
+from utils.clock import today_manila
 
 G, R = TransactionKind.GIG, TransactionKind.RENTAL
 ACTIVE, PENDING = TransactionStatus.ACTIVE, TransactionStatus.PENDING
@@ -85,7 +86,7 @@ class TransactionRepository:
     @classmethod
     def seeded(cls, today: date | None = None) -> "TransactionRepository":
         """Sample history for the demo user, dated relative to today."""
-        today = today or date.today()
+        today = today or today_manila()
         repo = cls()
         for kind, item, is_provider, status, cancelled, a, b, price, other in _SAMPLES:
             other_email = email_for(other)
