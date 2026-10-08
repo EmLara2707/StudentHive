@@ -117,10 +117,10 @@ def get_transaction_repository() -> TransactionRepository:
 
 
 def get_auth_gateway():
-    """What AuthController signs people in with (None until Person A's A2 lands)."""
+    """What AuthController signs people in with: the Supabase gateway, or the in-memory one."""
     if "auth_gateway" not in st.session_state:
         st.session_state.auth_gateway = factory.build_auth_gateway(
-            get_supabase_client(), get_admin_client)
+            get_supabase_client(), get_admin_client, get_user_repository())
     return st.session_state.auth_gateway
 
 
@@ -128,7 +128,7 @@ def get_auth_gateway():
 def get_auth_controller() -> AuthController:
     return AuthController(
         get_user_repository(), get_listing_repository(), get_review_repository(),
-        get_transaction_repository(),
+        get_transaction_repository(), get_auth_gateway(),
     )
 
 

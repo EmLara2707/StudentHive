@@ -24,14 +24,15 @@ def build_user_repository(client) -> UserRepository:
     return UserRepository.seeded()
 
 
-def build_auth_gateway(client, get_admin_client):
+def build_auth_gateway(client, get_admin_client, users=None):
     """The object AuthController signs people in and out with (A2/A3).
 
-    Returns None until the gateway exists: nothing calls it yet, and the
-    in-memory AuthController still checks passwords itself. `get_admin_client` is a
-    function (not a client) so the service-role key is only touched when an account
-    is actually deleted."""
+    With USE_SUPABASE_USERS on it is the Supabase gateway. Otherwise it is the in-memory
+    gateway over the in-memory `users` repository, so the app behaves as before.
+    `get_admin_client` is a function (not a client) so the service-role key is only
+    touched when an account is actually deleted."""
     if USE_SUPABASE_USERS:
-        # A2: return SupabaseAuthGateway(client, get_admin_client)
-        raise NotImplementedError("The auth gateway is not written yet (A2).")
-    return None
+        from repositories.auth_gateway import SupabaseAuthGateway
+        return SupabaseAuthGateway(client, get_admin_client)
+    from repositories.auth_gateway import InMemoryAuthGateway
+    return InMemoryAuthGateway(users)
