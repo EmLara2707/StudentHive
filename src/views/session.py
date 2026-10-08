@@ -48,7 +48,8 @@ def get_transaction_repository() -> TransactionRepository:
 # ---- controllers (stateless, cheap to build) ----
 def get_auth_controller() -> AuthController:
     return AuthController(
-        get_user_repository(), get_listing_repository(), get_review_repository()
+        get_user_repository(), get_listing_repository(), get_review_repository(),
+        get_transaction_repository(),
     )
 
 
@@ -80,7 +81,8 @@ def get_marketplace_controller() -> MarketplaceController:
 
 def get_booking_controller() -> BookingController:
     return BookingController(
-        get_marketplace_controller(), get_review_repository(), get_transaction_repository()
+        get_marketplace_controller(), get_review_repository(), get_transaction_repository(),
+        get_user_repository(),
     )
 
 
@@ -109,12 +111,22 @@ def start_session(user: User, reset_onboarding: bool = False) -> None:
         st.session_state.pop("ob_data", None)
 
 
+# The in-memory repositories ARE the "database" for now, so a logout must not wipe them
+# (registered accounts would disappear). Everything else belongs to the person who just
+# left: wizard draft, open booking page, typed text, open profile, selections, toasts...
+_REPOSITORY_KEYS = (
+    "user_repository", "listing_repository", "review_repository", "transaction_repository",
+)
+
+
 def end_session() -> None:
+    """Log out and forget everything the previous person was doing."""
+    for key in list(st.session_state.keys()):
+        if key not in _REPOSITORY_KEYS:
+            del st.session_state[key]
     st.session_state.logged_in = False
     st.session_state.user = None
     st.session_state.onboarding_complete = False
-    st.session_state.pop("ob_step", None)
-    st.session_state.pop("ob_data", None)
 
 
 def refresh_session_user(user: User) -> None:

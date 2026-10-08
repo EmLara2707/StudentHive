@@ -1,0 +1,4 @@
+# Run from inside src/:  streamlit run App.py
+# st.space() first shipped in Streamlit 1.51; the app is tested on 1.51 and 1.65.
+streamlit>=1.51,<2
+Pillow>=10      # optional: compresses uploaded photos; the app falls back to the original without it
