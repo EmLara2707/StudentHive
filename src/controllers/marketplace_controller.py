@@ -19,15 +19,20 @@ class MarketplaceController:
         self._users = users            # UserRepository
 
     # ---- owner display info ----
-    def _owner(self, email: str) -> OwnerInfo:
-        user = self._users.get_by_email(email)
-        if user is None:
-            return OwnerInfo(email, UNKNOWN_OWNER, NO_COURSE)
-        course = (user.profile.major or "").strip() or NO_COURSE
-        return OwnerInfo(user.email, user.name, course)
-
-    def _entry(self, listing: Listing) -> ListingEntry:
-        return ListingEntry(listing, self._owner(listing.owner_email))
+    def _entries(self, listings: list[Listing]) -> list[ListingEntry]:
+        """Listings with their owners attached. Owners are loaded in ONE repository
+        call for the whole list, not one lookup per card."""
+        users = self._users.get_many({l.owner_email for l in listings})
+        entries = []
+        for listing in listings:
+            user = users.get(listing.owner_email.strip().lower())
+            if user is None:
+                owner = OwnerInfo(listing.owner_email, UNKNOWN_OWNER, NO_COURSE)
+            else:
+                course = (user.profile.major or "").strip() or NO_COURSE
+                owner = OwnerInfo(user.email, user.name, course)
+            entries.append(ListingEntry(listing, owner))
+        return entries
 
     # ---- browsing ----
     def get_entry(self, listing_id: int) -> ListingEntry | None:
@@ -35,7 +40,7 @@ class MarketplaceController:
         listing = self._listings.get(listing_id)
         if listing is None or listing.is_closed:
             return None
-        return self._entry(listing)
+        return self._entries([listing])[0]
 
     def search(
         self,
@@ -47,7 +52,7 @@ class MarketplaceController:
         `categories` limits to Gig/Rental; `deliverable_kind` ("Service"/"Project")
         narrows Gigs."""
         q = (query or "").strip().lower()
-        entries = [self._entry(l) for l in self._listings.get_all() if not l.is_closed]
+        entries = self._entries([l for l in self._listings.get_all() if not l.is_closed])
         if categories:
             entries = [e for e in entries if e.listing.category in categories]
         if deliverable_kind:

@@ -36,7 +36,10 @@ class TransactionController:
         """All of this user's transactions of one kind (oldest id first)."""
         if not email:
             return []
-        return [self._entry(t, email) for t in self._transactions.get_for_user(email, kind)]
+        transactions = self._transactions.get_for_user(email, kind)
+        # one repository call for every counterpart, not one lookup per transaction
+        users = self._users.get_many({t.counterpart_email(email) for t in transactions})
+        return [self._entry(t, email, users) for t in transactions]
 
     def get_entry(self, email: str, transaction_id: int | None,
                   kind: TransactionKind | None = None) -> TransactionEntry | None:
@@ -49,9 +52,13 @@ class TransactionController:
             return None
         return self._entry(tx, email)
 
-    def _entry(self, tx: Transaction, viewer_email: str) -> TransactionEntry:
+    def _entry(self, tx: Transaction, viewer_email: str, users: dict | None = None) -> TransactionEntry:
+        """`users` is the {email: User} map from get_many when building a list;
+        a single entry loads its one counterpart itself."""
         other = tx.counterpart_email(viewer_email)
-        user = self._users.get_by_email(other)
+        if users is None:
+            users = self._users.get_many({other})
+        user = users.get(other.strip().lower())
         return TransactionEntry(tx, viewer_email, Counterpart(other, user.name if user else UNKNOWN_NAME))
 
     # ------------------------------------------------------------ tabs: filter + sort
