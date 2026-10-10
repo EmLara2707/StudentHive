@@ -13,7 +13,7 @@ from repositories.user_repository import UserRepository
 
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # StudentHive is for verified students: only addresses on these domains (or their
-# subdomains, e.g. student.ateneo.edu.ph) can register. The real school domain is mcm.edu.ph.
+# subdomains, e.g. student.mcm.edu.ph) can register. The real school domain is mcm.edu.ph.
 SCHOOL_EMAIL_DOMAINS = ("mcm.edu.ph",)
 
 
