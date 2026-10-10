@@ -1,4 +1,5 @@
 import streamlit as st
+from repositories.errors import RepositoryError
 from views.components.auth_cookie import flush_cookie_command
 from views.components.session_lifecycle import (
     keep_tokens_fresh, restore_login_on_load, sign_out_everywhere,
@@ -268,4 +269,12 @@ else:
 # A6: send a queued cookie change (save / forget the login) to the browser
 flush_cookie_command()
 
-pg.run()
+# A6/A5: a failed storage call (network, expired token, database) raises RepositoryError, whose
+# message is safe to show. Catch it here once, for every page, so a student sees a plain
+# message and a "Try again" button instead of Streamlit's red traceback. st.rerun() and
+# st.stop() are not RepositoryErrors, so they pass through untouched.
+try:
+    pg.run()
+except RepositoryError as exc:
+    st.error(str(exc))
+    st.button("Try again", key="app_retry")   # any click re-runs the page
