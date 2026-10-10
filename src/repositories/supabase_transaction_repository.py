@@ -14,7 +14,7 @@ Notes
   the placeholder is stored as NULL. Both are turned back into URLs on read.
 - Not cached: client.table(...) is looked up fresh on every use (supabase-py resets
   handles on sign-in and token refresh).
-- Reviews are B4: Transaction.reviewed_by is NOT stored here (it comes back empty).
+- Reviews live in SupabaseReviewRepository, not here.
 """
 from datetime import date, time
 

@@ -93,7 +93,6 @@ class Transaction:
     location: str = ""
     project_details: str = ""           # Projects only
     deadline: date | None = None        # Projects only
-    reviewed_by: frozenset = frozenset()  # emails that already left their review
 
     # ------------------------------------------------------------ who is who
     def is_provider(self, email: str) -> bool:
@@ -181,12 +180,6 @@ class Transaction:
     def cancel(self, by: str, today: date) -> None:
         self._require(Action.CANCEL, by, today)
         self._cancel(by)
-
-    def mark_reviewed(self, by: str) -> None:
-        self.reviewed_by = self.reviewed_by | {_key(by)}
-
-    def has_reviewed(self, email: str) -> bool:
-        return _key(email) in self.reviewed_by
 
     # ------------------------------------------------------------ internals
     def _cancel(self, by: str) -> None:

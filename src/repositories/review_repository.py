@@ -1,15 +1,27 @@
 """In-memory review storage."""
 from models.review import Review
+from repositories.errors import ConflictError
 from repositories.seed_data import SAMPLE_REVIEWS, SAMPLE_STUDENTS
 from repositories.user_repository import DEMO_EMAIL
 
 
 class ReviewRepository:
+    in_memory = True
+
     def __init__(self) -> None:
         self._reviews: list[Review] = []
 
     def add(self, review: Review) -> None:
+        """Mirrors the database: one review per (transaction, reviewer)."""
+        if (review.transaction_id is not None
+                and self.has_reviewed(review.transaction_id, review.reviewer_email)):
+            raise ConflictError()
         self._reviews.append(review)
+
+    def has_reviewed(self, transaction_id: int, reviewer_email: str) -> bool:
+        key = (reviewer_email or "").strip().lower()
+        return any(r.transaction_id == transaction_id and r.reviewer_email == key
+                   for r in self._reviews)
 
     def get_for_user(self, email: str) -> list[Review]:
         key = email.strip().lower()

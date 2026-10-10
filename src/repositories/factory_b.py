@@ -12,6 +12,7 @@ client but keeps the in-memory "database".
 from repositories.listing_repository import ListingRepository
 from repositories.supabase_listing_repository import SupabaseListingRepository
 from repositories.review_repository import ReviewRepository
+from repositories.supabase_review_repository import SupabaseReviewRepository
 from repositories.supabase_transaction_repository import SupabaseTransactionRepository
 from repositories.transaction_repository import TransactionRepository
 
@@ -33,8 +34,7 @@ def build_transaction_repository(client) -> TransactionRepository | SupabaseTran
     return TransactionRepository.seeded()
 
 
-def build_review_repository(client) -> ReviewRepository:
-    if USE_SUPABASE_REVIEWS:
-        # B4: return SupabaseReviewRepository(client)
-        raise NotImplementedError("SupabaseReviewRepository is not written yet (B4).")
+def build_review_repository(client) -> ReviewRepository | SupabaseReviewRepository:
+    if USE_SUPABASE_REVIEWS and client is not None:
+        return SupabaseReviewRepository(client)
     return ReviewRepository.seeded()

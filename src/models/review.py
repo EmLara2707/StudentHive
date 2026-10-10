@@ -9,6 +9,7 @@ class Review:
     rating: float
     text: str
     reviewer_email: str = ""      # "" for the sample reviews; used to clean up on account deletion
+    transaction_id: int | None = None   # None for the sample reviews
 
 
 @dataclass(frozen=True)
