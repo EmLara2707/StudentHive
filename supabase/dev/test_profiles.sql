@@ -1,5 +1,5 @@
 -- DEV ONLY. Never run in production. Run once in YOUR OWN Supabase project's SQL editor
--- after migrations 001-005, so foreign keys have profile rows to point at.
+-- after migrations 001-004, so foreign keys have profile rows to point at.
 --
 -- These rows have no password, so nobody can sign in as them; they only exist so that
 -- listings / transactions / reviews can reference real profiles.id values. The signup
