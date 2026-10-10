@@ -57,3 +57,43 @@ create policy "profiles readable by members" on public.profiles
     for select to authenticated using (true);
 create policy "own profile editable" on public.profiles
     for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+
+-- ---------------------------------------------------------------- A4 additions
+-- Safe to run more than once. If your project already ran the part above, copy only
+-- this block into the SQL editor.
+
+-- "Is this email already registered?" for the sign-up form. The sign-up screen runs
+-- before anyone is signed in, and profiles are readable only by signed-in members, so a
+-- plain select would always say "no". This returns ONLY true/false, never row data.
+-- Accepted trade-off: anyone can test whether an email has an account (the sign-up form
+-- already reveals that). The signup trigger still guards the real insert.
+create or replace function public.email_registered(p_email text) returns boolean
+language sql stable security definer set search_path = '' as $$
+    select exists (select 1 from public.profiles where email = lower(trim(p_email)));
+$$;
+revoke all on function public.email_registered(text) from public;
+grant execute on function public.email_registered(text) to anon, authenticated;
+
+-- Avatars bucket. Public read (same choice as listing-images in 004): anyone with the
+-- link can view an image; only the signed-in owner can write inside their own folder
+-- <user id>/<file>.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 10485760,
+        array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do nothing;
+
+drop policy if exists "avatars: members can look" on storage.objects;
+drop policy if exists "avatars: owner uploads" on storage.objects;
+drop policy if exists "avatars: owner replaces" on storage.objects;
+drop policy if exists "avatars: owner deletes" on storage.objects;
+create policy "avatars: members can look" on storage.objects
+    for select to authenticated using (bucket_id = 'avatars');
+create policy "avatars: owner uploads" on storage.objects
+    for insert to authenticated
+    with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "avatars: owner replaces" on storage.objects
+    for update to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy "avatars: owner deletes" on storage.objects
+    for delete to authenticated
+    using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
