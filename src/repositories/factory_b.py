@@ -18,8 +18,8 @@ from repositories.transaction_repository import TransactionRepository
 
 # Flip each to True once its Supabase repository is ready.
 USE_SUPABASE_LISTINGS = True
-USE_SUPABASE_TRANSACTIONS = False
-USE_SUPABASE_REVIEWS = False
+USE_SUPABASE_TRANSACTIONS = True
+USE_SUPABASE_REVIEWS = True
 
 
 def build_listing_repository(client) -> ListingRepository | SupabaseListingRepository:
