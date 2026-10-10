@@ -70,13 +70,6 @@ class TransactionRepository:
         return [t for t in self._items
                 if t.involves(email) and (kind is None or t.kind is kind)]
 
-    def delete_for_user(self, email: str) -> int:
-        """Remove every transaction the user is part of; returns how many were removed."""
-        kept = [t for t in self._items if not t.involves(email)]
-        removed = len(self._items) - len(kept)
-        self._items = kept
-        return removed
-
     def save(self, transaction: Transaction,
              expected_status: TransactionStatus | None = None) -> None:
         """Persist changes to an existing transaction. `expected_status` (the status that

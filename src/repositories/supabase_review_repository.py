@@ -12,8 +12,8 @@ Notes
 - The reviewer's name comes from that join. Seeded sample reviews have no reviewer
   account (reviewer_id is NULL) and keep their text in reviewer_name instead.
 - Not cached: client.table(...) is looked up fresh on every use.
-- delete_for_user / delete_by_reviewer do nothing and return 0: deleting a profile
-  cascades to its reviews (written and received), and there is no DELETE policy.
+- Deleting a profile cascades to its reviews (written and received) through foreign
+  keys; there is no DELETE policy and no delete method here.
 """
 import httpx
 from postgrest.exceptions import APIError
@@ -99,9 +99,3 @@ class SupabaseReviewRepository:
                 conflict.__cause__ = exc
                 raise conflict
             raise self._fail(exc)
-
-    def delete_for_user(self, email: str) -> int:
-        return 0       # the foreign-key cascade removes them when the profile is deleted
-
-    def delete_by_reviewer(self, email: str) -> int:
-        return 0       # same: cascade

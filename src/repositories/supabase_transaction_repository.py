@@ -175,9 +175,3 @@ class SupabaseTransactionRepository:
             raise self._fail(exc)
         if not changed:
             raise ConflictError()
-
-    def delete_for_user(self, email: str) -> int:
-        """No-op here: deleting the user cascades to their transactions (foreign key).
-        Kept only because AuthController.delete_account still calls it; removed in the
-        final PR."""
-        return 0
