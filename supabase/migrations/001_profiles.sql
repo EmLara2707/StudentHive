@@ -32,11 +32,11 @@ create table public.profiles (
 -- Known loosenesses (fine for a school project): a signed-in user can update any column
 -- of their own profile (including onboarded / id_status), and either participant can
 -- update any column of a transaction. The Python model's rules are what really gate this.
-create function public.handle_new_user() returns trigger
+create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = '' as $$
 begin
-    if lower(new.email) !~ '@([a-z0-9-]+\.)*edu\.ph$' then
-        raise exception 'Please use your school email address (it ends in .edu.ph).';
+    if lower(new.email) !~ '@([a-z0-9-]+\.)*mcm\.edu\.ph$' then
+        raise exception 'Please use your school email address (it ends in mcm.edu.ph).';
     end if;
     insert into public.profiles (id, email, name)
     values (new.id, lower(new.email),
