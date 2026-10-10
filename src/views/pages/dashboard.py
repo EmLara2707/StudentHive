@@ -9,6 +9,7 @@ import streamlit as st
 from models.event import CalendarEvent, EventKind
 from utils.clock import today_manila
 from utils.dates import first_of_month, shift_month
+from views.components.repo_errors import loading
 from views.components.styles import load_css
 from views.session import get_dashboard_controller
 
@@ -118,7 +119,8 @@ def _dialog_go_today() -> None:
 @st.dialog("Schedule", width="large")
 def calendar_dialog() -> None:
     ctrl = get_dashboard_controller()
-    events = _events()
+    with loading("Loading your schedule...", "Couldn't load your schedule.", key="retry_dlg_events"):
+        events = _events()
     by_day = ctrl.group_by_day(events)
     today = today_manila()
     view = st.session_state.dlg_month
@@ -176,7 +178,8 @@ def calendar_dialog() -> None:
 # ------------------------------------------------------------ page
 ctrl = get_dashboard_controller()
 today = today_manila()
-events = _events()
+with loading("Loading your dashboard...", "Couldn't load your dashboard.", key="retry_dashboard"):
+    events = _events()
 events_by_day = ctrl.group_by_day(events)
 
 if "cal_month" not in st.session_state:
@@ -201,7 +204,8 @@ left_col, right_col = st.columns([2, 1])
 with left_col:
     st.subheader("My Listings")
 
-    listings = ctrl.get_listings(_email())
+    with loading("Loading your listings...", "Couldn't load your listings.", key="retry_listings"):
+        listings = ctrl.get_listings(_email())
     with st.container(key="list_box"):
         if listings:
             cards_html = "".join(listing_card(l) for l in listings)

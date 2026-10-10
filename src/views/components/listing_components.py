@@ -7,6 +7,7 @@ from typing import Callable, Optional
 import streamlit as st
 
 from models.listing import Listing, ListingEntry
+from views.components.repo_errors import loading
 from views.components.user_profile import open_profile
 from views.session import get_booking_controller, get_current_email, get_marketplace_controller
 
@@ -207,7 +208,8 @@ def _lb_step(delta: int, n: int) -> None:
 
 @st.dialog("Photos", width="large")
 def lightbox_dialog(listing_id: int) -> None:
-    entry = get_marketplace_controller().get_entry(listing_id)
+    with loading("Loading photos...", "Couldn't load these photos.", key="retry_lightbox"):
+        entry = get_marketplace_controller().get_entry(listing_id)
     imgs = entry.listing.images if entry else []
     n = len(imgs)
     if n == 0:

@@ -14,6 +14,7 @@ from views.components.listing_components import (
     render_listing_detail, render_listing_grid, render_side_panel,
 )
 from views.components.listing_wizard import render_create_listing
+from views.components.repo_errors import loading
 from views.components.styles import load_css
 from views.components.user_profile import render_open_profile
 from views.session import (
@@ -84,12 +85,15 @@ def _render_browse(market) -> None:
                                                label_visibility="collapsed", key="market_kind")
 
     st.space("small")
-    render_listing_grid(market.browse(query, chosen, kind_choice), _open_listing, key_prefix="market")
+    with loading("Loading listings...", "Couldn't load the Marketplace.", key="retry_market"):
+        entries = market.browse(query, chosen, kind_choice)
+    render_listing_grid(entries, _open_listing, key_prefix="market")
 
 
 # ------------------------------------------------------------ detail
 def _render_detail(market, listing_id: int) -> None:
-    entry = market.get_entry(listing_id)
+    with loading("Loading listing...", "Couldn't load this listing.", key="retry_detail"):
+        entry = market.get_entry(listing_id)
     if entry is None:                      # deleted or closed in the meantime
         _close_listing()
         st.rerun()
