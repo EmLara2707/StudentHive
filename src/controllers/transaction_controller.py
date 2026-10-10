@@ -177,7 +177,7 @@ class TransactionController:
         entry = self.get_entry(actor_email, transaction_id)
         return (entry is not None
                 and entry.status is TransactionStatus.COMPLETED
-                and not entry.transaction.has_reviewed(actor_email))
+                and not self._reviews.has_reviewed(transaction_id, actor_email))
 
     def submit_review(self, reviewer_email: str, transaction_id: int,
                       rating: int, text: str) -> ActionResult:
@@ -187,16 +187,18 @@ class TransactionController:
             return ActionResult(False, error=NOT_FOUND_ERROR)
         if not self.can_review(reviewer_email, transaction_id):
             return ActionResult(False, entry, NOT_ALLOWED_ERROR)
-        if not 1 <= rating <= 5:
+        if isinstance(rating, bool) or not isinstance(rating, int) or not 1 <= rating <= 5:
             return ActionResult(False, entry, "Please pick a star rating.")
         reviewer = self._users.get_by_email(reviewer_email)
-        self._reviews.add(Review(
-            reviewer=reviewer.name if reviewer else UNKNOWN_NAME,
-            subject_email=entry.counterpart.email,
-            rating=float(rating),
-            text=(text or "").strip()[:MAX_REVIEW_CHARS],
-            reviewer_email=reviewer_email.strip().lower(),
-        ))
-        entry.transaction.mark_reviewed(reviewer_email)
-        self._transactions.save(entry.transaction, entry.transaction.status)
+        try:
+            self._reviews.add(Review(
+                reviewer=reviewer.name if reviewer else UNKNOWN_NAME,
+                subject_email=entry.counterpart.email,
+                rating=float(rating),
+                text=(text or "").strip()[:MAX_REVIEW_CHARS],
+                reviewer_email=reviewer_email.strip().lower(),
+                transaction_id=entry.id,
+            ))
+        except ConflictError:                   # already reviewed (double submit)
+            return ActionResult(False, entry, NOT_ALLOWED_ERROR)
         return ActionResult(True, entry)
