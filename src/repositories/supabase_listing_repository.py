@@ -15,6 +15,7 @@ Notes
 """
 import uuid
 
+import httpx
 from postgrest.exceptions import APIError
 
 from models.listing import ALLOWED_MIMES, MAX_IMAGES, Listing, ListingStatus
@@ -43,7 +44,7 @@ class SupabaseListingRepository:
         try:
             rows = (self._client.table("profiles").select("id")
                     .eq("email", email).limit(1).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         if not rows:
             raise NotFoundError("That account could not be found.")
@@ -82,7 +83,7 @@ class SupabaseListingRepository:
                     .eq("listing_images.position", 0)
                     .order("created_at", desc=True).order("id", desc=True)
                     .execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         return [self._to_listing(r, first_image_only=True) for r in rows]
 
@@ -93,7 +94,7 @@ class SupabaseListingRepository:
                     .eq("owner_id", owner_id)
                     .order("created_at", desc=True).order("id", desc=True)
                     .execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         return [self._to_listing(r) for r in rows]
 
@@ -102,7 +103,7 @@ class SupabaseListingRepository:
         try:
             rows = (self._client.table("listings").select(_SELECT_LIGHT)
                     .eq("id", listing_id).limit(1).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         return self._to_listing(rows[0]) if rows else None
 
@@ -154,7 +155,7 @@ class SupabaseListingRepository:
             }).execute().data[0])
             listing.id = int(row["id"])
             self._write_image_rows(listing.id, listing.images)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             self._discard([self._path_of(u) for u in listing.images])
             raise self._fail(exc)
         return listing
@@ -173,7 +174,7 @@ class SupabaseListingRepository:
                 "status": listing.status.value,
             }).eq("id", listing.id).execute()
             self._write_image_rows(listing.id, listing.images)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         dropped = set(before.images) - set(listing.images)
         self._discard([self._path_of(u) for u in dropped])
@@ -185,7 +186,7 @@ class SupabaseListingRepository:
                 return False
             gone = (self._client.table("listings").delete()
                     .eq("id", listing_id).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         if gone:
             self._discard([self._path_of(u) for u in before.images])
