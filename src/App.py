@@ -1,5 +1,8 @@
 import streamlit as st
-from views.session import end_session
+from views.components.auth_cookie import flush_cookie_command
+from views.components.session_lifecycle import (
+    keep_tokens_fresh, restore_login_on_load, sign_out_everywhere,
+)
 st.set_page_config(page_title="StudentHive", layout="wide")
 
 
@@ -172,6 +175,11 @@ if "user" not in st.session_state:
 if "onboarding_complete" not in st.session_state:
     st.session_state.onboarding_complete = False
 
+# A6: after a browser refresh, sign the person back in from their cookie; while they are
+# logged in, renew the access token before it expires. Both do nothing on in-memory logins.
+restore_login_on_load()
+keep_tokens_fresh()
+
 @st.dialog("Log out?")
 def confirm_logout_dialog() -> None:
     st.write("You’ll need to sign in again to get back to your account.")
@@ -179,7 +187,7 @@ def confirm_logout_dialog() -> None:
         if st.button("Cancel", key="logout_no"):
             st.rerun()
         if st.button("Yes, log out", key="logout_yes"):
-            end_session()
+            sign_out_everywhere()   # also forgets the saved login (cookie)
             st.rerun()
 
 # ==========================================
@@ -256,5 +264,8 @@ else:
         ],
         position="hidden",
     )
+
+# A6: send a queued cookie change (save / forget the login) to the browser
+flush_cookie_command()
 
 pg.run()

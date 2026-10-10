@@ -5,6 +5,7 @@ import secrets
 from models.profile import Profile
 from models.user import User
 from repositories.seed_data import SAMPLE_STUDENTS
+from utils.images import to_data_uri
 from utils.security import hash_password
 
 DEMO_EMAIL = "demo@mmcm.edu.ph"
@@ -49,6 +50,16 @@ class UserRepository:
     def save(self, user: User) -> None:
         """Persist changes to an existing user (a DB repo would UPDATE here)."""
         self._users[self._key(user.email)] = user
+
+    def set_photo(self, email: str, data: bytes, mime: str) -> bool:
+        """Store a profile photo. In memory the "URL" is a data: URI; the Supabase
+        repository uploads to Storage and keeps a public URL instead."""
+        user = self._users.get(self._key(email))
+        if user is None:
+            return False
+        user.profile.photo_url = to_data_uri(data, mime)
+        user.profile.photo_mime = mime
+        return True
 
     def delete(self, email: str) -> bool:
         return self._users.pop(self._key(email), None) is not None

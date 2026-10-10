@@ -1,6 +1,5 @@
 """Profile page (own profile): layout and dialogs only.
 Rules live in ProfileController / ListingController / AuthController."""
-import base64
 import html
 
 import streamlit as st
@@ -11,8 +10,8 @@ from views.components.profile_components import (
     chip_html, empty_html, rating_html, render_reviews, thumb_html,
 )
 from views.components.styles import load_css
+from views.components.session_lifecycle import sign_out_everywhere
 from views.session import (
-    end_session,
     get_auth_controller,
     get_listing_controller,
     get_profile_controller,
@@ -184,7 +183,7 @@ def confirm_delete_dialog():
         ):
             result = auth.delete_account(_email(), typed)
             if result.ok:
-                end_session()   # back to the login page
+                sign_out_everywhere()   # back to the login page
                 st.rerun()
             else:
                 st.error(result.error)
@@ -213,9 +212,8 @@ def _rating_html() -> str:
 
 
 def _banner(profile: Profile):
-    if profile.photo:
-        encoded = base64.b64encode(profile.photo).decode()
-        style = f"background-image:url(data:{profile.photo_mime};base64,{encoded})"
+    if profile.photo_url:
+        style = f"background-image:url({html.escape(profile.photo_url, quote=True)})"
     else:
         style = ""
 
@@ -527,7 +525,7 @@ def render_profile():
     _init()
     user = _user()
     if user is None:            # stale session (e.g. server restarted): log in again
-        end_session()
+        sign_out_everywhere()
         st.rerun()
 
     load_css("profile", "listing_form")

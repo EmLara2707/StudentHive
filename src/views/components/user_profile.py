@@ -5,7 +5,6 @@ Each of those pages starts with:
     if render_open_profile("market"):
         st.stop()
 and opens a profile with open_profile(email, "market") as a button callback."""
-import base64
 import html
 
 import streamlit as st
@@ -49,10 +48,9 @@ def _heading(text: str) -> None:
 
 
 def _banner(p: PublicProfile) -> None:
-    photo = p.profile.photo
-    if photo:
-        encoded = base64.b64encode(photo).decode()
-        style, initial = f"background-image:url(data:{p.profile.photo_mime};base64,{encoded})", ""
+    photo_url = p.profile.photo_url
+    if photo_url:
+        style, initial = f"background-image:url({html.escape(photo_url, quote=True)})", ""
     else:
         style, initial = "", _e(p.name[:1].upper())
 
