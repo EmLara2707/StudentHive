@@ -10,6 +10,7 @@ views/session.py uses it so a logout drops a repository that is tied to one user
 client but keeps the in-memory "database".
 """
 from repositories.listing_repository import ListingRepository
+from repositories.supabase_listing_repository import SupabaseListingRepository
 from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 
@@ -19,10 +20,9 @@ USE_SUPABASE_TRANSACTIONS = False
 USE_SUPABASE_REVIEWS = False
 
 
-def build_listing_repository(client) -> ListingRepository:
-    if USE_SUPABASE_LISTINGS:
-        # B2: return SupabaseListingRepository(client)
-        raise NotImplementedError("SupabaseListingRepository is not written yet (B2).")
+def build_listing_repository(client) -> ListingRepository | SupabaseListingRepository:
+    if USE_SUPABASE_LISTINGS and client is not None:
+        return SupabaseListingRepository(client)
     return ListingRepository.seeded()
 
 

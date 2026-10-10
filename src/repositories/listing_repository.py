@@ -1,6 +1,7 @@
 """In-memory listing storage. Swap this class for a DB-backed one later;
 controllers only depend on these method names."""
-from models.listing import GIG, RENTAL, Listing
+from models.listing import ALLOWED_MIMES, GIG, RENTAL, Listing
+from utils.images import to_data_uri
 from repositories.user_repository import DEMO_EMAIL, SAMPLE_SELLER_EMAIL
 
 SERVICE, PROJECT = "Service Deliverables", "Project Deliverables"
@@ -35,6 +36,8 @@ _MARKET_DESCRIPTION = "\n".join(
 
 
 class ListingRepository:
+    in_memory = True
+
     def __init__(self) -> None:
         self._items: dict[int, Listing] = {}
 
@@ -52,8 +55,16 @@ class ListingRepository:
     def next_id(self) -> int:
         return max(self._items, default=0) + 1
 
+    def store_images(self, owner_email: str, images: list[tuple[bytes, str]]) -> list[str]:
+        """Turn already-compressed (bytes, mime) images into what Listing.images holds.
+        In memory that is a data URI; the Supabase repository uploads and returns URLs."""
+        return [to_data_uri(data, mime if mime in ALLOWED_MIMES else "image/jpeg")
+                for data, mime in images]
+
     def add(self, listing: Listing) -> Listing:
-        """Insert a new listing at the front (newest first)."""
+        """Insert a new listing at the front (newest first). Like the database, this
+        assigns the id (any id on the listing passed in is replaced)."""
+        listing.id = self.next_id()
         self._items = {listing.id: listing, **self._items}
         return listing
 

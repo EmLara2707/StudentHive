@@ -6,7 +6,7 @@ from models.listing import (
     ALLOWED_MIMES, CATEGORIES, GIG, MAX_IMAGES, RATE_UNITS, Listing, ListingStatus,
 )
 from repositories.listing_repository import ListingRepository
-from utils.images import compress_image, to_data_uri
+from utils.images import compress_image
 
 
 @dataclass
@@ -16,13 +16,13 @@ class ListingResult:
     error: str | None = None
 
 
-def _to_data_uris(images: list[tuple[bytes, str]]) -> list[str]:
-    """Compress raw uploads (bytes, mime) and turn them into data URIs."""
-    uris = []
+def _compress(images: list[tuple[bytes, str]]) -> list[tuple[bytes, str]]:
+    """Compress raw uploads (bytes, mime); the repository decides how to store them."""
+    out = []
     for raw, mime in images:
         data, out_mime = compress_image(raw, mime)
-        uris.append(to_data_uri(data, out_mime if out_mime in ALLOWED_MIMES else "image/jpeg"))
-    return uris
+        out.append((data, out_mime if out_mime in ALLOWED_MIMES else "image/jpeg"))
+    return out
 
 
 class ListingController:
@@ -54,18 +54,19 @@ class ListingController:
         if rate_type not in RATE_UNITS:
             return ListingResult(False, error="Please choose a rate type.")
 
+        owner = (owner_email or "").strip().lower()
         listing = Listing(
-            id=self._listings.next_id(),
-            owner_email=(owner_email or "").strip().lower(),
+            id=0,                      # assigned by the repository / database
+            owner_email=owner,
             title=title,
             price=float(rate),
             category=category,
             deliverable=(deliverable or "").strip() if category == GIG else "",
             unit=RATE_UNITS[rate_type],
             description=(description or "").strip(),
-            images=_to_data_uris((images or [])[:MAX_IMAGES]),
+            images=self._listings.store_images(owner, _compress((images or [])[:MAX_IMAGES])),
         )
-        self._listings.add(listing)
+        listing = self._listings.add(listing)
         return ListingResult(True, listing)
 
     def get_for_owner(self, owner_email: str) -> list[Listing]:
@@ -103,7 +104,7 @@ class ListingController:
 
         images = list(kept_images)[:MAX_IMAGES]
         room = MAX_IMAGES - len(images)
-        images += _to_data_uris(new_images[:room])
+        images += self._listings.store_images(listing.owner_email, _compress(new_images[:room]))
 
         listing.title = title
         listing.unit = RATE_UNITS[rate_type]
