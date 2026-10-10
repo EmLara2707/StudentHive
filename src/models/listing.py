@@ -41,7 +41,7 @@ class Listing:
     deliverable: str = ""              # Gigs only: "Service Deliverables" / "Project Deliverables"
     unit: str = "hr"                   # "hr" | "day" | "once"
     description: str = ""              # paragraphs separated by new lines
-    images: list[str] = field(default_factory=list)   # data URIs
+    images: list[str] = field(default_factory=list)   # image URLs (data URIs in the in-memory repository)
     status: ListingStatus = ListingStatus.OPEN
 
     @property
