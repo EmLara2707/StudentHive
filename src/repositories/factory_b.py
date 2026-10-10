@@ -15,7 +15,7 @@ from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 
 # Flip each to True once its Supabase repository is ready.
-USE_SUPABASE_LISTINGS = False
+USE_SUPABASE_LISTINGS = True
 USE_SUPABASE_TRANSACTIONS = False
 USE_SUPABASE_REVIEWS = False
 
