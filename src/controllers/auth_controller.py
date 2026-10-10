@@ -25,6 +25,8 @@ class AuthResult:
     # Added for Supabase Auth (the three fields above are unchanged):
     needs_confirmation: bool = False        # signed up, but must click the email link first
     tokens: tuple[str, str] | None = None   # (access, refresh) for the view to remember
+    # A6: True when a failure was only a network problem, so the saved login is still good.
+    can_retry: bool = False
 
     @classmethod
     def success(cls, user: User | None = None, tokens: tuple[str, str] | None = None,
@@ -32,8 +34,8 @@ class AuthResult:
         return cls(ok=True, user=user, tokens=tokens, needs_confirmation=needs_confirmation)
 
     @classmethod
-    def failure(cls, message: str) -> "AuthResult":
-        return cls(ok=False, error=message)
+    def failure(cls, message: str, can_retry: bool = False) -> "AuthResult":
+        return cls(ok=False, error=message, can_retry=can_retry)
 
 
 class AuthController:
@@ -81,6 +83,43 @@ class AuthController:
         user = self._users.get_by_email(email)
         if user is None:        # signed in, but no profile row: treat as a failed login
             return AuthResult.failure("Invalid email or password.")
+        return AuthResult.success(user, tokens=outcome.tokens)
+
+    # ---- A6: keeping a person signed in across browser refreshes ----
+    _EXPIRED = "Your session expired. Please log in again."
+
+    @property
+    def remembers_logins(self) -> bool:
+        """True with Supabase Auth (a cookie can bring the login back); False for the
+        in-memory fallback, where there is nothing to restore."""
+        return getattr(self._gateway, "in_memory", True) is False
+
+    def _exchange(self, tokens):
+        """One refresh-token exchange. Returns (outcome, failed AuthResult or None)."""
+        outcome = self._gateway.restore_session(tokens)
+        if outcome.ok and outcome.tokens:
+            return outcome, None
+        return outcome, AuthResult.failure(
+            self._EXPIRED, can_retry=outcome.error_code == gw.NETWORK)
+
+    def renew_tokens(self, tokens) -> AuthResult:
+        """Exchange the refresh token (or an (access, refresh) pair) for a NEW pair.
+        Supabase refresh tokens are single-use, so the caller must store the new pair."""
+        outcome, failed = self._exchange(tokens)
+        return failed or AuthResult.success(tokens=outcome.tokens)
+
+    def restore(self, refresh_token: str) -> AuthResult:
+        """Sign someone back in from the refresh token in their cookie: renew the tokens,
+        then load their profile. On success `tokens` holds the NEW pair to remember."""
+        outcome, failed = self._exchange(refresh_token)
+        if failed:
+            return failed
+        try:
+            user = self._users.get_by_email(outcome.email) if outcome.email else None
+        except RepositoryError:     # tokens were renewed but the profile couldn't be read
+            return AuthResult.failure(self._EXPIRED)   # the old token is spent: log in again
+        if user is None:        # valid login but no profile row: same as an expired one
+            return AuthResult.failure(self._EXPIRED)
         return AuthResult.success(user, tokens=outcome.tokens)
 
     def register(self, full_name: str, email: str, password: str,

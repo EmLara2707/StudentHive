@@ -4,6 +4,8 @@ import os
 
 import streamlit as st
 
+from views.components.auth_cookie import queue_cookie_write
+from views.components.session_lifecycle import pop_session_notice
 from views.components.styles import load_css
 from views.session import get_auth_controller, start_session, store_auth_tokens
 
@@ -49,6 +51,10 @@ with right_col:
         )
         st.space("small")
 
+        notice = pop_session_notice()           # e.g. "Your session expired..."
+        if notice:
+            st.warning(notice)
+
         login_tab, signup_tab = st.tabs(["Login", "Sign-up"])
 
         # ---------------- LOGIN ----------------
@@ -65,6 +71,7 @@ with right_col:
                 if result.ok:
                     if result.tokens:
                         store_auth_tokens(*result.tokens)
+                        queue_cookie_write(result.tokens[1])    # survive a page refresh
                     start_session(result.user)
                     st.rerun()
                 else:
@@ -104,6 +111,7 @@ with right_col:
                 elif result.ok:
                     if result.tokens:
                         store_auth_tokens(*result.tokens)
+                        queue_cookie_write(result.tokens[1])    # survive a page refresh
                     # new user -> onboarding from step 1 with empty data
                     start_session(result.user, reset_onboarding=True)
                     st.rerun()
