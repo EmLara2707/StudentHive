@@ -191,9 +191,3 @@ class SupabaseListingRepository:
         if gone:
             self._discard([self._path_of(u) for u in before.images])
         return bool(gone)
-
-    def delete_by_owner(self, owner_email: str) -> int:
-        """No-op here: deleting the user cascades to their listings (foreign key).
-        Kept only because AuthController.delete_account still calls it; removed in
-        the final PR."""
-        return 0
