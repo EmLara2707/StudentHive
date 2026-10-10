@@ -15,6 +15,7 @@ Notes
 - delete_for_user / delete_by_reviewer do nothing and return 0: deleting a profile
   cascades to its reviews (written and received), and there is no DELETE policy.
 """
+import httpx
 from postgrest.exceptions import APIError
 
 from models.review import Review
@@ -43,7 +44,7 @@ class SupabaseReviewRepository:
         try:
             rows = (self._client.table("profiles").select("id")
                     .eq("email", email).limit(1).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         if not rows:
             raise NotFoundError("That account could not be found.")
@@ -57,7 +58,7 @@ class SupabaseReviewRepository:
         try:
             rows = (self._client.table("reviews").select(_SELECT)
                     .eq("subject_id", uid).order("id").execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         reviews = []
         for row in rows:
@@ -78,7 +79,7 @@ class SupabaseReviewRepository:
             rows = (self._client.table("reviews").select("id")
                     .eq("transaction_id", transaction_id).eq("reviewer_id", uid)
                     .limit(1).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         return bool(rows)
 
@@ -92,7 +93,7 @@ class SupabaseReviewRepository:
                 "p_rating": int(review.rating),
                 "p_text": review.text,
             }).execute()
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             if getattr(exc, "code", None) in _CONFLICT_CODES:
                 conflict = ConflictError()
                 conflict.__cause__ = exc

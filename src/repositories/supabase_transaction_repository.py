@@ -18,6 +18,7 @@ Notes
 """
 from datetime import date, time
 
+import httpx
 from postgrest.exceptions import APIError
 
 from models.transaction import (
@@ -60,7 +61,7 @@ class SupabaseTransactionRepository:
         try:
             rows = (self._client.table("profiles").select("id")
                     .eq("email", email).limit(1).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         if not rows:
             raise NotFoundError("That account could not be found.")
@@ -104,7 +105,7 @@ class SupabaseTransactionRepository:
         try:
             rows = (self._client.table("transactions").select(_SELECT)
                     .eq("id", transaction_id).limit(1).execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         return self._to_transaction(rows[0]) if rows else None
 
@@ -117,7 +118,7 @@ class SupabaseTransactionRepository:
             if kind is not None:
                 query = query.eq("kind", kind.value)
             rows = query.order("id").execute().data
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         return [self._to_transaction(r) for r in rows]
 
@@ -150,7 +151,7 @@ class SupabaseTransactionRepository:
         }
         try:
             row = self._client.table("transactions").insert(payload).execute().data[0]
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             if exc.code == "23505" and DUPLICATE_INDEX in (exc.message or ""):
                 raise ConflictError(DUPLICATE_MESSAGE) from exc
             raise self._fail(exc)
@@ -170,7 +171,7 @@ class SupabaseTransactionRepository:
                 "updated_at": now_manila().isoformat(),
             }).eq("id", transaction.id).eq("status", expected_status.value)
                 .execute().data)
-        except APIError as exc:
+        except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         if not changed:
             raise ConflictError()

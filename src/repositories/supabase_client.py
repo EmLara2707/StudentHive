@@ -9,9 +9,24 @@ Rules from the handoff:
   * Repositories must call client.table(...) / client.storage fresh on every use and
     must not keep those handles: signing in or refreshing the token resets them.
 """
+import httpx
 from supabase import Client
 from supabase import create_client as _create_client
 from supabase.lib.client_options import SyncClientOptions
+
+
+def _http_client() -> httpx.Client:
+    """One plain HTTP/1.1 client per Supabase client. The library's default is HTTP/2,
+    where every request shares one long-lived connection; across Streamlit's reruns and
+    threads (or after the server drops an idle connection) that surfaces as
+    httpx.ReadError [Errno 11] Resource temporarily unavailable. HTTP/1.1 drops dead
+    pooled connections and opens a fresh one instead."""
+    return httpx.Client(
+        http2=False,
+        timeout=httpx.Timeout(20.0, connect=10.0),
+        transport=httpx.HTTPTransport(retries=2),   # retries failed connects
+        follow_redirects=True,
+    )
 
 
 def create_client(url: str, anon_key: str) -> Client:
@@ -21,7 +36,8 @@ def create_client(url: str, anon_key: str) -> Client:
     reruns the script constantly and the app stores the tokens itself."""
     return _create_client(
         url, anon_key,
-        options=SyncClientOptions(auto_refresh_token=False, persist_session=False),
+        options=SyncClientOptions(auto_refresh_token=False, persist_session=False,
+                                  httpx_client=_http_client()),
     )
 
 
@@ -39,5 +55,6 @@ def create_admin_client(url: str, service_key: str) -> Client:
     a normal request."""
     return _create_client(
         url, service_key,
-        options=SyncClientOptions(auto_refresh_token=False, persist_session=False),
+        options=SyncClientOptions(auto_refresh_token=False, persist_session=False,
+                                  httpx_client=_http_client()),
     )
