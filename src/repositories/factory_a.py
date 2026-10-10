@@ -13,7 +13,7 @@ vanish on logout).
 from repositories.user_repository import UserRepository
 
 # Flip to True once your Supabase project has migration 001 applied and secrets.toml is set.
-USE_SUPABASE_USERS = False
+USE_SUPABASE_USERS = True
 
 
 def build_user_repository(client):
