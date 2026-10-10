@@ -81,13 +81,6 @@ def _left_panel(step: int):
             unsafe_allow_html=True,
         )
 
-        # TEMP (testing only): delete this block + the .st-key-skip_ob CSS in
-        # onboarding.css + OnboardingController.skip() before launch
-        if st.button("Skip onboarding (testing)", key="skip_ob"):
-            get_onboarding_controller().skip(_email())
-            finish_onboarding()
-            st.rerun()
-
 
 def _header(title: str, sub: str):
     st.markdown(f'<div class="ob-title">{title}</div>', unsafe_allow_html=True)

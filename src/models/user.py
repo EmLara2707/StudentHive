@@ -8,7 +8,6 @@ from models.profile import Profile
 class User:
     name: str
     email: str            # always stored lower-cased
-    password_hash: str
     onboarded: bool = False
     profile: Profile = field(default_factory=Profile)
 

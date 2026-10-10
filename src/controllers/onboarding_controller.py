@@ -54,12 +54,3 @@ class OnboardingController:
         user.onboarded = True
         self._users.save(user)
         return True
-
-    def skip(self, email: str) -> bool:
-        """TEMP (testing only): mark onboarded with an empty profile."""
-        user = self._users.get_by_email(email)
-        if user is None:
-            return False
-        user.onboarded = True
-        self._users.save(user)
-        return True

@@ -11,10 +11,13 @@ AuthController (A3) calls this instead of checking password hashes itself. Rules
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
+import os
 from dataclasses import dataclass
 
 from models.user import User
-from utils.security import hash_password, verify_password
+from repositories.user_repository import DEMO_EMAIL
 
 # error_code values the controller can switch on
 INVALID_CREDENTIALS = "invalid_credentials"   # wrong email or password
@@ -238,31 +241,57 @@ class SupabaseAuthGateway:
         return AuthOutcome(ok=True, user_id=user_id)
 
 
+_DEMO_PASSWORD = "demo1234"       # the in-memory demo account (dev / offline fallback only)
+_ITERATIONS = 200_000
+
+
+def _hash_password(password: str) -> str:
+    """'salt$hash' (hex) with salted PBKDF2-SHA256. Used ONLY by the in-memory fallback:
+    with Supabase Auth the app never sees or stores a password."""
+    salt = os.urandom(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _ITERATIONS)
+    return f"{salt.hex()}${digest.hex()}"
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    try:
+        salt_hex, digest_hex = stored.split("$", 1)
+        salt, expected = bytes.fromhex(salt_hex), bytes.fromhex(digest_hex)
+    except ValueError:
+        return False
+    actual = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, _ITERATIONS)
+    return hmac.compare_digest(actual, expected)
+
+
 class InMemoryAuthGateway:
     """The same gateway interface on top of the in-memory UserRepository.
 
-    This is the fallback that keeps the app working with no Supabase configured. It
-    reads and writes User.password_hash (removed in A8, when this class moves to its
-    own {email: hash} dictionary). There are no tokens: sign_in just remembers WHO is
-    signed in so update_password knows whose password to change. `user_id` is the
-    email here."""
+    This is the fallback that keeps the app working with no Supabase configured. It owns
+    the passwords: a private {email: hash} dictionary (the User model has no password).
+    Only the demo account has one at the start; the sample students have none, so nobody
+    can sign in as them. There are no tokens: sign_in just remembers WHO is signed in so
+    update_password knows whose password to change. `user_id` is the email here."""
 
     def __init__(self, users) -> None:
         self._users = users
         self._current_email: str | None = None
+        self._passwords: dict[str, str] = {}
+        if users is not None and users.exists(DEMO_EMAIL):
+            self._passwords[DEMO_EMAIL] = _hash_password(_DEMO_PASSWORD)
 
     def sign_up(self, name: str, email: str, password: str) -> AuthOutcome:
         email = email.strip().lower()
         if self._users.exists(email):
             return AuthOutcome.failure(ALREADY_REGISTERED, "email already registered")
-        self._users.add(User(name=name.strip(), email=email,
-                             password_hash=hash_password(password), onboarded=False))
+        self._users.add(User(name=name.strip(), email=email, onboarded=False))
+        self._passwords[email] = _hash_password(password)
         self._current_email = email
         return AuthOutcome(ok=True, user_id=email, email=email)
 
     def sign_in(self, email: str, password: str) -> AuthOutcome:
         user = self._users.get_by_email(email)
-        if user is None or not verify_password(password, user.password_hash):
+        stored = self._passwords.get(user.email) if user is not None else None
+        if stored is None or not _verify_password(password, stored):
             return AuthOutcome.failure(INVALID_CREDENTIALS, "wrong email or password")
         self._current_email = user.email
         return AuthOutcome(ok=True, user_id=user.email, email=user.email)
@@ -272,20 +301,20 @@ class InMemoryAuthGateway:
         return AuthOutcome(ok=True)
 
     def update_password(self, new_password: str) -> AuthOutcome:
-        user = self._users.get_by_email(self._current_email) if self._current_email else None
-        if user is None:
+        if not self._current_email or self._current_email not in self._passwords:
             return AuthOutcome.failure(SESSION_EXPIRED, "nobody is signed in")
-        user.password_hash = hash_password(new_password)
-        self._users.save(user)
-        return AuthOutcome(ok=True, user_id=user.email, email=user.email)
+        self._passwords[self._current_email] = _hash_password(new_password)
+        return AuthOutcome(ok=True, user_id=self._current_email, email=self._current_email)
 
     def restore_session(self, tokens) -> AuthOutcome:
         return AuthOutcome.failure(SESSION_EXPIRED, "in-memory sessions cannot be restored")
 
     def admin_delete_user(self, user_id: str) -> AuthOutcome:
-        if not self._users.delete(user_id):
+        key = (user_id or "").strip().lower()
+        if not self._users.delete(key):
             return AuthOutcome.failure(UNKNOWN, "account not found")
-        if self._current_email == (user_id or "").strip().lower():
+        self._passwords.pop(key, None)
+        if self._current_email == key:
             self._current_email = None
         return AuthOutcome(ok=True, user_id=user_id)
 
