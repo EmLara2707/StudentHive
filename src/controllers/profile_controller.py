@@ -2,8 +2,10 @@
 from models.profile import Profile
 from models.review import RatingSummary, Review
 from models.user import User
+from repositories.errors import RepositoryError
 from repositories.review_repository import ReviewRepository
 from repositories.user_repository import UserRepository
+from utils.images import compress_image
 
 _LIST_FIELDS = {"skills", "socials"}
 
@@ -87,8 +89,12 @@ class ProfileController:
         error = self.photo_error(len(data))
         if error:
             return error
-        # TODO: upload to real storage instead of keeping bytes on the profile
-        self._update_profile(email, photo=data, photo_mime=mime)
+        data, mime = compress_image(data, mime)     # 1200px JPEG, before any upload
+        try:
+            if not self._users.set_photo(email, data, mime):
+                return RepositoryError.DEFAULT_MESSAGE
+        except RepositoryError as exc:
+            return str(exc)
         return None
 
     # ---- reviews ----
