@@ -6,10 +6,10 @@ from models.user import User
 from repositories.seed_data import SAMPLE_STUDENTS
 from utils.images import to_data_uri
 
-DEMO_EMAIL = "demo@mmcm.edu.ph"
+DEMO_EMAIL = "demo@mcm.edu.ph"
 # Sample seller that owns the seeded marketplace listings. Nobody can log in as
 # this account (its password is random), it only exists so listings have an owner.
-SAMPLE_SELLER_EMAIL = "ana.r@mmcm.edu.ph"
+SAMPLE_SELLER_EMAIL = "ana.r@mcm.edu.ph"
 
 
 class UserRepository:
