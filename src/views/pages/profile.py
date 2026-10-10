@@ -1,6 +1,5 @@
 """Profile page (own profile): layout and dialogs only.
 Rules live in ProfileController / ListingController / AuthController."""
-import base64
 import html
 
 import streamlit as st
@@ -213,9 +212,8 @@ def _rating_html() -> str:
 
 
 def _banner(profile: Profile):
-    if profile.photo:
-        encoded = base64.b64encode(profile.photo).decode()
-        style = f"background-image:url(data:{profile.photo_mime};base64,{encoded})"
+    if profile.photo_url:
+        style = f"background-image:url({html.escape(profile.photo_url, quote=True)})"
     else:
         style = ""
 

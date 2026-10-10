@@ -12,15 +12,14 @@ vanish on logout).
 """
 from repositories.user_repository import UserRepository
 
-# Flip to True once SupabaseUserRepository and the auth gateway are both ready.
+# Flip to True once your Supabase project has migration 001 applied and secrets.toml is set.
 USE_SUPABASE_USERS = False
 
 
-def build_user_repository(client) -> UserRepository:
+def build_user_repository(client):
     if USE_SUPABASE_USERS:
-        # A4: from repositories.supabase_user_repository import SupabaseUserRepository
-        #     return SupabaseUserRepository(client)
-        raise NotImplementedError("SupabaseUserRepository is not written yet (A4).")
+        from repositories.supabase_user_repository import SupabaseUserRepository
+        return SupabaseUserRepository(client)
     return UserRepository.seeded()
 
 
