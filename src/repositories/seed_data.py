@@ -4,9 +4,9 @@ from dataclasses import dataclass
 
 
 def email_for(name: str) -> str:
-    """'Ana R.' -> 'ana.r@mmcm.edu.ph'"""
+    """'Ana R.' -> 'ana.r@mcm.edu.ph'"""
     slug = name.strip().lower().rstrip(".").replace(" ", ".")
-    return f"{slug}@mmcm.edu.ph"
+    return f"{slug}@mcm.edu.ph"
 
 
 @dataclass(frozen=True)
