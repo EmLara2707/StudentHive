@@ -13,7 +13,7 @@ from repositories.user_repository import UserRepository
 
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # StudentHive is for verified students: only addresses on these domains (or their
-# subdomains, e.g. student.ateneo.edu.ph) can register. Use ("mmcm.edu.ph",) for MMCM only.
+# subdomains, e.g. student.ateneo.edu.ph) can register. The real school domain is mcm.edu.ph.
 SCHOOL_EMAIL_DOMAINS = ("mcm.edu.ph",)
 
 
@@ -69,7 +69,7 @@ class AuthController:
         if code == gw.RATE_LIMITED:
             return "Too many attempts. Please wait a moment and try again."
         if code == gw.SIGNUP_REJECTED:
-            return "Please use your school email address (it ends in .edu.ph)."
+            return "Please use your school email address (it ends in mcm.edu.ph)."
         return RepositoryError.DEFAULT_MESSAGE
 
     def login(self, email: str, password: str) -> AuthResult:
@@ -131,7 +131,7 @@ class AuthController:
         if not _EMAIL_PATTERN.match(email):
             return AuthResult.failure("Please enter a valid email address.")
         if not self.is_school_email(email):
-            return AuthResult.failure("Please use your school email address (it ends in .edu.ph).")
+            return AuthResult.failure("Please use your school email address (it ends in mcm.edu.ph).")
         if len(password) < self.MIN_PASSWORD_LENGTH:
             return AuthResult.failure(
                 f"Password must be at least {self.MIN_PASSWORD_LENGTH} characters.")
