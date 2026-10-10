@@ -13,6 +13,7 @@ from models.review import RatingSummary
 from models.transaction import (
     PLACEHOLDER_IMAGE, Transaction, TransactionKind, TransactionStatus,
 )
+from repositories.errors import ConflictError
 from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 from repositories.user_repository import UserRepository
@@ -159,7 +160,10 @@ class BookingController:
             return BookingResult(False, errors=problems)
 
         transaction = self._build_transaction(context, form, requester_email, today)
-        return BookingResult(True, self._transactions.add(transaction))
+        try:
+            return BookingResult(True, self._transactions.add(transaction))
+        except ConflictError:       # the database's unique index: an identical open request
+            return BookingResult(False, errors=[DUPLICATE_ERROR])
 
     def _build_transaction(self, context: BookingContext, form: BookingForm,
                            requester_email: str, today: date) -> Transaction:

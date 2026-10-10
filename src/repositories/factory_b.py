@@ -12,6 +12,7 @@ client but keeps the in-memory "database".
 from repositories.listing_repository import ListingRepository
 from repositories.supabase_listing_repository import SupabaseListingRepository
 from repositories.review_repository import ReviewRepository
+from repositories.supabase_transaction_repository import SupabaseTransactionRepository
 from repositories.transaction_repository import TransactionRepository
 
 # Flip each to True once its Supabase repository is ready.
@@ -26,10 +27,9 @@ def build_listing_repository(client) -> ListingRepository | SupabaseListingRepos
     return ListingRepository.seeded()
 
 
-def build_transaction_repository(client) -> TransactionRepository:
-    if USE_SUPABASE_TRANSACTIONS:
-        # B3: return SupabaseTransactionRepository(client)
-        raise NotImplementedError("SupabaseTransactionRepository is not written yet (B3).")
+def build_transaction_repository(client) -> TransactionRepository | SupabaseTransactionRepository:
+    if USE_SUPABASE_TRANSACTIONS and client is not None:
+        return SupabaseTransactionRepository(client)
     return TransactionRepository.seeded()
 
 

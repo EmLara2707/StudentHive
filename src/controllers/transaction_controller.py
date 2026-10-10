@@ -10,10 +10,12 @@ from models.transaction import (
     Counterpart, InvalidTransition, Role, TodoStep, TodoTask, Transaction,
     TransactionEntry, TransactionKind, TransactionStatus,
 )
+from repositories.errors import ConflictError
 from utils.clock import today_manila
 
 NOT_FOUND_ERROR = "This transaction is no longer available."
 NOT_ALLOWED_ERROR = "That isn't available right now."
+CONFLICT_ERROR = "This request was just updated by the other person. Please refresh and try again."
 UNKNOWN_NAME = "Unknown student"
 MAX_REVIEW_CHARS = 500
 
@@ -159,11 +161,15 @@ class TransactionController:
         entry = self.get_entry(actor_email, transaction_id)
         if entry is None:
             return ActionResult(False, error=NOT_FOUND_ERROR)
+        read_status = entry.transaction.status      # what the row looked like when read
         try:
             change(entry.transaction)
         except InvalidTransition:
             return ActionResult(False, entry, NOT_ALLOWED_ERROR)
-        self._transactions.save(entry.transaction)
+        try:
+            self._transactions.save(entry.transaction, read_status)
+        except ConflictError:                       # someone else answered first
+            return ActionResult(False, entry, CONFLICT_ERROR)
         return ActionResult(True, entry)
 
     # ------------------------------------------------------------ reviews
@@ -192,5 +198,5 @@ class TransactionController:
             reviewer_email=reviewer_email.strip().lower(),
         ))
         entry.transaction.mark_reviewed(reviewer_email)
-        self._transactions.save(entry.transaction)
+        self._transactions.save(entry.transaction, entry.transaction.status)
         return ActionResult(True, entry)

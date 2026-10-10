@@ -48,6 +48,8 @@ _SAMPLES = [
 
 
 class TransactionRepository:
+    in_memory = True
+
     def __init__(self) -> None:
         self._items: list[Transaction] = []
 
@@ -75,8 +77,12 @@ class TransactionRepository:
         self._items = kept
         return removed
 
-    def save(self, transaction: Transaction) -> None:
-        """Persist changes to an existing transaction (a DB repo would UPDATE here)."""
+    def save(self, transaction: Transaction,
+             expected_status: TransactionStatus | None = None) -> None:
+        """Persist changes to an existing transaction. `expected_status` (the status that
+        was read) is what the Supabase repository checks to catch two people answering
+        at once. Here it is accepted and ignored: the stored object is the very one the
+        controller mutated, and each session has its own in-memory copy anyway."""
         for i, existing in enumerate(self._items):
             if existing.id == transaction.id:
                 self._items[i] = transaction
