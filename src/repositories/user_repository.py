@@ -1,12 +1,10 @@
 """In-memory user storage. Swap this class for a DB-backed one later;
 controllers only depend on these method names."""
-import secrets
 
 from models.profile import Profile
 from models.user import User
 from repositories.seed_data import SAMPLE_STUDENTS
 from utils.images import to_data_uri
-from utils.security import hash_password
 
 DEMO_EMAIL = "demo@mmcm.edu.ph"
 # Sample seller that owns the seeded marketplace listings. Nobody can log in as
@@ -71,7 +69,6 @@ class UserRepository:
         repo.add(User(
             name="Demo Student",
             email=DEMO_EMAIL,
-            password_hash=hash_password("demo1234"),
             onboarded=True,
             profile=Profile(
                 major="Bachelor of Computer Science",
@@ -80,13 +77,12 @@ class UserRepository:
                 socials=["stdnt@hive.com"],
             ),
         ))
-        # nobody can log in as a sample student: one random, discarded password for all
-        unusable_hash = hash_password(secrets.token_hex(16))
+        # nobody can log in as a sample student: the in-memory auth gateway holds no
+        # password for them (only the demo account has one)
         for s in SAMPLE_STUDENTS:
             repo.add(User(
                 name=s.name,
                 email=s.email,
-                password_hash=unusable_hash,
                 onboarded=True,
                 profile=Profile(
                     major=s.major, bio=s.bio, skills=list(s.skills), socials=s.socials,

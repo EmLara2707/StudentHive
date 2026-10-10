@@ -128,22 +128,6 @@ html, body,
 html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     overflow-x: hidden !important;
 }
-
-/* TEMP: skip-onboarding button (testing only) */
-.st-key-skip_ob { margin-top: 2.5rem; }
-.st-key-skip_ob button {
-    background: transparent !important;
-    border: 2px dashed rgba(255, 255, 255, 0.6) !important;
-    border-radius: 14px !important;
-    min-height: 44px;
-    padding: 0.3rem 1.2rem !important;
-}
-.st-key-skip_ob button p {
-    color: #ffffff !important;
-    font-size: 0.95rem;
-    font-weight: 500;
-}
-.st-key-skip_ob button:hover { background: rgba(255, 255, 255, 0.12) !important; }
 .ob-title {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;

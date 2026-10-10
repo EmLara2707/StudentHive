@@ -197,16 +197,4 @@ class AuthController:
             return AuthResult.failure("Account not found.")   # signed in as someone else
         if not self._gateway.admin_delete_user(user_id).ok:
             return AuthResult.failure("Account not found.")
-        # Cascade by email: nothing may be left behind for the next person who registers
-        # this email: its listings, its transactions (on both sides), the reviews written
-        # about it and the reviews it wrote. Kept until Person B's repositories are
-        # merged (A8 removes it). On Supabase the account is already gone and the
-        # database cascaded, so a failure here must not report the deletion as failed.
-        try:
-            self._listings.delete_by_owner(email)
-            self._transactions.delete_for_user(email)
-            self._reviews.delete_for_user(email)
-            self._reviews.delete_by_reviewer(email)
-        except RepositoryError:
-            pass
         return AuthResult.success()

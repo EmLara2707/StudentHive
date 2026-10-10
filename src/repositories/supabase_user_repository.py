@@ -7,7 +7,7 @@ Rules (handoff + Phase 0):
   * Fresh objects every call. Nothing is cached, and no client.table(...) / storage
     handle is kept between calls (signing in resets them).
   * Failures raise RepositoryError (student-safe message), never raw Supabase errors.
-  * Passwords live in Supabase Auth, so User.password_hash is always "" here.
+  * Passwords live in Supabase Auth; the app never sees or stores them.
 """
 import time
 
@@ -38,7 +38,6 @@ class SupabaseUserRepository:
         return User(
             name=row["name"],
             email=row["email"],
-            password_hash="",
             onboarded=bool(row.get("onboarded")),
             profile=Profile(
                 major=row.get("major") or "",
