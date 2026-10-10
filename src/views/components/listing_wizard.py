@@ -15,6 +15,8 @@ from models.listing import (
     MAX_IMAGES, PROJECT_DELIVERABLE, RATE_TYPES, RENTAL, GIG, SERVICE_DELIVERABLE,
 )
 from models.listing_draft import PROGRESS_LABELS, DraftImage, ListingDraft, WizardStep
+from repositories.errors import RepositoryError
+from views.components.repo_errors import show_error
 from views.components.styles import load_css
 from views.session import (
     close_listing_wizard, get_listing_draft, get_listing_wizard_controller,
@@ -206,7 +208,12 @@ def _screen_review(wizard, draft: ListingDraft) -> None:
         _go_back(wizard, draft)
     if post:
         user = st.session_state.get("user") or {}
-        result = wizard.post(draft, user.get("email", ""))
+        try:
+            with st.spinner("Posting your listing..."):
+                result = wizard.post(draft, user.get("email", ""))
+        except RepositoryError as exc:       # the draft is untouched: they can press Post again
+            show_error(exc, "Couldn't post your listing.")
+            return
         if not result.ok:
             st.error(result.error)
         else:

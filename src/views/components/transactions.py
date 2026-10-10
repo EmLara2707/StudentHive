@@ -19,8 +19,10 @@ from models.transaction import (
     Action, Role, TodoStep, TodoTask, TransactionEntry, TransactionKind,
     TransactionStatus,
 )
+from repositories.errors import RepositoryError
 from utils.clock import today_manila
 from utils.dates import first_of_month, shift_month
+from views.components.repo_errors import loading, show_error
 from views.components.styles import load_css
 from views.components.user_profile import open_profile, render_open_profile
 from views.session import get_current_email, get_transaction_controller
@@ -481,7 +483,8 @@ def _perform(ctx: _Ctx, action: Action, tid: int) -> None:
 
 def _confirm_body(kind: TransactionKind, tid: int, action: Action) -> None:
     ctx = _context(kind)
-    entry = ctx.ctrl.get_entry(ctx.email, tid, kind)
+    with loading("Loading...", "Couldn't load this request.", key="retry_confirm"):
+        entry = ctx.ctrl.get_entry(ctx.email, tid, kind)
     if entry is None:
         st.write(NOT_FOUND_ERROR)
         return
@@ -492,7 +495,12 @@ def _confirm_body(kind: TransactionKind, tid: int, action: Action) -> None:
     if c1.button(back_label, key=f"dlg_{stem}_no", use_container_width=True):
         st.rerun()
     if c2.button(yes_label, key=f"dlg_{stem}_yes", type="primary", use_container_width=True):
-        _perform(ctx, action, tid)
+        try:
+            with st.spinner("Updating..."):
+                _perform(ctx, action, tid)
+        except RepositoryError as exc:       # nothing was saved: keep the dialog open
+            show_error(exc, "Couldn't update this request.")
+            return
         st.rerun()
 
 
@@ -505,7 +513,8 @@ def _open_confirm(ctx: _Ctx, action: Action, tid: int) -> None:
 
 def _review_body(kind: TransactionKind, tid: int) -> None:
     ctx = _context(kind)
-    entry = ctx.ctrl.get_entry(ctx.email, tid, kind)
+    with loading("Loading...", "Couldn't load this review.", key="retry_review"):
+        entry = ctx.ctrl.get_entry(ctx.email, tid, kind)
     if entry is None:
         st.write(NOT_FOUND_ERROR)
         return
@@ -527,7 +536,12 @@ def _review_body(kind: TransactionKind, tid: int) -> None:
         st.rerun()
     if c2.button("Submit review", key=f"rv_submit_{tid}", type="primary",
                  use_container_width=True, disabled=stars is None):
-        result = ctx.ctrl.submit_review(ctx.email, tid, stars + 1, text)   # stars + 1 = 1-5
+        try:
+            with st.spinner("Submitting..."):
+                result = ctx.ctrl.submit_review(ctx.email, tid, stars + 1, text)   # stars + 1 = 1-5
+        except RepositoryError as exc:       # not saved: keep the dialog (and the stars) open
+            show_error(exc, "Couldn't submit your review.")
+            return
         st.session_state[ctx.key("toast")] = (
             f"Review for {name} submitted" if result.ok else result.error)
         st.rerun()
@@ -734,12 +748,17 @@ def render_transactions(kind: TransactionKind) -> None:
     load_css("transactions")
     ctx = _context(kind)
     _init_state(ctx)
-    entries = ctx.ctrl.entries(ctx.email, kind)
+    review_id = st.session_state.get(ctx.key("review_id"))
+    with loading(f"Loading your {copy.title.lower()}...", f"Couldn't load your {copy.title}.",
+                 key=f"retry_{copy.prefix}_load"):
+        entries = ctx.ctrl.entries(ctx.email, kind)
+        offer_review = review_id is not None and ctx.ctrl.can_review(ctx.email, review_id)
 
     # After "Yes, complete it", open the review dialog once.
-    # pop() clears the flag, so closing the dialog with the X won't make it reappear.
-    review_id = st.session_state.pop(ctx.key("review_id"), None)
-    if review_id is not None and ctx.ctrl.can_review(ctx.email, review_id):
+    # pop() clears the flag, so closing the dialog with the X won't make it reappear
+    # (and a failed load above leaves it set, so the review is still offered on retry).
+    st.session_state.pop(ctx.key("review_id"), None)
+    if offer_review:
         st.dialog("Leave a review")(_review_body)(kind, review_id)
 
     if ctx.key("toast") in st.session_state:

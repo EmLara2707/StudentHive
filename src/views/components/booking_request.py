@@ -18,8 +18,10 @@ from controllers.booking_controller import COMING_SOON_MESSAGE, OWN_LISTING_ERRO
 from models.booking_request import (
     BookingContext, BookingForm, BookingKind, MeetingMode, PriceQuote,
 )
+from repositories.errors import RepositoryError
 from utils.clock import today_manila
 from views.components.listing_components import render_listing_image
+from views.components.repo_errors import loading, show_error
 from views.components.styles import load_css
 from views.session import get_booking_controller, get_current_email
 
@@ -140,7 +142,8 @@ def render_booking_request(listing_id: int) -> None:
     """Draw the whole Booking Request / Project Request page."""
     booking = get_booking_controller()
     email = get_current_email()
-    context = booking.get_context(listing_id)
+    with loading("Loading listing...", "Couldn't load this listing.", key="retry_booking"):
+        context = booking.get_context(listing_id)
     if context is None or not booking.can_book(context.listing, email):
         # gone/closed, or the user's own listing: send them back to the Marketplace
         if context is not None:
@@ -253,7 +256,13 @@ def render_booking_request(listing_id: int) -> None:
     if submit_main and not booking.rate_request_available(context):
         st.toast(COMING_SOON_MESSAGE)
     elif submit_main or submit_side:
-        result = booking.submit(listing.id, email, form)
+        try:
+            with st.spinner("Sending your request..."):
+                result = booking.submit(listing.id, email, form)
+        except RepositoryError as exc:       # nothing was sent: the form stays filled in
+            with left:
+                show_error(exc, "Couldn't send your request.")
+            return
         if not result.ok:
             with left:
                 for message in result.errors:
