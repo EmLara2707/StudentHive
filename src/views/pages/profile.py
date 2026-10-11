@@ -146,8 +146,12 @@ def photo_dialog():
         if st.button("Cancel", key="photo_cancel"):
             st.rerun()
         if st.button("Save photo", key="photo_save", disabled=file is None):
-            ctrl.update_photo(_email(), file.getvalue(), file.type)
-            st.rerun()
+            error = ctrl.update_photo(_email(), file.getvalue(), file.type)
+            if error:
+                st.error(error)         # keep the dialog open so they can try again
+            else:
+                _sync_session_user()    # the dashboard header reads the photo from here
+                st.rerun()
 
 
 @st.dialog("Change password?")

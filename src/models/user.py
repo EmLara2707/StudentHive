@@ -13,4 +13,5 @@ class User:
 
     def to_session_dict(self) -> dict:
         """Shape the rest of the app currently expects in session_state.user."""
-        return {"name": self.name, "email": self.email}
+        return {"name": self.name, "email": self.email,
+                "photo_url": self.profile.photo_url or ""}

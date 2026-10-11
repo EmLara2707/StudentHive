@@ -34,6 +34,14 @@ def _events() -> list[CalendarEvent]:
 
 
 # ------------------------------------------------------------ html builders
+def _avatar_html(photo_url: str) -> str:
+    """The person's profile photo, or the yellow placeholder when they have none."""
+    if photo_url:
+        return (f'<img class="avatar-photo" src="{escape(photo_url, quote=True)}" '
+                'alt="Your profile photo">')
+    return '<div class="avatar-placeholder">👤</div>'
+
+
 def _badge_class(kind: str) -> str:
     return "badge-gig" if kind == EventKind.GIG.value else "badge-rental"
 
@@ -185,18 +193,21 @@ events_by_day = ctrl.group_by_day(events)
 if "cal_month" not in st.session_state:
     st.session_state.cal_month = first_of_month(today)
 
-name = (st.session_state.get("user") or {}).get("name", "User")
+session_user = st.session_state.get("user") or {}
+name = session_user.get("name", "User")
+photo_url = session_user.get("photo_url") or ""
 
 # ---------- Header ----------
 with st.container(border=True, key="header_box"):
     col_img, col_text = st.columns([1, 6], vertical_alignment="center")
 
     with col_img:
-        st.markdown('<div class="avatar-placeholder">👤</div>', unsafe_allow_html=True)
+        st.markdown(_avatar_html(photo_url), unsafe_allow_html=True)
 
     with col_text:
-        st.header(f"Welcome, {name}!")
-        st.subheader("Here’s what’s happening in your hive today.")
+        with st.container(key="hero_text"):
+            st.header(f"Welcome, {name}!")
+            st.subheader("Here’s what’s happening in your hive today.")
 
 left_col, right_col = st.columns([2, 1])
 
