@@ -199,6 +199,8 @@ def badges_html(r: TransactionEntry) -> str:
     if r.status is TransactionStatus.CANCELLED:
         who = "by you" if r.cancelled_by_me else "by them"
         out += f'<span class="badge badge-cancelled">Cancelled {who}</span>'
+    if r.can_review:       # finished, and I haven't reviewed the other person yet
+        out += '<span class="badge badge-review">Review</span>'
     return out
 
 
@@ -260,7 +262,9 @@ def _status_note(ctx: _Ctx, r: TransactionEntry) -> tuple[str, str]:
     if r.status is TransactionStatus.CANCELLED:
         return ("Cancelled by you." if r.cancelled_by_me else f"Cancelled by {name}."), ""
     if r.status is TransactionStatus.COMPLETED:
-        return ctx.copy.note_completed, ""
+        if r.can_review:
+            return f"{ctx.copy.note_completed} How was it with {name}? Leave your review below.", ""
+        return f"{ctx.copy.note_completed} Your review of {name} is in.", ""
     if r.status is TransactionStatus.PENDING:
         text = ctx.copy.note_respond if r.is_provider else ctx.copy.note_waiting
         return text.format(name=name), ""
@@ -512,39 +516,64 @@ def _open_confirm(ctx: _Ctx, action: Action, tid: int) -> None:
     st.dialog(title)(_confirm_body)(ctx.kind, tid, action)
 
 
+def _review_fields(ctx: _Ctx, entry: TransactionEntry, prefix: str):
+    """The stars and the optional text. `prefix` keeps the widget keys of the pop-up and the
+    details-panel form apart. Returns (stars, text); stars is 0-4, or None if none is picked."""
+    who = ctx.copy.review_who[entry.role]
+    stars = st.feedback("stars", key=f"{prefix}_stars_{entry.id}")
+    text = st.text_area(
+        "Your review (optional)",
+        key=f"{prefix}_text_{entry.id}",
+        max_chars=500,
+        placeholder=f"Share your experience with the {who}...",
+    )
+    return stars, text
+
+
+def _send_review(ctx: _Ctx, entry: TransactionEntry, stars: int, text: str) -> bool:
+    """Save the review and queue the toast. False if nothing was saved (the error is shown)."""
+    try:
+        with st.spinner("Submitting..."):
+            result = ctx.ctrl.submit_review(ctx.email, entry.id, stars + 1, text)   # stars + 1 = 1-5
+    except RepositoryError as exc:       # not saved: keep the form (and the stars) open
+        show_error(exc, "Couldn't submit your review.")
+        return False
+    name = entry.counterpart.name
+    st.session_state[ctx.key("toast")] = (
+        f"Review for {name} submitted" if result.ok else result.error)
+    return True
+
+
 def _review_body(kind: TransactionKind, tid: int) -> None:
+    """Pop-up offered to whoever just pressed Complete."""
     ctx = _context(kind)
     with loading("Loading...", "Couldn't load this review.", key="retry_review"):
         entry = ctx.ctrl.get_entry(ctx.email, tid, kind)
     if entry is None:
         st.write(NOT_FOUND_ERROR)
         return
-    who = ctx.copy.review_who[entry.role]
-    name = entry.counterpart.name
-    st.write(f"How was “{entry.transaction.item}” with {name}?")
+    st.write(f"How was “{entry.transaction.item}” with {entry.counterpart.name}?")
 
     # st.feedback returns 0-4 (index of the chosen star), or None if nothing is picked yet
-    stars = st.feedback("stars", key=f"rv_stars_{tid}")
-    text = st.text_area(
-        "Your review (optional)",
-        key=f"rv_text_{tid}",
-        max_chars=500,
-        placeholder=f"Share your experience with the {who}...",
-    )
-
+    stars, text = _review_fields(ctx, entry, "rv")
     with st.container(horizontal=True, horizontal_alignment="distribute"):
         if st.button("Skip", key=f"rv_skip_{tid}"):
             st.rerun()
         submitted = st.button("Submit review", key=f"rv_submit_{tid}", disabled=stars is None)
-    if submitted:
-        try:
-            with st.spinner("Submitting..."):
-                result = ctx.ctrl.submit_review(ctx.email, tid, stars + 1, text)   # stars + 1 = 1-5
-        except RepositoryError as exc:       # not saved: keep the dialog (and the stars) open
-            show_error(exc, "Couldn't submit your review.")
-            return
-        st.session_state[ctx.key("toast")] = (
-            f"Review for {name} submitted" if result.ok else result.error)
+    if submitted and _send_review(ctx, entry, stars, text):
+        st.rerun()
+
+
+def render_review(ctx: _Ctx, r: TransactionEntry) -> None:
+    """In the details panel of a finished transaction I haven't reviewed yet (this is how
+    the other person, who didn't press Complete, leaves their review)."""
+    if not r.can_review:
+        return
+    st.markdown(f'<div class="det-review-title">Review {escape(r.counterpart.name)}</div>',
+                unsafe_allow_html=True)
+    stars, text = _review_fields(ctx, r, "rvd")
+    submitted = st.button("Submit review", key=f"rvd_submit_{r.id}", disabled=stars is None)
+    if submitted and _send_review(ctx, r, stars, text):
         st.rerun()
 
 
@@ -725,6 +754,7 @@ def _render_right(ctx: _Ctx, entries: list[TransactionEntry]) -> None:
                 st.markdown(detail_bottom_html(ctx, selected), unsafe_allow_html=True)
                 st.markdown('<div style="height:0.8rem"></div>', unsafe_allow_html=True)
                 render_actions(ctx, selected)
+                render_review(ctx, selected)
     else:
         st.subheader("To-Do")
         tasks = ctx.ctrl.todos(entries, ctx.today)

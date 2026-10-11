@@ -203,6 +203,7 @@ class TransactionEntry:
     transaction: Transaction
     viewer_email: str
     counterpart: Counterpart
+    can_review: bool = False      # completed, and I haven't reviewed the other person yet
 
     @property
     def id(self) -> int:

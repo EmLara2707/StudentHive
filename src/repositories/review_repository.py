@@ -23,6 +23,12 @@ class ReviewRepository:
         return any(r.transaction_id == transaction_id and r.reviewer_email == key
                    for r in self._reviews)
 
+    def reviewed_ids(self, reviewer_email: str) -> set[int]:
+        """Ids of every transaction this person has already reviewed (one lookup for a list)."""
+        key = (reviewer_email or "").strip().lower()
+        return {r.transaction_id for r in self._reviews
+                if r.reviewer_email == key and r.transaction_id is not None}
+
     def get_for_user(self, email: str) -> list[Review]:
         key = email.strip().lower()
         return [r for r in self._reviews if r.subject_email == key]

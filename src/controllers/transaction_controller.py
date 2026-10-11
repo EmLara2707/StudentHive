@@ -2,7 +2,7 @@
 to-dos) and the actions they can take (accept, reject, withdraw, complete, cancel,
 review). Never imports streamlit."""
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 
 from models.review import Review
@@ -41,7 +41,10 @@ class TransactionController:
         transactions = self._transactions.get_for_user(email, kind)
         # one repository call for every counterpart, not one lookup per transaction
         users = self._users.get_many({t.counterpart_email(email) for t in transactions})
-        return [self._entry(t, email, users) for t in transactions]
+        # one query says which finished ones I have already reviewed (none if nothing finished)
+        reviewed = (self._reviews.reviewed_ids(email)
+                    if any(t.status is TransactionStatus.COMPLETED for t in transactions) else set())
+        return [self._entry(t, email, users, reviewed) for t in transactions]
 
     def get_entry(self, email: str, transaction_id: int | None,
                   kind: TransactionKind | None = None) -> TransactionEntry | None:
@@ -54,14 +57,20 @@ class TransactionController:
             return None
         return self._entry(tx, email)
 
-    def _entry(self, tx: Transaction, viewer_email: str, users: dict | None = None) -> TransactionEntry:
-        """`users` is the {email: User} map from get_many when building a list;
-        a single entry loads its one counterpart itself."""
+    def _entry(self, tx: Transaction, viewer_email: str, users: dict | None = None,
+               reviewed: set | None = None) -> TransactionEntry:
+        """`users` is the {email: User} map and `reviewed` the set of transaction ids I have
+        reviewed, both from one query when building a list; a single entry looks up its own."""
         other = tx.counterpart_email(viewer_email)
         if users is None:
             users = self._users.get_many({other})
         user = users.get(other.strip().lower())
-        return TransactionEntry(tx, viewer_email, Counterpart(other, user.name if user else UNKNOWN_NAME))
+        entry = TransactionEntry(tx, viewer_email, Counterpart(other, user.name if user else UNKNOWN_NAME))
+        if tx.status is TransactionStatus.COMPLETED:
+            done = (tx.id in reviewed if reviewed is not None
+                    else self._reviews.has_reviewed(tx.id, viewer_email))
+            entry = replace(entry, can_review=not done)
+        return entry
 
     # ------------------------------------------------------------ tabs: filter + sort
     @staticmethod
@@ -175,9 +184,7 @@ class TransactionController:
     # ------------------------------------------------------------ reviews
     def can_review(self, actor_email: str, transaction_id: int) -> bool:
         entry = self.get_entry(actor_email, transaction_id)
-        return (entry is not None
-                and entry.status is TransactionStatus.COMPLETED
-                and not self._reviews.has_reviewed(transaction_id, actor_email))
+        return entry is not None and entry.can_review
 
     def submit_review(self, reviewer_email: str, transaction_id: int,
                       rating: int, text: str) -> ActionResult:
@@ -185,7 +192,7 @@ class TransactionController:
         entry = self.get_entry(reviewer_email, transaction_id)
         if entry is None:
             return ActionResult(False, error=NOT_FOUND_ERROR)
-        if not self.can_review(reviewer_email, transaction_id):
+        if not entry.can_review:
             return ActionResult(False, entry, NOT_ALLOWED_ERROR)
         if isinstance(rating, bool) or not isinstance(rating, int) or not 1 <= rating <= 5:
             return ActionResult(False, entry, "Please pick a star rating.")

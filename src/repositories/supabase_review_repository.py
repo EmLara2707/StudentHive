@@ -83,6 +83,17 @@ class SupabaseReviewRepository:
             raise self._fail(exc)
         return bool(rows)
 
+    def reviewed_ids(self, email: str) -> set[int]:
+        """Ids of every transaction this person has already reviewed (one query for a list)."""
+        uid = self._uid(email)
+        try:
+            rows = (self._client.table("reviews").select("transaction_id")
+                    .eq("reviewer_id", uid).not_.is_("transaction_id", "null")
+                    .execute().data)
+        except (APIError, httpx.HTTPError) as exc:
+            raise self._fail(exc)
+        return {row["transaction_id"] for row in rows}
+
     # ------------------------------------------------------------ writes
     def add(self, review: Review) -> None:
         if review.transaction_id is None:
