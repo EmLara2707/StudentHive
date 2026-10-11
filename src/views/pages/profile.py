@@ -6,6 +6,7 @@ import streamlit as st
 
 from models.listing import MAX_IMAGES, RATE_TYPES
 from models.profile import Profile
+from views.components.photo_cropper import crop_controls
 from views.components.profile_components import (
     chip_html, empty_html, rating_html, render_reviews, thumb_html,
 )
@@ -140,17 +141,21 @@ def photo_dialog():
         if error:
             st.error(error)
             file = None
+    chosen = None                       # (bytes, mime) that will be saved
     if file is not None:
-        st.image(file, width=160)
+        # crop to a square first; if the file can't be cropped, keep the original upload
+        chosen = crop_controls(file.getvalue(), key=file.file_id)
+        if chosen is None:
+            chosen = (file.getvalue(), file.type)
+            st.image(file, width=160)
     with st.container(horizontal=True, horizontal_alignment="distribute"):
         if st.button("Cancel", key="photo_cancel"):
             st.rerun()
-        if st.button("Save photo", key="photo_save", disabled=file is None):
-            error = ctrl.update_photo(_email(), file.getvalue(), file.type)
+        if st.button("Save photo", key="photo_save", disabled=chosen is None):
+            error = ctrl.update_photo(_email(), *chosen)
             if error:
-                st.error(error)         # keep the dialog open so they can try again
+                st.error(error)
             else:
-                _sync_session_user()    # the dashboard header reads the photo from here
                 st.rerun()
 
 
