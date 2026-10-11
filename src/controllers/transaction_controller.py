@@ -213,6 +213,8 @@ class TransactionController:
                 text=(text or "").strip()[:MAX_REVIEW_CHARS],
                 reviewer_email=reviewer_email.strip().lower(),
                 transaction_id=entry.id,
+                created_at=now_manila(),
+                subject_is_provider=not entry.is_provider,   # I am the other side
             ))
         except ConflictError:                   # already reviewed (double submit)
             return ActionResult(False, entry, NOT_ALLOWED_ERROR)

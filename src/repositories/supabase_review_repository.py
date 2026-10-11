@@ -15,6 +15,8 @@ Notes
 - Deleting a profile cascades to its reviews (written and received) through foreign
   keys; there is no DELETE policy and no delete method here.
 """
+from datetime import datetime
+
 import httpx
 from postgrest.exceptions import APIError
 
@@ -70,6 +72,8 @@ class SupabaseReviewRepository:
                 text=row.get("text") or "",
                 reviewer_email=reviewer.get("email") or "",
                 transaction_id=row.get("transaction_id"),
+                created_at=datetime.fromisoformat(row["created_at"]) if row.get("created_at") else None,
+                subject_is_provider=row.get("subject_is_provider"),
             ))
         return reviews
 

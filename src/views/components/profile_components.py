@@ -5,7 +5,10 @@ import html
 import streamlit as st
 
 from models.listing import Listing
-from models.review import RatingSummary, Review
+from models.review import (
+    DEFAULT_REVIEW_SORT, REVIEW_FILTERS, REVIEW_SORTS, RatingSummary, Review,
+)
+from views.session import get_profile_controller
 
 
 def _e(value) -> str:
@@ -52,12 +55,30 @@ def thumb_html(listing: Listing, badge: str, closed: bool = False) -> str:
 
 
 def review_html(review: Review) -> str:
+    role = {True: "as provider", False: "as customer"}.get(review.subject_is_provider)
+    meta = " · ".join(x for x in (role, f"{review.created_at:%b} {review.created_at.day}, {review.created_at.year}"
+                                  if review.created_at else None) if x)
+    meta_html = f'<div class="pf-review-meta">{_e(meta)}</div>' if meta else ""
     return (f'<div class="pf-review"><b>{_e(review.reviewer)}</b> · ★ {review.rating:.1f}'
-            f'<br>{_e(review.text)}</div>')
+            f'<br>{_e(review.text)}{meta_html}</div>')
 
 
-def render_reviews(reviews: list[Review]) -> None:
+def render_reviews(reviews: list[Review], key: str = "own") -> None:
+    """The Reviews tab: role pills (As provider / As customer, one at a time, none = all) and a
+    sort dropdown (default: highest rated first). `key` keeps the widgets of different pages
+    (own profile / each public profile) apart."""
     if not reviews:
         st.markdown(empty_html("No reviews yet."), unsafe_allow_html=True)
-    for review in reviews:
+        return
+    filt_col, sort_col = st.columns([3, 2], vertical_alignment="center")
+    with filt_col:
+        chosen = st.pills("Filter reviews", list(REVIEW_FILTERS), selection_mode="single",
+                          label_visibility="collapsed", key=f"rvpills_{key}")
+    with sort_col:
+        sort = st.selectbox("Sort reviews", REVIEW_SORTS, index=REVIEW_SORTS.index(DEFAULT_REVIEW_SORT),
+                            label_visibility="collapsed", key=f"rvsort_{key}")
+    shown = get_profile_controller().sort_reviews(reviews, REVIEW_FILTERS.get(chosen), sort)
+    if not shown:
+        st.markdown(empty_html(f"No reviews {chosen.lower()} yet."), unsafe_allow_html=True)
+    for review in shown:
         st.markdown(review_html(review), unsafe_allow_html=True)

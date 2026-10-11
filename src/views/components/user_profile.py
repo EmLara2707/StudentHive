@@ -113,7 +113,7 @@ def _tabs(p: PublicProfile) -> None:
                 for listing in p.listings:
                     _listing_card(listing)
     with reviews_tab:
-        render_reviews(p.reviews)
+        render_reviews(p.reviews, key=f"pub_{p.email}")
 
 
 # ------------------------------------------------------------ entry

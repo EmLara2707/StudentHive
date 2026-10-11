@@ -197,3 +197,31 @@
 .st-key-lst_del_yes button { background: var(--danger-btn) !important; border: none !important; border-radius: 999px !important; min-height: 1.9rem; padding: 0 1.3rem !important; }
 .st-key-lst_del_yes button p { color: #fff !important; font-weight: 600; font-size: 0.85rem; }
 .st-key-lst_del_yes button:hover { background: #bd1c1c !important; }
+
+
+/* ---------- reviews tab: role pills + sort dropdown ---------- */
+[class*="st-key-rvpills_"] button {
+    border-radius: 999px;
+    border: 1.5px solid var(--ink);
+    background: #ffffff;
+    min-height: 1.8rem;
+    padding: 0 0.9rem;
+    box-shadow: none;
+}
+[class*="st-key-rvpills_"] button p { color: var(--ink); }
+[class*="st-key-rvpills_"] button:hover { border-color: var(--teal); background: #ffffff; }
+[class*="st-key-rvpills_"] button:hover p { color: var(--teal); }
+[class*="st-key-rvpills_"] [data-testid="stBaseButton-pillsActive"],
+[class*="st-key-rvpills_"] button[kind="pillsActive"],
+[class*="st-key-rvpills_"] button[aria-pressed="true"],
+[class*="st-key-rvpills_"] button[aria-checked="true"] {
+    background: var(--teal) !important;
+    border-color: var(--teal) !important;
+}
+[class*="st-key-rvpills_"] [data-testid="stBaseButton-pillsActive"] p,
+[class*="st-key-rvpills_"] button[kind="pillsActive"] p,
+[class*="st-key-rvpills_"] button[aria-pressed="true"] p,
+[class*="st-key-rvpills_"] button[aria-checked="true"] p { color: #ffffff !important; }
+[class*="st-key-rvsort_"] [data-baseweb="select"] > div { border-radius: 999px !important; font-size: 0.85rem; }
+.pf-review-meta { font-size: 0.78rem; color: #8a949c; margin-top: 0.2rem; }
+

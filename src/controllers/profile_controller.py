@@ -1,6 +1,6 @@
 """Profile page use-cases. No Streamlit, no session_state."""
 from models.profile import Profile
-from models.review import RatingSummary, Review
+from models.review import DEFAULT_REVIEW_SORT, RatingSummary, Review, filter_and_sort_reviews
 from models.user import User
 from repositories.errors import RepositoryError
 from repositories.review_repository import ReviewRepository
@@ -100,6 +100,12 @@ class ProfileController:
     # ---- reviews ----
     def get_reviews(self, email: str) -> list[Review]:
         return self._reviews.get_for_user(email)
+
+    @staticmethod
+    def sort_reviews(reviews: list[Review], as_provider: bool | None = None,
+                     sort: str = DEFAULT_REVIEW_SORT) -> list[Review]:
+        """The reviews tab: optional role filter, then the chosen order."""
+        return filter_and_sort_reviews(reviews, as_provider, sort)
 
     def get_rating_summary(self, email: str) -> RatingSummary:
         return RatingSummary.from_reviews(self._reviews.get_for_user(email))
