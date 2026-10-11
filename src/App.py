@@ -15,6 +15,7 @@ st.markdown(
     """
     <style>
     .stApp { zoom: 1.1; }
+    [data-testid="stMain"] [data-testid="stMainBlockContainer"] { padding-bottom: 8rem !important; }
     /* Sidebar background */
     [data-testid="stSidebar"] {
         background-color: #E7EDF1;
