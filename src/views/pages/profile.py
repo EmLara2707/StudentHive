@@ -156,6 +156,7 @@ def photo_dialog():
             if error:
                 st.error(error)
             else:
+                _sync_session_user() 
                 st.rerun()
 
 
