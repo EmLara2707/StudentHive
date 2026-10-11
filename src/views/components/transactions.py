@@ -491,10 +491,11 @@ def _confirm_body(kind: TransactionKind, tid: int, action: Action) -> None:
     stem = _DIALOG_KEYS[action]
     back_label, yes_label = _dialog_labels(ctx, action)
     st.write(_dialog_text(ctx, action, entry))
-    c1, c2 = st.columns(2)
-    if c1.button(back_label, key=f"dlg_{stem}_no", use_container_width=True):
-        st.rerun()
-    if c2.button(yes_label, key=f"dlg_{stem}_yes", type="primary", use_container_width=True):
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button(back_label, key=f"dlg_{stem}_no"):
+            st.rerun()
+        confirmed = st.button(yes_label, key=f"dlg_{stem}_yes")
+    if confirmed:
         try:
             with st.spinner("Updating..."):
                 _perform(ctx, action, tid)
@@ -531,11 +532,11 @@ def _review_body(kind: TransactionKind, tid: int) -> None:
         placeholder=f"Share your experience with the {who}...",
     )
 
-    c1, c2 = st.columns(2)
-    if c1.button("Skip", key=f"rv_skip_{tid}", use_container_width=True):
-        st.rerun()
-    if c2.button("Submit review", key=f"rv_submit_{tid}", type="primary",
-                 use_container_width=True, disabled=stars is None):
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button("Skip", key=f"rv_skip_{tid}"):
+            st.rerun()
+        submitted = st.button("Submit review", key=f"rv_submit_{tid}", disabled=stars is None)
+    if submitted:
         try:
             with st.spinner("Submitting..."):
                 result = ctx.ctrl.submit_review(ctx.email, tid, stars + 1, text)   # stars + 1 = 1-5

@@ -659,3 +659,60 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
+/* ---------- confirmation + review dialogs: same look as Log out / Delete / listing dialogs ---------- */
+[data-testid="stDialog"] p,
+[data-testid="stDialog"] button,
+[data-testid="stDialog"] textarea { font-family: 'Inter', sans-serif; }
+[data-testid="stDialog"] h2 { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--ink); }
+
+/* back-out buttons: white pill, teal outline */
+.st-key-dlg_accept_no button, .st-key-dlg_reject_no button, .st-key-dlg_complete_no button,
+.st-key-dlg_cancel_no button, .st-key-dlg_creq_no button, [class*="st-key-rv_skip_"] button {
+    background: #ffffff !important;
+    border: 1.5px solid var(--teal) !important;
+    border-radius: 999px !important;
+    min-height: 1.9rem;
+    padding: 0 1.3rem !important;
+    white-space: nowrap;
+}
+.st-key-dlg_accept_no button:hover, .st-key-dlg_reject_no button:hover, .st-key-dlg_complete_no button:hover,
+.st-key-dlg_cancel_no button:hover, .st-key-dlg_creq_no button:hover, [class*="st-key-rv_skip_"] button:hover {
+    background: #effaf8 !important;
+}
+
+/* confirm buttons: teal pill */
+.st-key-dlg_accept_yes button, .st-key-dlg_complete_yes button, [class*="st-key-rv_submit_"] button {
+    background: var(--teal) !important;
+    border: none !important;
+    border-radius: 999px !important;
+    min-height: 1.9rem;
+    padding: 0 1.3rem !important;
+    white-space: nowrap;
+}
+.st-key-dlg_accept_yes button:hover, .st-key-dlg_complete_yes button:hover,
+[class*="st-key-rv_submit_"] button:hover { background: var(--teal-hover) !important; }
+
+/* destructive confirm buttons (reject / cancel): red pill, like Delete */
+.st-key-dlg_reject_yes button, .st-key-dlg_cancel_yes button, .st-key-dlg_creq_yes button {
+    background: #e32626 !important;
+    border: none !important;
+    border-radius: 999px !important;
+    min-height: 1.9rem;
+    padding: 0 1.3rem !important;
+    white-space: nowrap;
+}
+.st-key-dlg_reject_yes button:hover, .st-key-dlg_cancel_yes button:hover,
+.st-key-dlg_creq_yes button:hover { background: #bd1c1c !important; }
+
+/* text inside the filled buttons + all back-out buttons */
+.st-key-dlg_accept_yes button p, .st-key-dlg_complete_yes button p, .st-key-dlg_reject_yes button p,
+.st-key-dlg_cancel_yes button p, .st-key-dlg_creq_yes button p, [class*="st-key-rv_submit_"] button p {
+    color: #ffffff !important; font-weight: 600; font-size: 0.85rem;
+}
+.st-key-dlg_accept_no button p, .st-key-dlg_reject_no button p, .st-key-dlg_complete_no button p,
+.st-key-dlg_cancel_no button p, .st-key-dlg_creq_no button p, [class*="st-key-rv_skip_"] button p {
+    color: var(--teal) !important; font-weight: 600; font-size: 0.85rem;
+}
+
+/* Submit review before any star is picked */
+[class*="st-key-rv_submit_"] button:disabled { background: #c9d0d8 !important; }

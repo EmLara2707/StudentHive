@@ -14,6 +14,7 @@ st.set_page_config(page_title="StudentHive", layout="wide")
 st.markdown(
     """
     <style>
+    .stApp { zoom: 1.1; }
     /* Sidebar background */
     [data-testid="stSidebar"] {
         background-color: #E7EDF1;
