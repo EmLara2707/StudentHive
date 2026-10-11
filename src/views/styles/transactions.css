@@ -397,6 +397,7 @@
   .badge-lending  { background: var(--role-lending); }
   .badge-pending   { background: #8A94A0; }
   .badge-cancelled { background: #D64545; }
+  .badge-review    { background: #3B82F6; }
   .listing-price {
       font-weight: 700;
       font-size: 0.9rem;
@@ -716,3 +717,21 @@
 
 /* Submit review before any star is picked */
 [class*="st-key-rv_submit_"] button:disabled { background: #c9d0d8 !important; }
+
+
+/* ---------- "Leave a review" button in the details panel: same look as Complete / Accept ---------- */
+[class*="st-key-act_review"] button {
+    background: #0f6b62;
+    border: none;
+    border-radius: 999px;
+    min-height: 2.3rem;
+    padding: 0 1rem;
+    box-shadow: none;
+}
+[class*="st-key-act_review"] button:hover,
+[class*="st-key-act_review"] button:focus:not(:active) { background: #0b5750; border: none; }
+[data-testid="stMain"] [class*="st-key-act_review"] button [data-testid="stMarkdownContainer"] p {
+    color: #FFFFFF !important;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
