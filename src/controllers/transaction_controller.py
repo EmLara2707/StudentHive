@@ -11,10 +11,11 @@ from models.transaction import (
     TransactionEntry, TransactionKind, TransactionStatus,
 )
 from repositories.errors import ConflictError
-from utils.clock import today_manila
+from utils.clock import now_manila, today_manila
 
 NOT_FOUND_ERROR = "This transaction is no longer available."
 NOT_ALLOWED_ERROR = "That isn't available right now."
+REVIEW_CLOSED_ERROR = "The 14-day window to review this has closed."
 CONFLICT_ERROR = "This request was just updated by the other person. Please refresh and try again."
 UNKNOWN_NAME = "Unknown student"
 MAX_REVIEW_CHARS = 500
@@ -69,7 +70,12 @@ class TransactionController:
         if tx.status is TransactionStatus.COMPLETED:
             done = (tx.id in reviewed if reviewed is not None
                     else self._reviews.has_reviewed(tx.id, viewer_email))
-            entry = replace(entry, can_review=not done)
+            now = now_manila()
+            is_open = tx.review_open(now)
+            entry = replace(entry,
+                            can_review=not done and is_open,
+                            review_days_left=None if done else tx.review_days_left(now),
+                            review_expired=not done and not is_open)
         return entry
 
     # ------------------------------------------------------------ tabs: filter + sort
@@ -160,7 +166,7 @@ class TransactionController:
 
     def complete(self, actor_email: str, transaction_id: int, today: date | None = None) -> ActionResult:
         today = today or today_manila()
-        return self._act(actor_email, transaction_id, lambda tx: tx.complete(actor_email, today))
+        return self._act(actor_email, transaction_id, lambda tx: tx.complete(actor_email, today, now_manila()))
 
     def cancel(self, actor_email: str, transaction_id: int, today: date | None = None) -> ActionResult:
         today = today or today_manila()
@@ -192,6 +198,8 @@ class TransactionController:
         entry = self.get_entry(reviewer_email, transaction_id)
         if entry is None:
             return ActionResult(False, error=NOT_FOUND_ERROR)
+        if entry.review_expired:
+            return ActionResult(False, entry, REVIEW_CLOSED_ERROR)
         if not entry.can_review:
             return ActionResult(False, entry, NOT_ALLOWED_ERROR)
         if isinstance(rating, bool) or not isinstance(rating, int) or not 1 <= rating <= 5:

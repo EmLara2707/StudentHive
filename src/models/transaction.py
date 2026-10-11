@@ -14,11 +14,12 @@ Lifecycle:
 Pure data + rules: no Streamlit, no storage.
 """
 from dataclasses import dataclass
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from enum import Enum
 
 
 PLACEHOLDER_IMAGE = "https://placehold.co/200"
+REVIEW_WINDOW_DAYS = 14      # how long after completion a review can be left (also in migration 005)
 
 
 class TransactionKind(str, Enum):
@@ -93,6 +94,7 @@ class Transaction:
     location: str = ""
     project_details: str = ""           # Projects only
     deadline: date | None = None        # Projects only
+    completed_at: datetime | None = None   # when it became Completed (starts the review window)
 
     # ------------------------------------------------------------ who is who
     def is_provider(self, email: str) -> bool:
@@ -146,6 +148,28 @@ class Transaction:
     def has_started(self, today: date) -> bool:
         return today >= self.start
 
+    # ------------------------------------------------------------ review window
+    @property
+    def review_deadline(self) -> datetime | None:
+        """Last moment a review can be left; None when unknown (no completion time stored)."""
+        if self.completed_at is None:
+            return None
+        return self.completed_at + timedelta(days=REVIEW_WINDOW_DAYS)
+
+    def review_open(self, now: datetime) -> bool:
+        """True while a review can still be left (completed, and inside the window)."""
+        if self.status is not TransactionStatus.COMPLETED:
+            return False
+        deadline = self.review_deadline
+        return deadline is None or now <= deadline
+
+    def review_days_left(self, now: datetime) -> int | None:
+        """Whole days left to review, rounded up (so it never says 0 while still open)."""
+        deadline = self.review_deadline
+        if deadline is None or now > deadline:
+            return None
+        return max(1, -(-int((deadline - now).total_seconds()) // 86400))
+
     # ------------------------------------------------------------ what a viewer may do
     def allowed_actions(self, email: str, today: date) -> list[Action]:
         if not self.involves(email):
@@ -173,9 +197,10 @@ class Transaction:
         self._require(Action.WITHDRAW, by)
         self._cancel(by)
 
-    def complete(self, by: str, today: date) -> None:
+    def complete(self, by: str, today: date, now: datetime | None = None) -> None:
         self._require(Action.COMPLETE, by, today)
         self.status = TransactionStatus.COMPLETED
+        self.completed_at = now
 
     def cancel(self, by: str, today: date) -> None:
         self._require(Action.CANCEL, by, today)
@@ -203,7 +228,9 @@ class TransactionEntry:
     transaction: Transaction
     viewer_email: str
     counterpart: Counterpart
-    can_review: bool = False      # completed, and I haven't reviewed the other person yet
+    can_review: bool = False      # completed, I haven't reviewed yet, and the window is open
+    review_days_left: int | None = None   # days left to review (only while can_review)
+    review_expired: bool = False  # completed, never reviewed by me, and the window has closed
 
     @property
     def id(self) -> int:

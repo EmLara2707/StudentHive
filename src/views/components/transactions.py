@@ -200,7 +200,8 @@ def badges_html(r: TransactionEntry) -> str:
         who = "by you" if r.cancelled_by_me else "by them"
         out += f'<span class="badge badge-cancelled">Cancelled {who}</span>'
     if r.can_review:       # finished, and I haven't reviewed the other person yet
-        out += '<span class="badge badge-review">To review</span>'
+        left = f" · {r.review_days_left}d left" if r.review_days_left else ""
+        out += f'<span class="badge badge-review">To review{left}</span>'
     return out
 
 
@@ -263,7 +264,11 @@ def _status_note(ctx: _Ctx, r: TransactionEntry) -> tuple[str, str]:
         return ("Cancelled by you." if r.cancelled_by_me else f"Cancelled by {name}."), ""
     if r.status is TransactionStatus.COMPLETED:
         if r.can_review:
-            return f"{ctx.copy.note_completed} Press Leave a review to rate {name}.", ""
+            left = plural(r.review_days_left or 1, "day")
+            return (f"{ctx.copy.note_completed} Press Leave a review to rate {name}. "
+                    f"You have {left} left to review."), ""
+        if r.review_expired:
+            return f"{ctx.copy.note_completed} The 14-day window to review {name} has closed.", ""
         return f"{ctx.copy.note_completed} Your review of {name} is in.", ""
     if r.status is TransactionStatus.PENDING:
         text = ctx.copy.note_respond if r.is_provider else ctx.copy.note_waiting

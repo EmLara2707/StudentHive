@@ -16,7 +16,7 @@ Notes
   handles on sign-in and token refresh).
 - Reviews live in SupabaseReviewRepository, not here.
 """
-from datetime import date, time
+from datetime import date, datetime, time
 
 import httpx
 from postgrest.exceptions import APIError
@@ -42,6 +42,10 @@ def _t(value: str | None) -> time | None:
 
 def _d(value: str | None) -> date | None:
     return date.fromisoformat(value) if value else None
+
+
+def _dt(value: str | None) -> datetime | None:
+    return datetime.fromisoformat(value) if value else None
 
 
 class SupabaseTransactionRepository:
@@ -98,6 +102,7 @@ class SupabaseTransactionRepository:
             location=row.get("location") or "",
             project_details=row.get("project_details") or "",
             deadline=_d(row.get("deadline")),
+            completed_at=_dt(row.get("completed_at")),
         )
 
     # ------------------------------------------------------------ reads

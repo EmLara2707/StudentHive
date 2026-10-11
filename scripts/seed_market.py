@@ -124,6 +124,10 @@ def seed_transactions(admin, ids: dict[str, str], transactions) -> tuple[int, in
             "quantity": round(float(t.quantity), 2),
             "total": round(float(t.total), 2),
             "status": t.status.value,
+            # sample history is inserted already Completed, so the trigger never stamps it:
+            # use the end date (noon, Manila) so its 14-day review window is realistic
+            "completed_at": (f"{t.end.isoformat()}T12:00:00+08:00"
+                             if t.status.value == "Completed" else None),
             "cancelled_by": ids[t.cancelled_by.strip().lower()] if t.cancelled_by else None,
             "location": t.location,
             "project_details": t.project_details,
