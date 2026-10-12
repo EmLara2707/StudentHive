@@ -13,7 +13,7 @@ import streamlit as st
 
 from utils.token_expiry import seconds_left
 from views.components.auth_cookie import (
-    queue_cookie_clear, queue_cookie_write, read_refresh_cookie,
+    COOKIE_PENDING, queue_cookie_clear, queue_cookie_write, read_refresh_cookie,
 )
 from views.session import (
     end_session, get_auth_controller, get_auth_tokens, start_session, store_auth_tokens,
@@ -29,11 +29,14 @@ def restore_login_on_load() -> None:
     a refresh token, sign that person back in."""
     if st.session_state.get("logged_in") or st.session_state.get(_TRIED_KEY):
         return
-    st.session_state[_TRIED_KEY] = True
     auth = get_auth_controller()
     if not auth.remembers_logins:
+        st.session_state[_TRIED_KEY] = True
         return
     token = read_refresh_cookie()
+    if token is COOKIE_PENDING:
+        _wait_for_browser()                         # does not return (st.stop)
+    st.session_state[_TRIED_KEY] = True
     if not token:
         return
 
@@ -50,6 +53,22 @@ def restore_login_on_load() -> None:
     else:
         queue_cookie_clear()
         st.session_state[_NOTICE_KEY] = result.error
+
+
+def _wait_for_browser() -> None:
+    """The browser has not reported its cookie yet (it answers within a moment, then the page
+    reruns by itself). Show a short message and stop. If it never answers (script blocked),
+    a button appears after a few seconds so nobody is stuck here."""
+    st.markdown(
+        "<style>.st-key-cookie_wait_skip { opacity: 0; animation: shShow 0s 6s forwards; }"
+        "@keyframes shShow { to { opacity: 1; } }</style>",
+        unsafe_allow_html=True,
+    )
+    st.caption("Loading...")
+    if st.button("Taking too long? Go to the login page", key="cookie_wait_skip"):
+        st.session_state[_TRIED_KEY] = True
+        st.rerun()
+    st.stop()
 
 
 def keep_tokens_fresh() -> None:

@@ -181,14 +181,6 @@ if "onboarding_complete" not in st.session_state:
 # A6: after a browser refresh, sign the person back in from their cookie; while they are
 # logged in, renew the access token before it expires. Both do nothing on in-memory logins.
 restore_login_on_load()
-if st.query_params.get("debug") == "1":
-    st.warning({
-        "cookie_names_server_sees": list(st.context.cookies.keys()),
-        "has_sh_refresh": "sh_refresh" in st.context.cookies,
-        "logged_in": st.session_state.get("logged_in"),
-        "restore_tried": st.session_state.get("restore_tried"),
-        "notice": st.session_state.get("session_notice"),
-    })
 keep_tokens_fresh()
 
 @st.dialog("Log out?")
