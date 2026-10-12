@@ -1,7 +1,7 @@
 """Onboarding use-cases. No Streamlit, no session_state."""
 import copy
 
-from models.profile import IdVerificationStatus, Profile
+from models.profile import Profile
 from repositories.user_repository import UserRepository
 
 _LIST_FIELDS = {"skills", "socials"}
@@ -34,7 +34,7 @@ class OnboardingController:
             items.pop(index)
 
     # ---- finishing ----
-    def complete(self, email: str, draft: Profile, id_submitted: bool) -> bool:
+    def complete(self, email: str, draft: Profile) -> bool:
         """Save the draft onto the user and mark them onboarded."""
         user = self._users.get_by_email(email)
         if user is None:
@@ -43,12 +43,6 @@ class OnboardingController:
         profile = copy.deepcopy(draft)
         profile.major = profile.major.strip()
         profile.bio = profile.bio.strip()[: Profile.MAX_BIO_LENGTH]
-        # TODO: hand the ID image to the third-party verification service here;
-        # it will later flip this status to VERIFIED or REJECTED.
-        profile.id_status = (
-            IdVerificationStatus.PENDING if id_submitted
-            else IdVerificationStatus.NOT_SUBMITTED
-        )
 
         user.profile = profile
         user.onboarded = True

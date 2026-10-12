@@ -3,15 +3,18 @@ Rules and saving live in OnboardingController; the draft is a Profile model."""
 import streamlit as st
 
 from models.profile import Profile
+from views.components.photo_cropper import crop_controls
 from views.components.styles import load_css
-from views.session import finish_onboarding, get_onboarding_controller
+from views.session import (
+    finish_onboarding, get_onboarding_controller, get_profile_controller, refresh_session_user,
+)
 
 # NOTE: do NOT call st.set_page_config here. App.py already does it.
 
 STEPS = [
     ("Basic Info", "Personal Info & Major"),
     ("Skills & Portfolio", "Showcase your talents"),
-    ("ID Verification", "Student ID Upload"),
+    ("Profile Photo", "Show your face"),
 ]
 
 CLOUD_ICON = (
@@ -157,36 +160,68 @@ def _step_skills(draft: Profile):
         _go(3)
 
 
-def _step_id(draft: Profile):
+_PHOTO_KEY = "ob_photo"      # (bytes, mime) of the cropped photo, kept until onboarding ends
+
+
+def _remove_photo():
+    st.session_state.pop(_PHOTO_KEY, None)
+
+
+def _step_photo(draft: Profile):
     _header(
-        "ID Verification",
-        "Upload your ID to verify that you are part of the institution. "
-        "Please ensure the information is clear and visible",
+        "Profile Photo",
+        "Add a photo so other students recognise you. You can skip this and add one later "
+        "from your Profile page.",
     )
 
     with st.container(key="upload_box"):
         st.markdown(
             f'<div style="text-align:center">{CLOUD_ICON}'
-            '<div class="ob-upload-text">Drag and drop your image here<br>or</div></div>',
+            '<div class="ob-upload-text">Drag and drop your photo here<br>or</div></div>',
             unsafe_allow_html=True,
         )
         uploaded = st.file_uploader(
-            "Student ID",
+            "Profile photo",
             type=["png", "jpg", "jpeg"],
             label_visibility="collapsed",
-            key="id_upload",
+            key="photo_upload_ob",
         )
     st.markdown('<div class="ob-upload-hint">PNG or JPG</div>', unsafe_allow_html=True)
+
+    ctrl = get_profile_controller()
+    if uploaded is not None:
+        error = ctrl.photo_error(uploaded.size)
+        if error:
+            st.error(error)
+            _remove_photo()
+        else:
+            # the same crop box as the Profile page; if the file can't be cropped, keep it whole
+            chosen = crop_controls(uploaded.getvalue(), key=f"ob_{uploaded.file_id}")
+            if chosen is None:
+                chosen = (uploaded.getvalue(), uploaded.type)
+                st.image(uploaded, width=160)
+            st.session_state[_PHOTO_KEY] = chosen
+    elif _PHOTO_KEY in st.session_state:         # came back to this step: show what was picked
+        st.image(st.session_state[_PHOTO_KEY][0], width=160, caption="Your photo")
+        st.button("Remove photo", key="ob_photo_remove", on_click=_remove_photo)
 
     back, nxt = _nav(3)
     if back:
         _go(2)
     if nxt:
-        # The image itself is not stored; verification is delegated to a
-        # third-party service (see the TODO in OnboardingController.complete).
-        get_onboarding_controller().complete(
-            _email(), draft, id_submitted=uploaded is not None
-        )
+        email = _email()
+        if get_onboarding_controller().complete(email, draft):
+            photo = st.session_state.get(_PHOTO_KEY)
+            # after complete(): saving the draft would otherwise overwrite the photo
+            error = ctrl.update_photo(email, *photo) if photo else None
+            if error:
+                # the profile is saved; stay here so they can retry or press Remove photo
+                st.error(f"Your photo couldn't be saved: {error}")
+                return
+            _remove_photo()
+            user = ctrl.get_user(email)
+            if user:
+                refresh_session_user(user)       # so the dashboard shows the photo right away
         finish_onboarding()
         st.rerun()
 
@@ -206,7 +241,7 @@ def render_onboarding():
         elif step == 2:
             _step_skills(draft)
         else:
-            _step_id(draft)
+            _step_photo(draft)
 
 
 # Only run onboarding while the user hasn't finished it.
