@@ -1,8 +1,11 @@
 """Onboarding page: stepper UI only.
 Rules and saving live in OnboardingController; the draft is a Profile model."""
+import html
+
 import streamlit as st
 
 from models.profile import Profile
+from utils.images import to_data_uri
 from views.components.photo_cropper import crop_controls
 from views.components.styles import load_css
 from views.session import (
@@ -16,14 +19,6 @@ STEPS = [
     ("Skills & Portfolio", "Showcase your talents"),
     ("Profile Photo", "Show your face"),
 ]
-
-CLOUD_ICON = (
-    '<svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#7d7d7d" '
-    'stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">'
-    '<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/>'
-    '<path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>'
-)
-
 
 # ---------------------------------------------------------------- helpers
 def _init_state():
@@ -142,7 +137,8 @@ def _step_skills(draft: Profile):
         with c2:
             draft.github = st.text_input("Github", value=draft.github)
 
-    st.markdown('<div class="ob-h2">Professional Socials</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ob-h2">Professional Socials (at least one)</div>',
+                unsafe_allow_html=True)
     with st.container(key="card_socials"):
         st.text_input(
             "Add Social Media Link",
@@ -157,14 +153,55 @@ def _step_skills(draft: Profile):
     if back:
         _go(1)
     if nxt:
-        _go(3)
+        error = get_onboarding_controller().socials_error(draft)
+        if error:
+            st.error(error)         # stay on this step until one social link is added
+        else:
+            _go(3)
 
 
 _PHOTO_KEY = "ob_photo"      # (bytes, mime) of the cropped photo, kept until onboarding ends
+_PLACEHOLDER = "👤"
 
 
 def _remove_photo():
     st.session_state.pop(_PHOTO_KEY, None)
+
+
+@st.dialog("Upload photo")
+def _photo_dialog():
+    """Pick a file, crop it with the Profile page's crop box, then use it."""
+    ctrl = get_profile_controller()
+    file = st.file_uploader("Choose an image", type=["png", "jpg", "jpeg"], key="photo_upload_ob")
+    if file is not None:
+        error = ctrl.photo_error(file.size)
+        if error:
+            st.error(error)
+            file = None
+    chosen = None                                   # (bytes, mime) that will be used
+    if file is not None:
+        # crop to a square first; if the file can't be cropped, keep the original upload
+        chosen = crop_controls(file.getvalue(), key=f"ob_{file.file_id}")
+        if chosen is None:
+            chosen = (file.getvalue(), file.type)
+            st.image(file, width=160)
+    with st.container(horizontal=True, horizontal_alignment="distribute"):
+        if st.button("Cancel", key="ob_photo_cancel"):
+            st.rerun()
+        if st.button("Use photo", key="ob_photo_use", disabled=chosen is None):
+            st.session_state[_PHOTO_KEY] = chosen
+            st.rerun()
+
+
+def _avatar_circle():
+    """The round preview: the chosen photo, or a placeholder until there is one."""
+    photo = st.session_state.get(_PHOTO_KEY)
+    if photo:
+        style = f"background-image:url({html.escape(to_data_uri(*photo), quote=True)})"
+        inner = ""
+    else:
+        style, inner = "", _PLACEHOLDER
+    st.markdown(f'<div class="ob-avatar" style="{style}">{inner}</div>', unsafe_allow_html=True)
 
 
 def _step_photo(draft: Profile):
@@ -174,42 +211,24 @@ def _step_photo(draft: Profile):
         "from your Profile page.",
     )
 
-    with st.container(key="upload_box"):
-        st.markdown(
-            f'<div style="text-align:center">{CLOUD_ICON}'
-            '<div class="ob-upload-text">Drag and drop your photo here<br>or</div></div>',
-            unsafe_allow_html=True,
-        )
-        uploaded = st.file_uploader(
-            "Profile photo",
-            type=["png", "jpg", "jpeg"],
-            label_visibility="collapsed",
-            key="photo_upload_ob",
-        )
-    st.markdown('<div class="ob-upload-hint">PNG or JPG</div>', unsafe_allow_html=True)
+    has_photo = _PHOTO_KEY in st.session_state
+    with st.container(key="ob_avatar_box"):
+        _avatar_circle()
+        if st.button("Change photo" if has_photo else "Upload photo", key="ob_photo_open",
+                     icon=":material/photo_camera:"):
+            _photo_dialog()
+        if has_photo:
+            st.button("Remove photo", key="ob_photo_remove", type="tertiary",
+                      on_click=_remove_photo)
 
     ctrl = get_profile_controller()
-    if uploaded is not None:
-        error = ctrl.photo_error(uploaded.size)
-        if error:
-            st.error(error)
-            _remove_photo()
-        else:
-            # the same crop box as the Profile page; if the file can't be cropped, keep it whole
-            chosen = crop_controls(uploaded.getvalue(), key=f"ob_{uploaded.file_id}")
-            if chosen is None:
-                chosen = (uploaded.getvalue(), uploaded.type)
-                st.image(uploaded, width=160)
-            st.session_state[_PHOTO_KEY] = chosen
-    elif _PHOTO_KEY in st.session_state:         # came back to this step: show what was picked
-        st.image(st.session_state[_PHOTO_KEY][0], width=160, caption="Your photo")
-        st.button("Remove photo", key="ob_photo_remove", on_click=_remove_photo)
-
     back, nxt = _nav(3)
     if back:
         _go(2)
     if nxt:
         email = _email()
+        if get_onboarding_controller().socials_error(draft):
+            _go(2)                  # safety net: the social link is required
         if get_onboarding_controller().complete(email, draft):
             photo = st.session_state.get(_PHOTO_KEY)
             # after complete(): saving the draft would otherwise overwrite the photo

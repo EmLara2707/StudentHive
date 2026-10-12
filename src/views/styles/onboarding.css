@@ -236,27 +236,26 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
 }
 .st-key-nav_back button:hover { background: #effaf8 !important; }
 
-/* ---------- ID upload ---------- */
-.st-key-upload_box {
-    border: 3px dashed #2b2e30;
-    border-radius: 28px;
-    padding: 2.5rem 2rem 2rem 2rem;
-    max-width: 860px;
-    margin: 1.5rem auto 0 auto;
+/* ---------- profile photo ---------- */
+.st-key-ob_avatar_box {
     align-items: center;
-    text-align: center;
+    gap: 1rem;
+    margin: 2rem auto 0 auto;
 }
-.ob-upload-text {
-    font-size: 1.6rem;
-    color: #7d7d7d;
-    line-height: 1.6;
+.ob-avatar {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 4px solid var(--teal-ring);
+    background: #f3f6f8 center/cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5.5rem;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
-.ob-upload-hint {
-    text-align: center;
-    color: var(--ink);
-    font-size: 1.1rem;
-    margin-top: 0.8rem;
-}
+.st-key-ob_avatar_box [data-testid="stButton"] { display: flex; justify-content: center; }
 /* turn the stock uploader into a single "Browse Computer" button */
 [data-testid="stFileUploaderDropzone"] {
     background: transparent !important;
@@ -288,3 +287,14 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
     .st-key-ob_left { position: static; width: 100%; height: auto; padding: 2.5rem 1.5rem; }
     .st-key-ob_right { margin-left: 0; width: 100% !important; max-width: 100% !important; padding: 2rem 1.5rem 4rem 1.5rem; }
 }
+
+/* the Upload / Change photo button under the circle */
+.st-key-ob_photo_open button {
+    background: #ffffff !important;
+    border: 3px solid var(--teal-ring) !important;
+    border-radius: 22px !important;
+    padding: 0.5rem 1.8rem !important;
+    min-height: 52px;
+}
+.st-key-ob_photo_open button p { font-size: 1.15rem; font-weight: 700; color: var(--teal-line); }
+.st-key-ob_photo_open button:hover { background: #effaf8 !important; }

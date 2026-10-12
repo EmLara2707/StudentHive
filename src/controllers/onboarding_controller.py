@@ -33,11 +33,18 @@ class OnboardingController:
         if 0 <= index < len(items):
             items.pop(index)
 
+    # ---- rules ----
+    SOCIALS_REQUIRED_ERROR = "Add at least one social media link so other students can reach you."
+
+    def socials_error(self, draft: Profile) -> str | None:
+        """Step 2 needs at least one social media contact. Returns the message, or None if fine."""
+        return None if any(s.strip() for s in draft.socials) else self.SOCIALS_REQUIRED_ERROR
+
     # ---- finishing ----
     def complete(self, email: str, draft: Profile) -> bool:
         """Save the draft onto the user and mark them onboarded."""
         user = self._users.get_by_email(email)
-        if user is None:
+        if user is None or self.socials_error(draft):
             return False
 
         profile = copy.deepcopy(draft)
