@@ -5,7 +5,7 @@ from pathlib import Path
 import streamlit as st
 
 # Put the team's real contact email here (one place; both documents use it).
-CONTACT_EMAIL = "the StudentHive team (add a contact email in views/components/legal.py)"
+CONTACT_EMAIL = "stdnt.hive@gmail.com"
 
 _LEGAL_DIR = Path(__file__).resolve().parent.parent / "legal"
 
