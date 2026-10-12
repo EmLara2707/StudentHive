@@ -156,3 +156,26 @@ html, body,
     margin-top: 1.2rem;
 }
 .sh-legal a { color: var(--teal-soft); text-decoration: none; }
+
+/* ---------- Terms / Privacy links under the sign-up form: look like text links ---------- */
+.st-key-legal_links { flex-wrap: wrap; margin-top: 1.2rem; }
+.st-key-legal_links .stButton { margin-top: 0 !important; }
+.st-key-legal_links .sh-legal-text { font-size: 0.9rem; color: var(--muted); }
+.st-key-legal_links .stButton > button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: auto !important;
+}
+.st-key-legal_links .stButton > button p {
+    color: var(--teal-soft) !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    text-decoration: underline;
+}
+.st-key-legal_links .stButton > button:hover,
+.st-key-legal_links .stButton > button:focus:not(:active) { background: transparent !important; }
+.st-key-legal_links .stButton > button:hover p { color: var(--teal-ring) !important; }

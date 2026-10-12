@@ -5,6 +5,7 @@ import os
 import streamlit as st
 
 from views.components.auth_cookie import queue_cookie_write
+from views.components.legal import privacy_dialog, terms_dialog
 from views.components.session_lifecycle import pop_session_notice
 from views.components.styles import load_css
 from views.session import get_auth_controller, start_session, store_auth_tokens
@@ -91,15 +92,15 @@ with right_col:
             st.space("small")
             signup_button = st.button("Create Account", key="signup_btn")
 
-            st.markdown(
-                """
-                <div class="sh-legal">
-                By creating an account, you agree to our
-                <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            with st.container(horizontal=True, horizontal_alignment="center",
+                              vertical_alignment="center", gap="xxsmall", key="legal_links"):
+                st.markdown('<span class="sh-legal-text">By creating an account, you agree to our</span>',
+                            unsafe_allow_html=True)
+                if st.button("Terms of Service", key="terms_link"):
+                    terms_dialog()
+                st.markdown('<span class="sh-legal-text">and</span>', unsafe_allow_html=True)
+                if st.button("Privacy Policy", key="privacy_link"):
+                    privacy_dialog()
             st.space("medium")
 
             if signup_button:
