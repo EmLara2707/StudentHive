@@ -16,6 +16,9 @@ st.markdown(
     <style>
     .stApp { zoom: 1.1; }
     [data-testid="stMain"] [data-testid="stMainBlockContainer"] { padding-bottom: 8rem !important; }
+
+    input[type="password"]::-ms-reveal { display: none !important; }
+    input[type="password"]::-ms-clear { display: none !important; }
     /* Sidebar background */
     [data-testid="stSidebar"] {
         background-color: #E7EDF1;
