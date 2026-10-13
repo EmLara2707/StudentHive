@@ -10,8 +10,8 @@ auth.users, and listings/transactions/reviews point at those ids.
 What it does, for each person:
   * no account yet  -> creates it through the ADMIN API, already email-confirmed
                        (no confirmation email is sent, so no email rate limit is used)
-  * account exists  -> reuses it (for example the rows made by supabase/dev/test_profiles.sql,
-                       which have fixed ids and no password) and confirms its email
+  * account exists  -> reuses it (for example one created by hand or by an earlier run)
+                       and confirms its email
   * then fills in the profile row (onboarded, major, bio, skills, socials), because the
     signup trigger only creates a default, un-onboarded profile.
 
@@ -37,7 +37,9 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))      # sample_data.py
 
-DEMO_PASSWORD = "demo1234"          # dev demo account only
+# Never hard-code the demo password: set SEED_DEMO_PASSWORD, pass --demo-password, or let
+# the script generate one (it is printed at the end of a successful run).
+DEMO_PASSWORD = os.environ.get("SEED_DEMO_PASSWORD") or secrets.token_urlsafe(9)
 
 
 @dataclass(frozen=True)
@@ -68,8 +70,8 @@ def build_users(demo_password: str = DEMO_PASSWORD) -> list[SeedUser]:
 
 
 def _find_id(admin, email: str) -> str | None:
-    """The auth user id for this email, via the profiles table (the signup trigger and
-    test_profiles.sql both create a profile row per auth user)."""
+    """The auth user id for this email, via the profiles table (the signup trigger
+    creates a profile row for every auth user)."""
     rows = (admin.table("profiles").select("id").eq("email", email).limit(1).execute().data)
     return rows[0]["id"] if rows else None
 
@@ -121,7 +123,9 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--yes", action="store_true", help="do not ask for confirmation")
     parser.add_argument("--secrets", type=Path, default=ROOT / "src" / ".streamlit" / "secrets.toml")
-    parser.add_argument("--demo-password", default=DEMO_PASSWORD)
+    parser.add_argument("--demo-password", default=DEMO_PASSWORD,
+                        help="password for the demo account (default: $SEED_DEMO_PASSWORD, "
+                             "or a random one that is printed at the end)")
     args = parser.parse_args(argv)
 
     url, key = load_credentials(args.secrets)
