@@ -62,7 +62,7 @@ class AuthController:
         if code == gw.INVALID_CREDENTIALS:
             return "Invalid email or password."
         if code == gw.EMAIL_NOT_CONFIRMED:
-            return ("Please confirm your email first. Enter the 6-digit code we sent you "
+            return ("Please confirm your email first. Enter the code we sent you "
                     "(check your inbox and junk folder).")
         if code == gw.INVALID_CODE:
             return "That code is wrong or has expired. Check it, or ask for a new code."
@@ -148,8 +148,8 @@ class AuthController:
         user = self._users.get_by_email(email)
         return AuthResult.success(user, tokens=outcome.tokens)
 
-    # ---- confirming a new account with the emailed 6-digit code ----
-    CODE_MIN_LENGTH, CODE_MAX_LENGTH = 6, 10  
+    # ---- confirming a new account with the emailed code ----
+    CODE_MIN_LENGTH, CODE_MAX_LENGTH = 6, 10     # Supabase's "Email OTP Length" is 6 to 10  
 
     def confirm_signup(self, email: str, code: str) -> AuthResult:
         """Check the code from the confirmation email. On success the person is signed in."""

@@ -21,7 +21,7 @@ ALREADY_REGISTERED = "already_registered"
 WEAK_PASSWORD = "weak_password"
 SIGNUP_REJECTED = "signup_rejected"           # trigger or provider refused the signup
 RATE_LIMITED = "rate_limited"
-INVALID_CODE = "invalid_code"                 # the 6-digit confirmation code is wrong or expired
+INVALID_CODE = "invalid_code"                 # the emailed confirmation code is wrong or expired
 SESSION_EXPIRED = "session_expired"           # refresh token no longer valid
 NETWORK = "network"
 NOT_CONFIGURED = "not_configured"             # e.g. no service key for admin_delete_user
@@ -167,7 +167,7 @@ class SupabaseAuthGateway:
         return _outcome_from_response(response, needs_confirmation=session is None)
 
     def verify_signup_code(self, email: str, code: str) -> AuthOutcome:
-        """Confirm a new account with the 6-digit code from the email ({{ .Token }}).
+        """Confirm a new account with the code from the email ({{ .Token }}).
         Success signs the person in: the outcome holds the tokens, like sign_in."""
         try:
             response = self._client.auth.verify_otp({

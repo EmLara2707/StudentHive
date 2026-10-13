@@ -15,7 +15,7 @@ from views.session import get_auth_controller, start_session, store_auth_tokens
 load_css("login")
 
 
-_PENDING_KEY = "pending_confirm_email"      # the address waiting for its 6-digit code
+_PENDING_KEY = "pending_confirm_email"      # the address waiting for its emailed code
 
 
 def _confirm_panel(auth) -> None:
@@ -24,9 +24,9 @@ def _confirm_panel(auth) -> None:
     email = st.session_state[_PENDING_KEY]
     st.markdown('<div class="sh-title" style="font-size:1.6rem">Confirm your email</div>',
                 unsafe_allow_html=True)
-    st.info(f"We sent a 6-digit code to **{email}**. Check your inbox and your junk folder.")
+    st.info(f"We sent a code to **{email}**. Check your inbox and your junk folder.")
     code = st.text_input("Confirmation code", key="confirm_code", max_chars=12,
-                         placeholder="123456")
+                         placeholder="Enter your code")
     with st.container(horizontal=True, horizontal_alignment="distribute", key="confirm_nav"):
         back = st.button("Back", key="confirm_back")             # return to Login / Sign-up
         verify = st.button("Confirm account", key="confirm_btn")
