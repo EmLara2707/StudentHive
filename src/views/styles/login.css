@@ -179,3 +179,23 @@ html, body,
 .st-key-legal_links .stButton > button:hover,
 .st-key-legal_links .stButton > button:focus:not(:active) { background: transparent !important; }
 .st-key-legal_links .stButton > button:hover p { color: var(--teal-ring) !important; }
+
+/* ---------- confirm-your-email panel: the two small actions look like text links ---------- */
+.st-key-confirm_row .stButton { margin-top: 0 !important; }
+.st-key-confirm_row .stButton > button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    width: auto !important;
+}
+.st-key-confirm_row .stButton > button p {
+    color: var(--teal-soft) !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    text-decoration: underline;
+}
+.st-key-confirm_row .stButton > button:hover { background: transparent !important; }
+.st-key-confirm_row .stButton > button:hover p { color: var(--teal-ring) !important; }

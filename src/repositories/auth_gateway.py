@@ -21,6 +21,7 @@ ALREADY_REGISTERED = "already_registered"
 WEAK_PASSWORD = "weak_password"
 SIGNUP_REJECTED = "signup_rejected"           # trigger or provider refused the signup
 RATE_LIMITED = "rate_limited"
+INVALID_CODE = "invalid_code"                 # the 6-digit confirmation code is wrong or expired
 SESSION_EXPIRED = "session_expired"           # refresh token no longer valid
 NETWORK = "network"
 NOT_CONFIGURED = "not_configured"             # e.g. no service key for admin_delete_user
@@ -164,6 +165,34 @@ class SupabaseAuthGateway:
             return AuthOutcome.failure(ALREADY_REGISTERED, "email already registered")
         session = getattr(response, "session", None)
         return _outcome_from_response(response, needs_confirmation=session is None)
+
+    def verify_signup_code(self, email: str, code: str) -> AuthOutcome:
+        """Confirm a new account with the 6-digit code from the email ({{ .Token }}).
+        Success signs the person in: the outcome holds the tokens, like sign_in."""
+        try:
+            response = self._client.auth.verify_otp({
+                "email": email.strip().lower(),
+                "token": code.strip(),
+                "type": "signup",
+            })
+        except Exception as exc:
+            outcome = _classify(exc)
+            # A refused code (wrong, expired, already used) is a Supabase API error; only a
+            # rate limit or a network problem should keep its own meaning.
+            if outcome.error_code in (RATE_LIMITED, NETWORK):
+                return outcome
+            return AuthOutcome.failure(INVALID_CODE, outcome.message)
+        if getattr(response, "session", None) is None:
+            return AuthOutcome.failure(INVALID_CODE, "verify_otp returned no session")
+        return _outcome_from_response(response)
+
+    def resend_signup_code(self, email: str) -> AuthOutcome:
+        """Email a fresh confirmation code (the old one stops working)."""
+        try:
+            self._client.auth.resend({"type": "signup", "email": email.strip().lower()})
+        except Exception as exc:
+            return _classify(exc)
+        return AuthOutcome(ok=True, email=email.strip().lower())
 
     def sign_in(self, email: str, password: str) -> AuthOutcome:
         """Email + password. On success the client now carries the user's token and

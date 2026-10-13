@@ -23,7 +23,7 @@ class AuthResult:
     user: User | None = None
     error: str | None = None
     # Added for Supabase Auth (the three fields above are unchanged):
-    needs_confirmation: bool = False        # signed up, but must click the email link first
+    needs_confirmation: bool = False        # signed up, but must enter the emailed code first
     tokens: tuple[str, str] | None = None   # (access, refresh) for the view to remember
     # A6: True when a failure was only a network problem, so the saved login is still good.
     can_retry: bool = False
@@ -34,8 +34,11 @@ class AuthResult:
         return cls(ok=True, user=user, tokens=tokens, needs_confirmation=needs_confirmation)
 
     @classmethod
-    def failure(cls, message: str, can_retry: bool = False) -> "AuthResult":
-        return cls(ok=False, error=message, can_retry=can_retry)
+    def failure(cls, message: str, can_retry: bool = False,
+                needs_confirmation: bool = False) -> "AuthResult":
+        # needs_confirmation on a failure = "the account exists but the email isn't confirmed"
+        return cls(ok=False, error=message, can_retry=can_retry,
+                   needs_confirmation=needs_confirmation)
 
 
 class AuthController:
@@ -59,7 +62,10 @@ class AuthController:
         if code == gw.INVALID_CREDENTIALS:
             return "Invalid email or password."
         if code == gw.EMAIL_NOT_CONFIRMED:
-            return "Please confirm your email first. Check your inbox for the link."
+            return ("Please confirm your email first. Enter the 6-digit code we sent you "
+                    "(check your inbox and junk folder).")
+        if code == gw.INVALID_CODE:
+            return "That code is wrong or has expired. Check it, or ask for a new code."
         if code == gw.ALREADY_REGISTERED:
             return "An account with this email already exists."
         if code == gw.WEAK_PASSWORD:
@@ -77,7 +83,9 @@ class AuthController:
 
         outcome = self._gateway.sign_in(email, password)
         if not outcome.ok:
-            return AuthResult.failure(self._message_for(outcome))
+            return AuthResult.failure(
+                self._message_for(outcome),
+                needs_confirmation=outcome.error_code == gw.EMAIL_NOT_CONFIRMED)
         user = self._users.get_by_email(email)
         if user is None:        # signed in, but no profile row: treat as a failed login
             return AuthResult.failure("Invalid email or password.")
@@ -139,6 +147,36 @@ class AuthController:
             return AuthResult.success(needs_confirmation=True)
         user = self._users.get_by_email(email)
         return AuthResult.success(user, tokens=outcome.tokens)
+
+    # ---- confirming a new account with the emailed 6-digit code ----
+    CODE_LENGTH = 6
+
+    def confirm_signup(self, email: str, code: str) -> AuthResult:
+        """Check the code from the confirmation email. On success the person is signed in."""
+        email = (email or "").strip()
+        digits = "".join(ch for ch in (code or "") if ch.isdigit())
+        if not email or not digits:
+            return AuthResult.failure("Enter the 6-digit code from your email.")
+        if len(digits) != self.CODE_LENGTH:
+            return AuthResult.failure(
+                f"The code has {self.CODE_LENGTH} digits. Check your email and try again.")
+        outcome = self._gateway.verify_signup_code(email, digits)
+        if not outcome.ok:
+            return AuthResult.failure(self._message_for(outcome))
+        user = self._users.get_by_email(email)
+        if user is None:        # confirmed, but no profile row: they can log in again
+            return AuthResult.failure(RepositoryError.DEFAULT_MESSAGE)
+        return AuthResult.success(user, tokens=outcome.tokens)
+
+    def resend_code(self, email: str) -> AuthResult:
+        """Send a fresh confirmation code. Supabase allows one request per email every ~40 s."""
+        email = (email or "").strip()
+        if not email:
+            return AuthResult.failure("Enter your school email first.")
+        outcome = self._gateway.resend_signup_code(email)
+        if not outcome.ok:
+            return AuthResult.failure(self._message_for(outcome))
+        return AuthResult.success()
 
     @staticmethod
     def is_school_email(email: str) -> bool:

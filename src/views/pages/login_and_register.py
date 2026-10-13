@@ -15,6 +15,47 @@ from views.session import get_auth_controller, start_session, store_auth_tokens
 load_css("login")
 
 
+_PENDING_KEY = "pending_confirm_email"      # the address waiting for its 6-digit code
+
+
+def _confirm_panel(auth) -> None:
+    """Enter the code from the confirmation email. Replaces the Login / Sign-up tabs after
+    sign-up, or after a login refused because the email isn't confirmed yet."""
+    email = st.session_state[_PENDING_KEY]
+    st.markdown('<div class="sh-title" style="font-size:1.6rem">Confirm your email</div>',
+                unsafe_allow_html=True)
+    st.info(f"We sent a 6-digit code to **{email}**. Check your inbox and your junk folder.")
+    code = st.text_input("Confirmation code", key="confirm_code", max_chars=12,
+                         placeholder="123456")
+    verify = st.button("Confirm account", key="confirm_btn")
+    with st.container(horizontal=True, horizontal_alignment="distribute", key="confirm_row"):
+        resend = st.button("Send a new code", key="confirm_resend", type="tertiary")
+        other = st.button("Use a different email", key="confirm_other", type="tertiary")
+
+    if other:
+        st.session_state.pop(_PENDING_KEY, None)
+        st.session_state.pop("confirm_code", None)
+        st.rerun()
+    if resend:
+        result = auth.resend_code(email)
+        if result.ok:
+            st.success("A new code is on its way. Check your inbox and junk folder.")
+        else:
+            st.error(result.error)
+    if verify:
+        result = auth.confirm_signup(email, code)
+        if result.ok:
+            st.session_state.pop(_PENDING_KEY, None)
+            st.session_state.pop("confirm_code", None)
+            if result.tokens:
+                store_auth_tokens(*result.tokens)
+                queue_cookie_write(result.tokens[1])        # survive a page refresh
+            start_session(result.user, reset_onboarding=True)   # new account: onboarding
+            st.rerun()
+        else:
+            st.error(result.error)
+
+
 def find_image() -> str | None:
     """Look for the image in views/images, then src/images, then next to this file."""
     base_dir = os.path.dirname(os.path.abspath(__file__))   # .../views/pages
@@ -56,6 +97,10 @@ with right_col:
         if notice:
             st.warning(notice)
 
+        if st.session_state.get(_PENDING_KEY):      # waiting for the emailed code
+            _confirm_panel(auth)
+            st.stop()
+
         login_tab, signup_tab = st.tabs(["Login", "Sign-up"])
 
         # ---------------- LOGIN ----------------
@@ -74,6 +119,9 @@ with right_col:
                         store_auth_tokens(*result.tokens)
                         queue_cookie_write(result.tokens[1])    # survive a page refresh
                     start_session(result.user)
+                    st.rerun()
+                elif result.needs_confirmation:     # account exists, email not confirmed
+                    st.session_state[_PENDING_KEY] = school_email.strip().lower()
                     st.rerun()
                 else:
                     st.error(result.error)
@@ -106,9 +154,9 @@ with right_col:
             if signup_button:
                 result = auth.register(full_name, new_email, new_password, confirm_password)
                 if result.ok and result.needs_confirmation:
-                    # Supabase email confirmation: not signed in until the link is clicked
-                    st.success("Account created! Check your school inbox and click the "
-                               "confirmation link, then log in.")
+                    # Supabase email confirmation: not signed in until the emailed code is entered
+                    st.session_state[_PENDING_KEY] = new_email.strip().lower()
+                    st.rerun()
                 elif result.ok:
                     if result.tokens:
                         store_auth_tokens(*result.tokens)
