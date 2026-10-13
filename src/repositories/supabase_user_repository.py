@@ -1,5 +1,5 @@
-"""A4: users on Supabase (the `profiles` table). Same method names as the in-memory
-UserRepository, so controllers do not change.
+"""A4: users on Supabase (the `profiles` table). Implements the UserRepository
+interface (repositories/user_repository.py).
 
 Rules (handoff + Phase 0):
   * No Streamlit import.

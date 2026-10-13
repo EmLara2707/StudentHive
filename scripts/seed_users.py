@@ -3,8 +3,8 @@
     python scripts/seed_users.py              # asks you to confirm the project first
     python scripts/seed_users.py --yes        # no question (scripts, CI)
 
-Why this exists: the in-memory app ships a demo user and 12 sample students. With
-USE_SUPABASE_USERS on they must be real rows, because profiles.id references
+Why this exists: a fresh dev project has no accounts. The demo user and 12 sample students
+must be real rows, because profiles.id references
 auth.users, and listings/transactions/reviews point at those ids.
 
 What it does, for each person:
@@ -16,7 +16,7 @@ What it does, for each person:
     signup trigger only creates a default, un-onboarded profile.
 
 The demo account gets the password below. Sample students get a random password that is
-thrown away, so nobody can sign in as them (same as the in-memory seed).
+thrown away, so nobody can sign in as them (the sample students are never meant to log in).
 
 Safe to run again: it updates instead of failing. Production starts EMPTY: never run this
 there, and never ship the demo account (final step A8).
@@ -35,8 +35,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))      # sample_data.py
 
-DEMO_PASSWORD = "demo1234"          # same as the in-memory demo account
+DEMO_PASSWORD = "demo1234"          # dev demo account only
 
 
 @dataclass(frozen=True)
@@ -51,15 +52,12 @@ class SeedUser:
 
 
 def build_users(demo_password: str = DEMO_PASSWORD) -> list[SeedUser]:
-    """The demo user and the sample students, read from the same source the in-memory
-    app uses (UserRepository.seeded), so the two can never drift apart."""
-    from repositories.seed_data import SAMPLE_STUDENTS
-    from repositories.user_repository import DEMO_EMAIL, UserRepository
+    """The demo user and the sample students, from scripts/sample_data.py."""
+    from sample_data import DEMO_EMAIL, sample_users
 
-    repo = UserRepository.seeded()
     people = []
-    for email in [DEMO_EMAIL, *[s.email for s in SAMPLE_STUDENTS]]:
-        user = repo.get_by_email(email)
+    for user in sample_users():
+        email = user.email
         people.append(SeedUser(
             name=user.name, email=user.email, major=user.profile.major,
             bio=user.profile.bio, skills=list(user.profile.skills),

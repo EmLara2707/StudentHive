@@ -7,7 +7,6 @@ Two rules from the A1 spike:
     (session_state and cookie) straight away.
   * If a refresh fails for good, the cookie is cleared and the login page shows
     "Your session expired".
-Nothing here changes anything while the in-memory repositories are in use.
 """
 import streamlit as st
 
@@ -30,9 +29,6 @@ def restore_login_on_load() -> None:
     if st.session_state.get("logged_in") or st.session_state.get(_TRIED_KEY):
         return
     auth = get_auth_controller()
-    if not auth.remembers_logins:
-        st.session_state[_TRIED_KEY] = True
-        return
     token = read_refresh_cookie()
     if token is COOKIE_PENDING:
         _wait_for_browser()                         # does not return (st.stop)
@@ -78,7 +74,7 @@ def keep_tokens_fresh() -> None:
         return
     tokens = get_auth_tokens()
     if not tokens:
-        return                                       # in-memory login: nothing to renew
+        return                                       # no tokens stored: nothing to renew
     left = seconds_left(tokens[0])
     if left is None or left > REFRESH_BEFORE_SECONDS:
         return
@@ -95,13 +91,11 @@ def keep_tokens_fresh() -> None:
 def sign_out_everywhere(notice: str | None = None) -> None:
     """end_session() plus forgetting the saved login. Use this instead of end_session()
     in views, otherwise the cookie would log the person straight back in on refresh."""
-    remembers = get_auth_controller().remembers_logins     # ask before the gateway is dropped
     end_session()
     # st.context.cookies still shows the cookie this page was loaded with, so mark the
     # restore as already tried or the next run would sign the person back in.
     st.session_state[_TRIED_KEY] = True
-    if remembers:
-        queue_cookie_clear()
+    queue_cookie_clear()
     if notice:
         st.session_state[_NOTICE_KEY] = notice
 

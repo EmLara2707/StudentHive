@@ -44,14 +44,12 @@ class AuthController:
 
     def __init__(self, users: UserRepository, listings: ListingRepository,
                  reviews: ReviewRepository, transactions: TransactionRepository,
-                 gateway=None) -> None:
+                 gateway) -> None:
         self._users = users
         self._listings = listings
         self._reviews = reviews
         self._transactions = transactions
-        # SupabaseAuthGateway or InMemoryAuthGateway. views/session.py passes it; when it
-        # doesn't, fall back to the in-memory one so the app works either way.
-        self._gateway = gateway if gateway is not None else gw.InMemoryAuthGateway(users)
+        self._gateway = gateway          # SupabaseAuthGateway (views/session.py passes it)
 
     @staticmethod
     def _message_for(outcome) -> str:
@@ -87,12 +85,6 @@ class AuthController:
 
     # ---- A6: keeping a person signed in across browser refreshes ----
     _EXPIRED = "Your session expired. Please log in again."
-
-    @property
-    def remembers_logins(self) -> bool:
-        """True with Supabase Auth (a cookie can bring the login back); False for the
-        in-memory fallback, where there is nothing to restore."""
-        return getattr(self._gateway, "in_memory", True) is False
 
     def _exchange(self, tokens):
         """One refresh-token exchange. Returns (outcome, failed AuthResult or None)."""

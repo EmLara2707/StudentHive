@@ -1,5 +1,5 @@
 """B6: DEV / STAGING ONLY. Fills Supabase with the sample marketplace: listings,
-transactions and reviews, the same ones the in-memory app ships.
+transactions and reviews, from scripts/sample_data.py.
 
     python scripts/seed_users.py      # FIRST: creates the demo account and 12 students
     python scripts/seed_market.py     # asks you to confirm the project first
@@ -7,15 +7,12 @@ transactions and reviews, the same ones the in-memory app ships.
 
 Why this exists: with the Supabase repositories switched on, the demo user's Dashboard,
 Gigs, Rentals and the Marketplace would otherwise be empty. This recreates the sample
-history so a fresh dev project looks like the in-memory demo.
-
-It reads the sample data from the in-memory repositories (ListingRepository.seeded,
-TransactionRepository.seeded, ReviewRepository.seeded), so the two can never drift apart.
+history so a fresh dev project has something to show.
 
 What it creates
   * 15 listings: the demo user's 8 and the 7 marketplace samples from Ana R. They are
     inserted one at a time, oldest first, so the marketplace shows them in the same order
-    as the in-memory app (newest first).
+    as the marketplace shows them (newest first).
   * 26 transactions between the demo user and the sample students, dated relative to
     TODAY (Asia/Manila) in every status (Pending, Active, Completed, Cancelled).
   * the sample reviews (two per person). They have no reviewer account: the reviewer_id
@@ -40,19 +37,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))      # sample_data.py
 
 
 # ------------------------------------------------------------ the sample data
 def build_seed():
-    """(listings, transactions, reviews) exactly as the in-memory app seeds them."""
-    from repositories.listing_repository import ListingRepository
-    from repositories.review_repository import ReviewRepository
-    from repositories.transaction_repository import TransactionRepository
+    """(listings, transactions, reviews) from scripts/sample_data.py."""
+    from sample_data import sample_listings, sample_reviews, sample_transactions
 
-    listings = ListingRepository.seeded().get_all()          # newest first
-    transactions = TransactionRepository.seeded()._items
-    reviews = ReviewRepository.seeded()._reviews
-    return listings, transactions, reviews
+    listings = sample_listings()                 # newest first
+    return listings, sample_transactions(), sample_reviews()
 
 
 def emails_needed(listings, transactions, reviews) -> set[str]:
@@ -77,7 +71,7 @@ def load_ids(admin, emails: set[str]) -> dict[str, str]:
 # ------------------------------------------------------------ writers (one per table)
 def seed_listings(admin, ids: dict[str, str], listings) -> tuple[int, int]:
     """Returns (created, skipped). Oldest first, one insert each, so created_at differs
-    and the marketplace (newest first) shows the same order as the in-memory app."""
+    and the marketplace (newest first) shows them in that order."""
     have = {(r["owner_id"], r["title"])
             for r in admin.table("listings").select("owner_id,title").execute().data}
     created = skipped = 0

@@ -1,91 +1,22 @@
-"""In-memory user storage. Swap this class for a DB-backed one later;
-controllers only depend on these method names."""
+"""What the controllers need from user storage. The only implementation is
+SupabaseUserRepository (the `profiles` table); this file is just the interface, so
+controllers can name the type without importing Supabase code."""
+from typing import Protocol
 
-from models.profile import Profile
 from models.user import User
-from repositories.seed_data import SAMPLE_STUDENTS
-from utils.images import to_data_uri
-
-DEMO_EMAIL = "demo@mcm.edu.ph"
-# Sample seller that owns the seeded marketplace listings. Nobody can log in as
-# this account (its password is random), it only exists so listings have an owner.
-SAMPLE_SELLER_EMAIL = "ana.r@mcm.edu.ph"
 
 
-class UserRepository:
-    def __init__(self) -> None:
-        self._users: dict[str, User] = {}
-
-    @staticmethod
-    def _key(email: str) -> str:
-        return email.strip().lower()
-
-    def get_by_email(self, email: str) -> User | None:
-        return self._users.get(self._key(email))
+class UserRepository(Protocol):
+    def get_by_email(self, email: str) -> User | None: ...
 
     def get_many(self, emails) -> "dict[str, User]":
-        """Several users in one call: {lower-cased email: User}. Emails that match
-        nobody are simply missing from the result. Callers look up with
-        email.strip().lower()."""
-        found: dict[str, User] = {}
-        for email in emails:
-            key = self._key(email)
-            user = self._users.get(key)
-            if user is not None:
-                found[key] = user
-        return found
+        """{lower-cased email: User}. Emails that match nobody are missing."""
+        ...
 
-    def exists(self, email: str) -> bool:
-        return self._key(email) in self._users
+    def exists(self, email: str) -> bool: ...
 
-    def add(self, user: User) -> None:
-        key = self._key(user.email)
-        if key in self._users:
-            raise ValueError("User already exists")
-        user.email = key
-        self._users[key] = user
+    def add(self, user: User) -> None: ...
 
-    def save(self, user: User) -> None:
-        """Persist changes to an existing user (a DB repo would UPDATE here)."""
-        self._users[self._key(user.email)] = user
+    def save(self, user: User) -> None: ...
 
-    def set_photo(self, email: str, data: bytes, mime: str) -> bool:
-        """Store a profile photo. In memory the "URL" is a data: URI; the Supabase
-        repository uploads to Storage and keeps a public URL instead."""
-        user = self._users.get(self._key(email))
-        if user is None:
-            return False
-        user.profile.photo_url = to_data_uri(data, mime)
-        user.profile.photo_mime = mime
-        return True
-
-    def delete(self, email: str) -> bool:
-        return self._users.pop(self._key(email), None) is not None
-
-    @classmethod
-    def seeded(cls) -> "UserRepository":
-        """Demo account (already onboarded) plus the sample students."""
-        repo = cls()
-        repo.add(User(
-            name="Demo Student",
-            email=DEMO_EMAIL,
-            onboarded=True,
-            profile=Profile(
-                major="Bachelor of Computer Science",
-                bio=("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " * 6).strip(),
-                skills=["Figma", "Python", "Tutoring"],
-                socials=["stdnt@hive.com"],
-            ),
-        ))
-        # nobody can log in as a sample student: the in-memory auth gateway holds no
-        # password for them (only the demo account has one)
-        for s in SAMPLE_STUDENTS:
-            repo.add(User(
-                name=s.name,
-                email=s.email,
-                onboarded=True,
-                profile=Profile(
-                    major=s.major, bio=s.bio, skills=list(s.skills), socials=s.socials,
-                ),
-            ))
-        return repo
+    def set_photo(self, email: str, data: bytes, mime: str) -> bool: ...

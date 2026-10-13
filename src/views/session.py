@@ -29,7 +29,7 @@ _TOKENS_KEY = "auth_tokens"          # (access_token, refresh_token) of the sign
 
 def _supabase_secrets() -> dict | None:
     """The [supabase] section of .streamlit/secrets.toml, or None when this machine
-    has no Supabase configured (the app then runs on the in-memory repositories)."""
+    has no Supabase configured (App.py then shows a message and stops)."""
     try:
         section = st.secrets["supabase"]
         return {
@@ -87,7 +87,7 @@ def get_auth_tokens() -> tuple[str, str] | None:
 
 
 # ---- repositories: one of each per browser session ----
-# What gets built (in-memory or Supabase) is decided in repositories/factory_a.py
+# What gets built is decided in repositories/factory_a.py
 # and factory_b.py: one flag per repository, each owned by one person.
 def get_user_repository() -> UserRepository:
     if "user_repository" not in st.session_state:
@@ -117,7 +117,7 @@ def get_transaction_repository() -> TransactionRepository:
 
 
 def get_auth_gateway():
-    """What AuthController signs people in with: the Supabase gateway, or the in-memory one."""
+    """What AuthController signs people in with: the Supabase gateway."""
     if "auth_gateway" not in st.session_state:
         st.session_state.auth_gateway = factory.build_auth_gateway(
             get_supabase_client(), get_admin_client, get_user_repository())
@@ -190,14 +190,9 @@ def start_session(user: User, reset_onboarding: bool = False) -> None:
         st.session_state.pop("ob_data", None)
 
 
-# The in-memory repositories ARE the "database" for now, so a logout must not wipe them
-# (registered accounts would disappear). A Supabase-backed one (in_memory = False) is
-# tied to one person's client, so it IS dropped. Everything else belongs to the person
-# who just left: wizard draft, open booking page, typed text, open profile, selections...
-_REPOSITORY_KEYS = (
-    "user_repository", "listing_repository", "review_repository", "transaction_repository",
-    "auth_gateway",
-)
+# On logout everything in session_state goes: the Supabase client and its repositories (tied
+# to one person's client) and everything else that belonged to the person who just left:
+# wizard draft, open booking page, typed text, open profile, selections...
 
 
 def _sign_out_of_supabase() -> None:
@@ -213,12 +208,9 @@ def _sign_out_of_supabase() -> None:
 def end_session() -> None:
     """Log out and forget everything the previous person was doing."""
     _sign_out_of_supabase()
-    keep = {key for key in _REPOSITORY_KEYS
-            if getattr(st.session_state.get(key), "in_memory", True)}
-    # everything else goes, including the Supabase client(s) and the stored tokens
+    # everything goes, including the Supabase client(s) and the stored tokens
     for key in list(st.session_state.keys()):
-        if key not in keep:
-            del st.session_state[key]
+        del st.session_state[key]
     st.session_state.logged_in = False
     st.session_state.user = None
     st.session_state.onboarding_complete = False

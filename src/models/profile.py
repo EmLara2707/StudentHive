@@ -24,6 +24,6 @@ class Profile:
     github: str = ""
     socials: list[str] = field(default_factory=list)
     id_status: IdVerificationStatus = IdVerificationStatus.NOT_SUBMITTED
-    # Ready to render: an https URL (Supabase Storage) or a data: URI (in-memory fallback).
+    # Ready to render: an https URL (Supabase Storage).
     photo_url: str | None = None
     photo_mime: str | None = None

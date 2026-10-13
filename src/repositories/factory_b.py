@@ -1,40 +1,22 @@
 """PERSON B's half of the repository factory: listings, transactions, reviews.
 
-Each build_* takes the per-session Supabase client (or None when no Supabase is
-configured) and returns the repository the app should use. While a flag below is
-False, the app keeps using the in-memory seeded repository, which is the fallback
-until the final step. Only Person B edits this file. No Streamlit.
+Each build_* takes the per-session Supabase client and returns the Supabase-backed
+repository the app uses. Only Person B edits this file. No Streamlit.
 
-Convention for Supabase-backed repositories: set `in_memory = False` on the class.
-views/session.py uses it so a logout drops a repository that is tied to one user's
-client but keeps the in-memory "database".
-"""
-from repositories.listing_repository import ListingRepository
+`in_memory = False` on a Supabase-backed class tells views/session.py to drop it on
+logout (it is tied to one user's client)."""
 from repositories.supabase_listing_repository import SupabaseListingRepository
-from repositories.review_repository import ReviewRepository
 from repositories.supabase_review_repository import SupabaseReviewRepository
 from repositories.supabase_transaction_repository import SupabaseTransactionRepository
-from repositories.transaction_repository import TransactionRepository
-
-# Flip each to True once its Supabase repository is ready.
-USE_SUPABASE_LISTINGS = True
-USE_SUPABASE_TRANSACTIONS = True
-USE_SUPABASE_REVIEWS = True
 
 
-def build_listing_repository(client) -> ListingRepository | SupabaseListingRepository:
-    if USE_SUPABASE_LISTINGS and client is not None:
-        return SupabaseListingRepository(client)
-    return ListingRepository.seeded()
+def build_listing_repository(client) -> SupabaseListingRepository:
+    return SupabaseListingRepository(client)
 
 
-def build_transaction_repository(client) -> TransactionRepository | SupabaseTransactionRepository:
-    if USE_SUPABASE_TRANSACTIONS and client is not None:
-        return SupabaseTransactionRepository(client)
-    return TransactionRepository.seeded()
+def build_transaction_repository(client) -> SupabaseTransactionRepository:
+    return SupabaseTransactionRepository(client)
 
 
-def build_review_repository(client) -> ReviewRepository | SupabaseReviewRepository:
-    if USE_SUPABASE_REVIEWS and client is not None:
-        return SupabaseReviewRepository(client)
-    return ReviewRepository.seeded()
+def build_review_repository(client) -> SupabaseReviewRepository:
+    return SupabaseReviewRepository(client)

@@ -1,6 +1,7 @@
 import streamlit as st
 from repositories.errors import RepositoryError
 from views.components.auth_cookie import flush_cookie_command
+from views.session import get_supabase_client
 from views.components.session_lifecycle import (
     keep_tokens_fresh, restore_login_on_load, sign_out_everywhere,
 )
@@ -181,8 +182,14 @@ if "user" not in st.session_state:
 if "onboarding_complete" not in st.session_state:
     st.session_state.onboarding_complete = False
 
+# StudentHive keeps all its data in Supabase: without a configured project there is nothing to show.
+if get_supabase_client() is None:
+    st.error("StudentHive can't reach its database. Copy src/.streamlit/secrets.toml.example "
+             "to src/.streamlit/secrets.toml and fill in your Supabase project's url and keys.")
+    st.stop()
+
 # A6: after a browser refresh, sign the person back in from their cookie; while they are
-# logged in, renew the access token before it expires. Both do nothing on in-memory logins.
+# logged in, renew the access token before it expires. Both do nothing when nobody is logged in.
 restore_login_on_load()
 keep_tokens_fresh()
 
