@@ -27,12 +27,13 @@ def _confirm_panel(auth) -> None:
     st.info(f"We sent a 6-digit code to **{email}**. Check your inbox and your junk folder.")
     code = st.text_input("Confirmation code", key="confirm_code", max_chars=12,
                          placeholder="123456")
-    verify = st.button("Confirm account", key="confirm_btn")
-    with st.container(horizontal=True, horizontal_alignment="distribute", key="confirm_row"):
+    with st.container(horizontal=True, horizontal_alignment="distribute", key="confirm_nav"):
+        back = st.button("Back", key="confirm_back")             # return to Login / Sign-up
+        verify = st.button("Confirm account", key="confirm_btn")
+    with st.container(horizontal=True, horizontal_alignment="center", key="confirm_row"):
         resend = st.button("Send a new code", key="confirm_resend", type="tertiary")
-        other = st.button("Use a different email", key="confirm_other", type="tertiary")
 
-    if other:
+    if back:
         st.session_state.pop(_PENDING_KEY, None)
         st.session_state.pop("confirm_code", None)
         st.rerun()

@@ -199,3 +199,12 @@ html, body,
 }
 .st-key-confirm_row .stButton > button:hover { background: transparent !important; }
 .st-key-confirm_row .stButton > button:hover p { color: var(--teal-ring) !important; }
+
+/* ---------- confirm panel: Back is an outlined button next to Confirm account ---------- */
+.st-key-confirm_nav .stButton { margin-top: 0.5rem !important; }
+.st-key-confirm_nav .st-key-confirm_back button {
+    background: #ffffff !important;
+    border: 2px solid var(--teal) !important;
+}
+.st-key-confirm_nav .st-key-confirm_back button p { color: var(--teal) !important; }
+.st-key-confirm_nav .st-key-confirm_back button:hover { background: #effaf8 !important; }
