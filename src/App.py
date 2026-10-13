@@ -5,8 +5,11 @@ from views.session import get_supabase_client
 from views.components.session_lifecycle import (
     keep_tokens_fresh, restore_login_on_load, sign_out_everywhere,
 )
-st.set_page_config(page_title="StudentHive", layout="wide")
-
+from pathlib import Path 
+st.set_page_config(
+    page_title="StudentHive", layout="wide",
+    page_icon=str(Path(__file__).parent / "views" / "images" / "icon.png"),
+)
 
 # ==========================================
 # GLOBAL STYLES (spacing + sidebar)

@@ -56,8 +56,8 @@ html, body,
     height: 150px;
     margin: 0 auto;          /* centers the circle in its column */
     border-radius: 50%;
-    background: #F5B301;
-    border: 3px solid #E0A100;
+    background: #ffffff;
+    border: 3px solid #4ccfc0;
     display: flex;
     align-items: center;
     justify-content: center;
