@@ -149,22 +149,22 @@ class AuthController:
         return AuthResult.success(user, tokens=outcome.tokens)
 
     # ---- confirming a new account with the emailed 6-digit code ----
-    CODE_LENGTH = 6
+    CODE_MIN_LENGTH, CODE_MAX_LENGTH = 6, 10  
 
     def confirm_signup(self, email: str, code: str) -> AuthResult:
         """Check the code from the confirmation email. On success the person is signed in."""
         email = (email or "").strip()
         digits = "".join(ch for ch in (code or "") if ch.isdigit())
         if not email or not digits:
-            return AuthResult.failure("Enter the 6-digit code from your email.")
-        if len(digits) != self.CODE_LENGTH:
+            return AuthResult.failure("Enter the code from your email.")
+        if not self.CODE_MIN_LENGTH <= len(digits) <= self.CODE_MAX_LENGTH:
             return AuthResult.failure(
-                f"The code has {self.CODE_LENGTH} digits. Check your email and try again.")
+                "That doesn't look like the code from your email. Check it and try again.")
         outcome = self._gateway.verify_signup_code(email, digits)
         if not outcome.ok:
             return AuthResult.failure(self._message_for(outcome))
         user = self._users.get_by_email(email)
-        if user is None:        # confirmed, but no profile row: they can log in again
+        if user is None: 
             return AuthResult.failure(RepositoryError.DEFAULT_MESSAGE)
         return AuthResult.success(user, tokens=outcome.tokens)
 
