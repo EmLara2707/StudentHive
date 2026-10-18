@@ -144,11 +144,25 @@ class TransactionController:
                 if e.is_provider:
                     tasks.append(TodoTask(tx.start, TodoStep.RESPOND, e))
             elif e.status is TransactionStatus.ACTIVE:
+                if tx.is_rental:
+                    tasks.extend(TransactionController._rental_tasks(e))
+                    continue
                 if tx.start >= today:
                     tasks.append(TodoTask(tx.start, TodoStep.BEGIN, e))
                 tasks.append(TodoTask(tx.end, TodoStep.FINISH, e))
         tasks.sort(key=lambda t: t.due)
         return tasks
+
+    @staticmethod
+    def _rental_tasks(e: TransactionEntry) -> list[TodoTask]:
+        """An accepted rental has one open step at a time: pickup (due on the start date,
+        overdue until confirmed), then return (due on the end date), then wrap-up."""
+        tx = e.transaction
+        if not tx.is_picked_up:
+            return [TodoTask(tx.start, TodoStep.BEGIN, e), TodoTask(tx.end, TodoStep.FINISH, e)]
+        if not tx.is_dropped_off:
+            return [TodoTask(tx.end, TodoStep.FINISH, e)]
+        return [TodoTask(tx.end, TodoStep.WRAP_UP, e)]
 
     @staticmethod
     def overdue_count(tasks: list[TodoTask], today: date) -> int:
@@ -172,17 +186,29 @@ class TransactionController:
         today = today or today_manila()
         return self._act(actor_email, transaction_id, lambda tx: tx.cancel(actor_email, today))
 
+    def confirm_pickup(self, actor_email: str, transaction_id: int, today: date | None = None) -> ActionResult:
+        today = today or today_manila()
+        return self._act(actor_email, transaction_id,
+                         lambda tx: tx.confirm_pickup(actor_email, today, now_manila()))
+
+    def confirm_dropoff(self, actor_email: str, transaction_id: int, today: date | None = None) -> ActionResult:
+        today = today or today_manila()
+        return self._act(actor_email, transaction_id,
+                         lambda tx: tx.confirm_dropoff(actor_email, today, now_manila()))
+
     def _act(self, actor_email: str, transaction_id: int, change) -> ActionResult:
         entry = self.get_entry(actor_email, transaction_id)
         if entry is None:
             return ActionResult(False, error=NOT_FOUND_ERROR)
-        read_status = entry.transaction.status      # what the row looked like when read
+        tx = entry.transaction
+        read_status = tx.status                     # what the row looked like when read
+        read_progress = (tx.is_picked_up, tx.is_dropped_off)
         try:
             change(entry.transaction)
         except InvalidTransition:
             return ActionResult(False, entry, NOT_ALLOWED_ERROR)
         try:
-            self._transactions.save(entry.transaction, read_status)
+            self._transactions.save(entry.transaction, read_status, *read_progress)
         except ConflictError:                       # someone else answered first
             return ActionResult(False, entry, CONFLICT_ERROR)
         return ActionResult(True, entry)

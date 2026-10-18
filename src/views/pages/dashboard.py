@@ -7,10 +7,12 @@ from html import escape
 import streamlit as st
 
 from models.event import CalendarEvent, EventKind
+from models.transaction import TransactionKind
 from utils.clock import today_manila
 from utils.dates import first_of_month, shift_month
 from views.components.repo_errors import loading
 from views.components.styles import load_css
+from views.components.transactions import go_to_transaction
 from views.session import get_dashboard_controller
 
 # NOTE: do NOT call st.set_page_config here. App.py already does it.
@@ -81,6 +83,14 @@ def event_row(e: CalendarEvent) -> str:
         f'<span class="badge {_badge_class(e.kind.value)}">{escape(e.kind.value)}</span>'
         '</div>'
     )
+
+
+def clickable_event(e: CalendarEvent, key: str) -> None:
+    """An event bar that opens that gig / rental in its page (invisible button over the row)."""
+    with st.container(key=f"evrow_{key}"):
+        if st.button("Open", key=f"evbtn_{key}") and e.transaction_id is not None:
+            go_to_transaction(TransactionKind(e.kind.value), e.transaction_id)
+        st.markdown(event_row(e), unsafe_allow_html=True)
 
 
 def marker_css(view: date, events_by_day: dict, today: date) -> str:
@@ -171,14 +181,16 @@ def calendar_dialog() -> None:
         st.markdown(f"**{selected:%A, %B} {selected.day}**")
         selected_events = by_day.get(selected, [])
         if selected_events:
-            st.markdown("".join(event_row(e) for e in selected_events), unsafe_allow_html=True)
+            for i, e in enumerate(selected_events):
+                clickable_event(e, f"dsel_{i}_{e.transaction_id}_{e.date:%Y%m%d}")
         else:
             st.caption("Nothing scheduled.")
     with right:
         st.markdown(f"**{view:%B %Y} agenda**")
         month_events = ctrl.in_month(events, view.year, view.month)
         if month_events:
-            st.markdown("".join(event_row(e) for e in month_events), unsafe_allow_html=True)
+            for i, e in enumerate(month_events):
+                clickable_event(e, f"dmon_{i}_{e.transaction_id}_{e.date:%Y%m%d}")
         else:
             st.caption("No gigs or rentals this month.")
 
@@ -265,8 +277,9 @@ with right_col:
         )
         if upcoming:
             footer += '<div class="next-title">Next up</div>'
-            footer += "".join(event_row(e) for e in upcoming)
         st.markdown(footer, unsafe_allow_html=True)
+        for i, e in enumerate(upcoming):
+            clickable_event(e, f"next_{i}_{e.transaction_id}_{e.date:%Y%m%d}")
 
     if clicked:
         st.session_state.dlg_month = first_of_month(clicked)

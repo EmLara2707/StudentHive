@@ -103,6 +103,8 @@ class SupabaseTransactionRepository:
             project_details=row.get("project_details") or "",
             deadline=_d(row.get("deadline")),
             completed_at=_dt(row.get("completed_at")),
+            picked_up_at=_dt(row.get("picked_up_at")),
+            dropped_off_at=_dt(row.get("dropped_off_at")),
         )
 
     # ------------------------------------------------------------ reads
@@ -163,19 +165,29 @@ class SupabaseTransactionRepository:
         transaction.id = int(row["id"])
         return transaction
 
-    def save(self, transaction: Transaction, expected_status: TransactionStatus) -> None:
+    @staticmethod
+    def _was_set(query, column: str, was_set: bool):
+        """Filter: `column` was (not) null when the row was read."""
+        return query.not_.is_(column, "null") if was_set else query.is_(column, "null")
+
+    def save(self, transaction: Transaction, expected_status: TransactionStatus,
+             expected_picked_up: bool = False, expected_dropped_off: bool = False) -> None:
         """Persist a lifecycle change. The row is updated only if it still has the status
-        that was read; otherwise nothing is written and ConflictError is raised (someone
-        else answered first)."""
+        (and pickup / drop-off confirmations) that were read; otherwise nothing is written
+        and ConflictError is raised (someone else acted first)."""
         cancelled_by = (self._uid(transaction.cancelled_by)
                         if transaction.cancelled_by else None)
         try:
-            changed = (self._client.table("transactions").update({
+            query = (self._client.table("transactions").update({
                 "status": transaction.status.value,
                 "cancelled_by": cancelled_by,
+                "picked_up_at": transaction.picked_up_at.isoformat() if transaction.picked_up_at else None,
+                "dropped_off_at": transaction.dropped_off_at.isoformat() if transaction.dropped_off_at else None,
                 "updated_at": now_manila().isoformat(),
-            }).eq("id", transaction.id).eq("status", expected_status.value)
-                .execute().data)
+            }).eq("id", transaction.id).eq("status", expected_status.value))
+            query = self._was_set(query, "picked_up_at", expected_picked_up)
+            query = self._was_set(query, "dropped_off_at", expected_dropped_off)
+            changed = query.execute().data
         except (APIError, httpx.HTTPError) as exc:
             raise self._fail(exc)
         if not changed:

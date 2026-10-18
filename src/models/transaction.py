@@ -11,6 +11,10 @@ Lifecycle:
     Active    -> Completed  (either side, once the start date has come)
     Active    -> Cancelled  (either side)
 
+Rentals add two confirmations by the renter inside Active:
+    picked up  (from the start day on; until then either side may cancel, after it nobody can)
+    dropped off (any time after pickup); only then can the rental be completed or cancelled
+
 Pure data + rules: no Streamlit, no storage.
 """
 from dataclasses import dataclass
@@ -61,10 +65,17 @@ class Action(str, Enum):
     WITHDRAW = "withdraw"      # requester takes back a pending request
     COMPLETE = "complete"
     CANCEL = "cancel"
+    CONFIRM_PICKUP = "confirm_pickup"      # rentals: the renter received the item
+    CONFIRM_DROPOFF = "confirm_dropoff"    # rentals: the renter returned the item
 
 
 class InvalidTransition(ValueError):
     """The requested status change is not allowed from the current state."""
+
+
+def clock_label(t: time) -> str:
+    """'4:00 PM'."""
+    return f"{t.hour % 12 or 12}:{t.minute:02d} {'AM' if t.hour < 12 else 'PM'}"
 
 
 def _key(email: str) -> str:
@@ -95,6 +106,8 @@ class Transaction:
     project_details: str = ""           # Projects only
     deadline: date | None = None        # Projects only
     completed_at: datetime | None = None   # when it became Completed (starts the review window)
+    picked_up_at: datetime | None = None   # rentals: renter confirmed pickup
+    dropped_off_at: datetime | None = None # rentals: renter confirmed drop-off
 
     # ------------------------------------------------------------ who is who
     def is_provider(self, email: str) -> bool:
@@ -133,11 +146,23 @@ class Transaction:
 
     @property
     def time_label(self) -> str:
-        """Start time of an hourly booking ('4:00 PM'), otherwise 'All day'."""
-        t = self.start_time if self.is_hourly else None
+        """Start time ('4:00 PM'), or 'All day' when no time was stored (older bookings)."""
+        t = self.start_time
         if t is None:
             return "All day"
-        return f"{t.hour % 12 or 12}:{t.minute:02d} {'AM' if t.hour < 12 else 'PM'}"
+        return clock_label(t)
+
+    @property
+    def is_rental(self) -> bool:
+        return self.kind is TransactionKind.RENTAL
+
+    @property
+    def is_picked_up(self) -> bool:
+        return self.picked_up_at is not None
+
+    @property
+    def is_dropped_off(self) -> bool:
+        return self.dropped_off_at is not None
 
     def covers(self, day: date) -> bool:
         return self.start <= day <= self.end
@@ -179,10 +204,25 @@ class Transaction:
                 return [Action.ACCEPT, Action.REJECT]
             return [Action.WITHDRAW]
         if self.status is TransactionStatus.ACTIVE:
+            if self.is_rental:
+                return self._rental_actions(email, today)
             if self.has_started(today):
                 return [Action.COMPLETE, Action.CANCEL]
             return [Action.CANCEL]
         return []
+
+    def _rental_actions(self, email: str, today: date) -> list[Action]:
+        """Accepted rental: cancel until pickup is confirmed; no cancelling while the item is
+        out; complete or cancel only once the renter has confirmed the drop-off."""
+        if self.is_dropped_off:
+            return [Action.COMPLETE, Action.CANCEL]
+        if self.is_picked_up:
+            return [Action.CONFIRM_DROPOFF] if self.is_requester(email) else []
+        if not self.has_started(today):
+            return [Action.CANCEL]
+        if self.is_requester(email):
+            return [Action.CONFIRM_PICKUP, Action.CANCEL]    # got it, or didn't receive it
+        return [Action.CANCEL]
 
     # ------------------------------------------------------------ transitions
     def accept(self, by: str) -> None:
@@ -205,6 +245,14 @@ class Transaction:
     def cancel(self, by: str, today: date) -> None:
         self._require(Action.CANCEL, by, today)
         self._cancel(by)
+
+    def confirm_pickup(self, by: str, today: date, now: datetime | None = None) -> None:
+        self._require(Action.CONFIRM_PICKUP, by, today)
+        self.picked_up_at = now or datetime.combine(today, time())
+
+    def confirm_dropoff(self, by: str, today: date, now: datetime | None = None) -> None:
+        self._require(Action.CONFIRM_DROPOFF, by, today)
+        self.dropped_off_at = now or datetime.combine(today, time())
 
     # ------------------------------------------------------------ internals
     def _cancel(self, by: str) -> None:
@@ -264,6 +312,7 @@ class TodoStep(str, Enum):
     RESPOND = "respond"      # a pending request I must answer
     BEGIN = "begin"          # the start date
     FINISH = "finish"        # the end date
+    WRAP_UP = "wrap_up"      # rentals: the item is back, the rental can be completed
 
 
 @dataclass(frozen=True)

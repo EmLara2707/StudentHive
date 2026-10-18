@@ -28,7 +28,7 @@ class DashboardController:
             kind = EventKind.GIG if tx.kind is TransactionKind.GIG else EventKind.RENTAL
             for day in tx.days():
                 events.append(CalendarEvent(owner, day, tx.item, kind,
-                                            tx.time_label, tx.price, tx.unit))
+                                            tx.time_label, tx.price, tx.unit, tx.id))
         return sorted(events, key=lambda e: e.date)
 
     @staticmethod

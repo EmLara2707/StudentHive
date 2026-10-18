@@ -19,6 +19,7 @@ class CalendarEvent:
     time: str
     price: float
     unit: str = "hr"          # "hr" | "day" | "once"
+    transaction_id: int | None = None   # which Gig / Rental the bar opens
 
     @property
     def price_label(self) -> str:

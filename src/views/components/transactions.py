@@ -16,7 +16,7 @@ import streamlit as st
 
 from controllers.transaction_controller import NOT_FOUND_ERROR, TransactionController
 from models.transaction import (
-    Action, Role, TodoStep, TodoTask, TransactionEntry, TransactionKind,
+    Action, Role, clock_label, TodoStep, TodoTask, TransactionEntry, TransactionKind,
     TransactionStatus,
 )
 from repositories.errors import RepositoryError
@@ -122,6 +122,8 @@ _COPY = {
             (Role.RENTING, TodoStep.FINISH): ("Return {item}", "To {name}"),
             (Role.LENDING, TodoStep.BEGIN): ("Hand over {item}", "To {name}"),
             (Role.LENDING, TodoStep.FINISH): ("Collect {item} back", "From {name}"),
+            (Role.RENTING, TodoStep.WRAP_UP): ("Complete {item}", "With {name}"),
+            (Role.LENDING, TodoStep.WRAP_UP): ("Complete {item}", "With {name}"),
         },
         note_waiting="Waiting for {name} to approve your request.",
         note_respond="{name} is waiting for your response.",
@@ -138,10 +140,13 @@ _ACTION_TITLES = {
     Action.ACCEPT: "Accept this request?",
     Action.REJECT: "Reject this request?",
     Action.WITHDRAW: "Cancel this request?",
+    Action.CONFIRM_PICKUP: "Confirm pickup?",
+    Action.CONFIRM_DROPOFF: "Confirm drop-off?",
 }
 # widget-key stems of each confirmation dialog (kept from the old pages)
 _DIALOG_KEYS = {Action.ACCEPT: "accept", Action.REJECT: "reject", Action.COMPLETE: "complete",
-                Action.CANCEL: "cancel", Action.WITHDRAW: "creq"}
+                Action.CANCEL: "cancel", Action.WITHDRAW: "creq",
+                Action.CONFIRM_PICKUP: "pickup", Action.CONFIRM_DROPOFF: "dropoff"}
 
 
 @dataclass(frozen=True)
@@ -187,15 +192,29 @@ def _time_range(r: TransactionEntry) -> str | None:
     tx = r.transaction
     if not (tx.is_hourly and tx.start_time and tx.end_time):
         return None
-    fmt = lambda t: f"{t.hour % 12 or 12}:{t.minute:02d} {'AM' if t.hour < 12 else 'PM'}"
-    return f"{fmt(tx.start_time)} – {fmt(tx.end_time)}"
+    return f"{clock_label(tx.start_time)} – {clock_label(tx.end_time)}"
+
+
+def _time_rows(r: TransactionEntry) -> list[tuple[str, str]]:
+    """The time rows of the details panel. Hourly: one range. Daily / one-time: the pickup
+    and drop-off times of a rental, or the meet-up (and end) time of a gig, with their dates."""
+    tx = r.transaction
+    if _time_range(r):
+        return [("Time", _time_range(r))]
+    if tx.is_hourly or not tx.start_time:        # nothing stored (older bookings, projects)
+        return []
+    start = f"{tx.start:%b} {tx.start.day} · {clock_label(tx.start_time)}"
+    end = (f"{tx.end:%b} {tx.end.day} · {clock_label(tx.end_time)}" if tx.end_time else None)
+    if tx.is_rental:
+        return [("Pickup", start)] + ([("Drop-off", end)] if end else [])
+    return [("Meet-up", start)] + ([("Ends", end)] if end else [])
 
 
 # ------------------------------------------------------------ html builders
 def badges_html(r: TransactionEntry) -> str:
     out = f'<span class="badge badge-{r.role.value.lower()}">{escape(r.role.value)}</span>'
     if r.status is TransactionStatus.PENDING:
-        out += '<span class="badge badge-pending">Pending</span>'
+        out += '<span class="badge badge-pending">Request</span>'
     if r.status is TransactionStatus.CANCELLED:
         who = "by you" if r.cancelled_by_me else "by them"
         out += f'<span class="badge badge-cancelled">Cancelled {who}</span>'
@@ -273,6 +292,8 @@ def _status_note(ctx: _Ctx, r: TransactionEntry) -> tuple[str, str]:
     if r.status is TransactionStatus.PENDING:
         text = ctx.copy.note_respond if r.is_provider else ctx.copy.note_waiting
         return text.format(name=name), ""
+    if tx.is_rental and (tx.is_picked_up or today >= tx.start):
+        return _rental_note(ctx, r)
     if today < tx.start:
         return f"Starts in {plural((tx.start - today).days, 'day')}.", ""
     if today <= tx.end:
@@ -280,6 +301,27 @@ def _status_note(ctx: _Ctx, r: TransactionEntry) -> tuple[str, str]:
         return ("In progress — ends today." if left == 0
                 else f"In progress — ends in {plural(left, 'day')}."), ""
     return f"Overdue by {plural((today - tx.end).days, 'day')}.", " det-note-overdue"
+
+
+def _rental_note(ctx: _Ctx, r: TransactionEntry) -> tuple[str, str]:
+    """Where an accepted rental stands: waiting for pickup, out with the renter, or returned."""
+    tx, name = r.transaction, r.counterpart.name
+    renter = not r.is_provider
+    if tx.is_dropped_off:
+        return "Drop-off confirmed. This rental can now be completed.", ""
+    if tx.is_picked_up:
+        overdue = ctx.today > tx.end
+        if renter:
+            text = "Picked up. Confirm drop-off once you have returned the item."
+        else:
+            text = f"{name} has picked up the item. Waiting for them to confirm drop-off."
+        if overdue:
+            return f"{text} Return is overdue by {plural((ctx.today - tx.end).days, 'day')}.", " det-note-overdue"
+        return text, ""
+    if renter:
+        return ("Confirm pickup once you receive the item, or cancel if you didn't. "
+                "After pickup the rental can't be cancelled."), ""
+    return f"Waiting for {name} to confirm pickup.", ""
 
 
 def detail_bottom_html(ctx: _Ctx, r: TransactionEntry) -> str:
@@ -291,8 +333,7 @@ def detail_bottom_html(ctx: _Ctx, r: TransactionEntry) -> str:
         rows.append(("Deadline", f"{tx.deadline:%b} {tx.deadline.day}", False))
     else:
         rows.append(("Dates", fmt_range(r), False))
-    if _time_range(r):
-        rows.append(("Time", _time_range(r), False))
+    rows.extend((label, value, False) for label, value in _time_rows(r))
     if _duration(r):
         rows.append(("Duration", _duration(r), False))
     rows.append(("Price" if tx.unit == "once" else "Rate", tx.price_label, False))
@@ -310,6 +351,19 @@ def detail_bottom_html(ctx: _Ctx, r: TransactionEntry) -> str:
         for label, value, long in rows
     )
     return f'{rows_html}<div class="det-note{note_cls}">{escape(note)}</div>'
+
+
+# ------------------------------------------------------------ jump here from the Dashboard
+_PAGE_FILES = {TransactionKind.GIG: "views/pages/gigs.py",
+               TransactionKind.RENTAL: "views/pages/rentals.py"}
+
+
+def go_to_transaction(kind: TransactionKind, tid: int) -> None:
+    """Switch to the Gigs / Rentals page with this booking open in the details panel."""
+    prefix = _COPY[kind].prefix
+    st.session_state[f"{prefix}_selected"] = tid
+    st.session_state[f"{prefix}_selected_day"] = None
+    st.switch_page(_PAGE_FILES[kind])
 
 
 # ------------------------------------------------------------ selection (which item / day is shown)
@@ -449,6 +503,12 @@ def _dialog_text(ctx: _Ctx, action: Action, r: TransactionEntry) -> str:
         return ctx.copy.reject_text.format(**fields)
     if action is Action.WITHDRAW:
         return ctx.copy.withdraw_text.format(**fields)
+    if action is Action.CONFIRM_PICKUP:
+        return (f"Confirm that you received “{fields['item']}” from {fields['name']}? "
+                "Once confirmed, this rental can no longer be cancelled.")
+    if action is Action.CONFIRM_DROPOFF:
+        return (f"Confirm that you returned “{fields['item']}” to {fields['name']}? "
+                "The rental can then be completed.")
     if action is Action.COMPLETE:
         return f"Mark “{fields['item']}” with {fields['name']} as completed? This can’t be undone."
     return f"“{fields['item']}” with {fields['name']} will be cancelled. This can’t be undone."
@@ -462,6 +522,8 @@ def _dialog_labels(ctx: _Ctx, action: Action) -> tuple[str, str]:
         Action.COMPLETE: ("Not yet", "Yes, complete it"),
         Action.CANCEL: (ctx.copy.keep_label, "Yes, cancel it"),
         Action.WITHDRAW: ("Keep request", "Yes, cancel it"),
+        Action.CONFIRM_PICKUP: ("Not yet", "Yes, I received it"),
+        Action.CONFIRM_DROPOFF: ("Not yet", "Yes, I returned it"),
     }[action]
 
 
@@ -474,6 +536,8 @@ def _perform(ctx: _Ctx, action: Action, tid: int) -> None:
         Action.WITHDRAW: lambda: ctrl.withdraw(email, tid),
         Action.COMPLETE: lambda: ctrl.complete(email, tid, ctx.today),
         Action.CANCEL: lambda: ctrl.cancel(email, tid, ctx.today),
+        Action.CONFIRM_PICKUP: lambda: ctrl.confirm_pickup(email, tid, ctx.today),
+        Action.CONFIRM_DROPOFF: lambda: ctrl.confirm_dropoff(email, tid, ctx.today),
     }[action]()
     if not result.ok:
         st.session_state[ctx.key("toast")] = result.error
@@ -485,6 +549,8 @@ def _perform(ctx: _Ctx, action: Action, tid: int) -> None:
         Action.WITHDRAW: f"Cancelled request for {item}",
         Action.COMPLETE: f"Marked {item} as completed",
         Action.CANCEL: f"Cancelled {item}",
+        Action.CONFIRM_PICKUP: f"Pickup confirmed for {item}",
+        Action.CONFIRM_DROPOFF: f"Drop-off confirmed for {item}",
     }[action]
     if action is Action.COMPLETE:
         st.session_state[ctx.key("review_id")] = tid   # tells the page to open the review dialog next
@@ -585,6 +651,19 @@ def render_actions(ctx: _Ctx, r: TransactionEntry) -> None:
         if st.button("Cancel request", key="act_cancel", use_container_width=True):
             _open_confirm(ctx, Action.WITHDRAW, tid)
 
+    elif Action.CONFIRM_PICKUP in actions:
+        # rental, on/after the start day: got the item, or didn't and cancels
+        c1, c2 = st.columns(2)
+        if c1.button("Confirm pickup", key="act_pickup", use_container_width=True):
+            _open_confirm(ctx, Action.CONFIRM_PICKUP, tid)
+        if c2.button("Cancel", key="act_cancel", use_container_width=True):
+            _open_confirm(ctx, Action.CANCEL, tid)
+
+    elif Action.CONFIRM_DROPOFF in actions:
+        # rental is out: no cancelling, the renter confirms the return
+        if st.button("Confirm drop-off", key="act_dropoff", use_container_width=True):
+            _open_confirm(ctx, Action.CONFIRM_DROPOFF, tid)
+
     elif Action.COMPLETE in actions:
         # already started -> can be completed or cancelled
         c1, c2 = st.columns(2)
@@ -623,7 +702,7 @@ def _init_state(ctx: _Ctx) -> None:
 
 
 def _tab_header(ctx: _Ctx, asc_label: str, desc_label: str, tab: str, filters: dict, key: str):
-    """Filter pills + sort button of the Pending / Completed / Cancelled tabs.
+    """Filter pills + sort button of the Requests / Completed / Cancelled tabs.
     Returns the picked filter label (None = show everything)."""
     filt_col, sort_col = st.columns([4.726, 1.274], vertical_alignment="center")
     with filt_col:
@@ -704,7 +783,7 @@ def _tab_pending(ctx: _Ctx, entries: list[TransactionEntry]) -> None:
                          PENDING_FILTERS, "pills_pending")
     items = ctx.ctrl.pending(entries, PENDING_FILTERS.get(chosen))
     items = ctx.ctrl.sort_by_start(items, st.session_state[ctx.key("asc_pending")])
-    _render_list(ctx, items, "pending", "No pending requests.")
+    _render_list(ctx, items, "pending", "No requests.")
 
 
 def _tab_done(ctx: _Ctx, entries: list[TransactionEntry]) -> None:
@@ -794,7 +873,7 @@ def render_transactions(kind: TransactionKind) -> None:
 
     with left_col:
         tab_mine, tab_pending, tab_done, tab_cancel = st.tabs(
-            [copy.mine_tab, "Pending", "Completed", "Cancelled"]
+            [copy.mine_tab, "Requests", "Completed", "Cancelled"]
         )
         with tab_mine:
             _tab_mine(ctx, entries)

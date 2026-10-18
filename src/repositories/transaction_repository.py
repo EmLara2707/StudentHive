@@ -14,7 +14,9 @@ class TransactionRepository(Protocol):
 
     def get_for_user(self, email: str, kind: TransactionKind | None = None) -> list[Transaction]: ...
 
-    def save(self, transaction: Transaction, expected_status: TransactionStatus) -> None:
-        """Persist changes. `expected_status` is the status that was read: if someone else
-        changed it meanwhile the save is refused (two people answering at once)."""
+    def save(self, transaction: Transaction, expected_status: TransactionStatus,
+             expected_picked_up: bool = False, expected_dropped_off: bool = False) -> None:
+        """Persist changes. `expected_*` is what was read (status, and for rentals whether
+        pickup / drop-off were already confirmed): if someone else changed it meanwhile the
+        save is refused (two people acting at once)."""
         ...

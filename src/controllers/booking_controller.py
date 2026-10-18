@@ -190,8 +190,9 @@ class BookingController:
             **common, start=form.start_date, end=form.end_date,
             price=listing.price, unit=listing.unit,
             quantity=quote.quantity, total=quote.subtotal,
-            start_time=form.start_time if listing.unit == "hr" else None,
-            end_time=form.end_time if listing.unit == "hr" else None,
+            # daily and one-time bookings keep their times too (pickup / drop-off, meet-up)
+            start_time=form.start_time,
+            end_time=form.end_time,
             meeting_mode=form.meeting_mode.value if form.meeting_mode else None,
             location=(form.location.strip() if self._needs_location(context.kind, form) else ""),
         )
