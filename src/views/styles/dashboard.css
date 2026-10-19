@@ -403,3 +403,12 @@ div[data-testid="stDialog"] button[aria-label="Close"] {
 [class*="st-key-evrow_"] [class*="st-key-evbtn_"] button p {
     opacity: 0;
 }
+
+/* Inside the Schedule dialog the generic dialog button rule is !important, so the invisible
+   bar buttons need a more specific !important override or they paint over the bars. */
+div[data-testid="stDialog"] [class*="st-key-evrow_"] [class*="st-key-evbtn_"] .stButton > button,
+div[data-testid="stDialog"] [class*="st-key-evrow_"] [class*="st-key-evbtn_"] .stButton > button:hover {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
