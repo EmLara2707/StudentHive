@@ -30,7 +30,7 @@ class MarketplaceController:
                 owner = OwnerInfo(listing.owner_email, UNKNOWN_OWNER, NO_COURSE)
             else:
                 course = (user.profile.major or "").strip() or NO_COURSE
-                owner = OwnerInfo(user.email, user.name, course)
+                owner = OwnerInfo(user.email, user.name, course, user.profile.photo_url or "")
             entries.append(ListingEntry(listing, owner))
         return entries
 

@@ -97,8 +97,20 @@ def _skills(p: PublicProfile) -> None:
         st.markdown(chip_html(p.profile.skills), unsafe_allow_html=True)
 
 
+def go_to_listing(listing_id: int) -> None:
+    """Close the profile and show this listing's detail view on the Marketplace page."""
+    close_profile()
+    st.session_state.selected_listing_id = listing_id
+    st.session_state.booking_listing_id = None
+    st.switch_page("views/pages/marketplace.py")
+
+
 def _listing_card(listing) -> None:
     with st.container(key=f"lcard_{listing.id}"):
+        # invisible button over the whole card -> opens the listing
+        with st.container(key=f"lview_{listing.id}"):
+            if st.button("View listing", key=f"lviewbtn_{listing.id}"):
+                go_to_listing(listing.id)
         st.markdown(thumb_html(listing, listing.price_label), unsafe_allow_html=True)
         st.markdown(f'<div class="pf-listing-name">{_e(listing.title)}</div>', unsafe_allow_html=True)
 

@@ -511,3 +511,5 @@
 /* Streamlit's top bar floats above the page: keep it see-through so it never
    covers the top of the search box (the pinned header behind it is already white) */
 [data-testid="stHeader"] { background: transparent !important; }
+/* owner profile picture inside the round avatar */
+.sh-avatar-photo { background-size: cover; background-position: center; background-repeat: no-repeat; }

@@ -91,6 +91,7 @@ class OwnerInfo:
     email: str
     name: str
     course: str
+    photo_url: str = ""        # profile picture; empty -> the initial is shown instead
 
 
 @dataclass(frozen=True)

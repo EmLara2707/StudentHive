@@ -46,6 +46,15 @@ def render_listing_image(listing: Listing, height: int = 150, badge: bool = True
     )
 
 
+def avatar_html(owner, large: bool = False) -> str:
+    """The owner's profile picture in the round avatar, or their initial when they have none."""
+    cls = "sh-avatar sh-avatar-lg" if large else "sh-avatar"
+    if owner.photo_url:
+        return (f"<div class='{cls} sh-avatar-photo' "
+                f"style=\"background-image:url({escape(owner.photo_url, quote=True)})\"></div>")
+    return f"<div class='{cls}'>{escape(owner.name[:1].upper())}</div>"
+
+
 def render_listing_card(entry: ListingEntry, on_view: Optional[Callable[[int], None]] = None,
                         key_prefix: str = "listing") -> None:
     """Marketplace card: image, title + price, divider, owner + View."""
@@ -63,7 +72,7 @@ def render_listing_card(entry: ListingEntry, on_view: Optional[Callable[[int], N
         with info_col:
             st.markdown(
                 f"<div class='sh-owner'>"
-                f"<div class='sh-avatar'>{escape(owner.name[:1].upper())}</div>"
+                f"{avatar_html(owner)}"
                 f"<div><div class='sh-owner-name'>{escape(owner.name)}</div>"
                 f"<div class='sh-owner-course'>{escape(owner.course)}</div></div></div>",
                 unsafe_allow_html=True,
@@ -186,7 +195,7 @@ def render_side_panel(entry: ListingEntry) -> None:
                       on_click=open_profile, args=(owner.email, "market"))
             st.markdown(
                 f"<div class='sh-panel-user'>"
-                f"<div class='sh-avatar sh-avatar-lg'>{escape(owner.name[:1].upper())}</div>"
+                f"{avatar_html(owner, large=True)}"
                 f"<div><div class='sh-panel-user-name'>{escape(owner.name)}</div>"
                 f"<div class='sh-panel-user-sub'>Course, {escape(owner.course)}</div></div></div>",
                 unsafe_allow_html=True,
