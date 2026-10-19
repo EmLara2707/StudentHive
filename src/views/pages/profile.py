@@ -11,6 +11,7 @@ from views.components.profile_components import (
     chip_html, empty_html, rating_html, render_reviews, thumb_html,
 )
 from views.components.styles import load_css
+from views.components.user_profile import go_to_listing
 from views.components.session_lifecycle import sign_out_everywhere
 from views.session import (
     get_auth_controller,
@@ -443,6 +444,10 @@ def _run_listing_action():
 def _listing_card(l):
     lid = l.id
     with st.container(key=f"lcard_{lid}"):
+        if not l.is_closed:      # open listings: the whole card opens the listing detail view
+            with st.container(key=f"lview_{lid}"):
+                if st.button("View listing", key=f"lviewbtn_{lid}"):
+                    go_to_listing(lid)
         badge = "Closed" if l.is_closed else l.price_label
         st.markdown(thumb_html(l, badge, closed=l.is_closed), unsafe_allow_html=True)
         st.markdown(f'<div class="pf-listing-name">{html.escape(l.title)}</div>', unsafe_allow_html=True)
