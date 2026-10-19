@@ -444,9 +444,11 @@
   .det-note-overdue { background: #FBE5E5; }
 
   /* ---------- Action buttons in the details panel ---------- */
-  /* Accept / Complete: solid teal */
+  /* Accept / Complete / Confirm pickup / Confirm drop-off: solid teal */
   [class*="st-key-act_accept"] button,
-  [class*="st-key-act_complete"] button {
+  [class*="st-key-act_complete"] button,
+  [class*="st-key-act_pickup"] button,
+  [class*="st-key-act_dropoff"] button {
       background: #0f6b62;
       border: none;
       border-radius: 999px;
@@ -455,14 +457,20 @@
       box-shadow: none;
   }
   [class*="st-key-act_accept"] button:hover,
-  [class*="st-key-act_accept"] button:focus:not(:active),
   [class*="st-key-act_complete"] button:hover,
-  [class*="st-key-act_complete"] button:focus:not(:active) {
+  [class*="st-key-act_pickup"] button:hover,
+  [class*="st-key-act_dropoff"] button:hover,
+  [class*="st-key-act_accept"] button:focus:not(:active),
+  [class*="st-key-act_complete"] button:focus:not(:active),
+  [class*="st-key-act_pickup"] button:focus:not(:active),
+  [class*="st-key-act_dropoff"] button:focus:not(:active) {
       background: #0b5750;
       border: none;
   }
   [data-testid="stMain"] [class*="st-key-act_accept"] button [data-testid="stMarkdownContainer"] p,
-  [data-testid="stMain"] [class*="st-key-act_complete"] button [data-testid="stMarkdownContainer"] p {
+  [data-testid="stMain"] [class*="st-key-act_complete"] button [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-act_pickup"] button [data-testid="stMarkdownContainer"] p,
+  [data-testid="stMain"] [class*="st-key-act_dropoff"] button [data-testid="stMarkdownContainer"] p {
       color: #FFFFFF !important;
       font-weight: 600;
       font-size: 0.9rem;
