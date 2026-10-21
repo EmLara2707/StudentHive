@@ -127,7 +127,6 @@ if "msg_toast" in st.session_state:
 selected = min(st.session_state.msg_selected, len(SAMPLE_CHATS) - 1)
 chat = SAMPLE_CHATS[selected]
 
-st.caption("Preview only: these conversations are samples, and nothing you type is sent.")
 
 list_col, chat_col = st.columns([1, 1.6], gap="small")
 
@@ -144,7 +143,7 @@ with list_col:
 with chat_col:
     with st.container(key="msg_chat_box"):
         st.markdown(chat_header_html(chat), unsafe_allow_html=True)
-        with st.container(height=360, border=False, key="msg_thread"):
+        with st.container(height=600, border=False, key="msg_thread"):
             st.markdown(bubbles_html(chat), unsafe_allow_html=True)
         with st.container(key="msg_compose", horizontal=True, vertical_alignment="center"):
             st.text_input("Message", placeholder="Type a message...", key="msg_draft",
