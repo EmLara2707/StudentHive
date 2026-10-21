@@ -130,17 +130,21 @@ with right_col:
         # ---------------- SIGN-UP ----------------
         with signup_tab:
             st.write("")
-            full_name = st.text_input("Full Name", key="signup_name")
-            new_email = st.text_input("School Email", key="signup_email")
-            new_password = st.text_input(
-                "Password", type="password", key="signup_password"
-            )
-            confirm_password = st.text_input(
-                "Confirm Password", type="password", key="signup_confirm"
-            )
-            st.space("small")
-            signup_button = st.button("Create Account", key="signup_btn")
+            # A form, so typing and tabbing between fields does not rerun the script (a rerun
+            # was flipping the page back to the Login tab). It runs only on Create Account.
+            with st.form("signup_form", border=False):
+                full_name = st.text_input("Full Name", key="signup_name")
+                new_email = st.text_input("School Email", key="signup_email")
+                new_password = st.text_input(
+                    "Password", type="password", key="signup_password"
+                )
+                confirm_password = st.text_input(
+                    "Confirm Password", type="password", key="signup_confirm"
+                )
+                st.space("small")
+                signup_button = st.form_submit_button("Create Account", key="signup_btn")
 
+            # Buttons are not allowed inside a form, so the legal links stay outside it.
             with st.container(horizontal=True, horizontal_alignment="center",
                               vertical_alignment="center", gap="xxsmall", key="legal_links"):
                 st.markdown('<span class="sh-legal-text">By creating an account, you agree to our</span>',

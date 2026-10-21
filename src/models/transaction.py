@@ -11,9 +11,11 @@ Lifecycle:
     Active    -> Completed  (either side, once the start date has come)
     Active    -> Cancelled  (either side)
 
-Rentals add two confirmations by the renter inside Active:
-    picked up  (from the start day on; until then either side may cancel, after it nobody can)
-    dropped off (any time after pickup); only then can the rental be completed or cancelled
+Rentals add two confirmations inside Active, each made by the side that receives the item:
+    picked up   confirmed by the RENTER (from the start day on; until then either side may
+                cancel, after it nobody can)
+    dropped off confirmed by the LENDER once the item is back with them (any time after
+                pickup); only then can the rental be completed or cancelled
 
 Pure data + rules: no Streamlit, no storage.
 """
@@ -66,7 +68,7 @@ class Action(str, Enum):
     COMPLETE = "complete"
     CANCEL = "cancel"
     CONFIRM_PICKUP = "confirm_pickup"      # rentals: the renter received the item
-    CONFIRM_DROPOFF = "confirm_dropoff"    # rentals: the renter returned the item
+    CONFIRM_DROPOFF = "confirm_dropoff"    # rentals: the lender has the item back
 
 
 class InvalidTransition(ValueError):
@@ -213,11 +215,13 @@ class Transaction:
 
     def _rental_actions(self, email: str, today: date) -> list[Action]:
         """Accepted rental: cancel until pickup is confirmed; no cancelling while the item is
-        out; complete or cancel only once the renter has confirmed the drop-off."""
+        out; complete or cancel only once the lender has confirmed the drop-off.
+        The renter confirms pickup (they receive the item); the lender confirms drop-off
+        (they get it back), so neither side confirms both."""
         if self.is_dropped_off:
             return [Action.COMPLETE, Action.CANCEL]
         if self.is_picked_up:
-            return [Action.CONFIRM_DROPOFF] if self.is_requester(email) else []
+            return [Action.CONFIRM_DROPOFF] if self.is_provider(email) else []
         if not self.has_started(today):
             return [Action.CANCEL]
         if self.is_requester(email):

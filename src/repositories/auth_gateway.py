@@ -7,11 +7,14 @@ AuthController (A3) calls this instead of checking password hashes itself. Rules
     error_code, so the controller decides which student-facing message to show.
   * It holds the per-session client it is given; it never builds or caches one.
   * The admin client is only reached through the get_admin_client function, and only
-    by admin_delete_user.
+    by admin_delete_user and admin_remove_user_files.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
+
+log = logging.getLogger(__name__)
 
 
 # error_code values the controller can switch on
@@ -252,6 +255,36 @@ class SupabaseAuthGateway:
         return _outcome_from_response(response)
 
     # ---- account deletion (admin only) ----
+    # Buckets whose files live under <user id>/ (see storage.py).
+    FILE_BUCKETS = ("avatars", "listing-images")
+
+    def admin_remove_user_files(self, user_id: str) -> None:
+        """Delete the person's uploaded photos before their account goes. Best effort: a
+        missing bucket or a network hiccup is logged and skipped, never raised.
+
+        This runs first because Supabase can refuse to delete an auth user that still owns
+        Storage objects, and because public-bucket files would otherwise stay online
+        forever once their owner is gone."""
+        admin = self._get_admin_client()
+        if admin is None:
+            return
+        for bucket in self.FILE_BUCKETS:
+            try:
+                files = admin.storage.from_(bucket)
+                tried: set[str] = set()
+                while True:
+                    names = [f"{user_id}/{item['name']}"
+                             for item in files.list(user_id, {"limit": 100})
+                             if item.get("name")]
+                    fresh = [n for n in names if n not in tried]
+                    if not fresh:                       # empty, or nothing new to try
+                        break
+                    tried.update(fresh)
+                    files.remove(fresh)
+            except Exception as exc:
+                log.warning("delete account: could not clear %s files (%s: %s)",
+                            bucket, type(exc).__name__, exc)
+
     def admin_delete_user(self, user_id: str) -> AuthOutcome:
         """Delete the auth user. Foreign keys cascade to profiles and everything
         below it. Uses the service-role client and nothing else does."""

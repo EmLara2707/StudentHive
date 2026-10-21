@@ -31,7 +31,7 @@ TIME_OPTIONS = [datetime(2000, 1, 1, h, m).strftime("%I:%M %p")
 DEFAULT_TIME = "10:00 AM"
 
 _MODE_SUBTITLES = {
-    MeetingMode.ONLINE: "Google Meet / Zoom / Teams link will be given",
+    MeetingMode.ONLINE: "Communicate with the provider on your preferred platform.",
     MeetingMode.CAMPUS: "Library, Cafeteria, etc.",
 }
 

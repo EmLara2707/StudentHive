@@ -7,7 +7,7 @@ from models.profile import Profile
 @dataclass
 class User:
     name: str
-    email: str            # always stored lower-cased
+    email: str        
     onboarded: bool = False
     profile: Profile = field(default_factory=Profile)
 

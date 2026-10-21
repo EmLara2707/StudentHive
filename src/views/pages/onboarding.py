@@ -128,7 +128,7 @@ def _step_skills(draft: Profile):
         )
         _chips(draft, "skills", "skills")
 
-    st.markdown('<div class="ob-h2">Portfolio & Links</div>', unsafe_allow_html=True)
+    st.markdown('<div class="ob-h2">Portfolio & Links (optional)</div>', unsafe_allow_html=True)
     with st.container(key="card_portfolio"):
         draft.portfolio = st.text_input("Personal Portfolio", value=draft.portfolio)
         c1, c2 = st.columns(2)

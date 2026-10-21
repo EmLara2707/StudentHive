@@ -20,3 +20,5 @@ class TransactionRepository(Protocol):
         pickup / drop-off were already confirmed): if someone else changed it meanwhile the
         save is refused (two people acting at once)."""
         ...
+
+

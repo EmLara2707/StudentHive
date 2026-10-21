@@ -188,10 +188,10 @@ def confirm_delete_dialog():
     with st.container(horizontal=True, horizontal_alignment="distribute"):
         if st.button("Cancel", key="del_no"):
             st.rerun()
-        if st.button(
-            "Delete account", key="del_yes",
-            disabled=typed.strip() != auth.DELETE_CONFIRMATION,
-        ):
+        # Not disabled while the text doesn't match: a text box only commits on Enter or when
+        # it loses focus, so clicking straight from the box onto a disabled button was
+        # swallowed (the first click only enabled it). delete_account() checks the text.
+        if st.button("Delete account", key="del_yes"):
             result = auth.delete_account(_email(), typed)
             if result.ok:
                 sign_out_everywhere()   # back to the login page

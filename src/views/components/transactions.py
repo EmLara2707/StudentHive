@@ -312,9 +312,9 @@ def _rental_note(ctx: _Ctx, r: TransactionEntry) -> tuple[str, str]:
     if tx.is_picked_up:
         overdue = ctx.today > tx.end
         if renter:
-            text = "Picked up. Confirm drop-off once you have returned the item."
+            text = f"Picked up. Return the item to {name}; they will confirm the drop-off."
         else:
-            text = f"{name} has picked up the item. Waiting for them to confirm drop-off."
+            text = f"{name} has picked up the item. Confirm drop-off once it is back with you."
         if overdue:
             return f"{text} Return is overdue by {plural((ctx.today - tx.end).days, 'day')}.", " det-note-overdue"
         return text, ""
@@ -507,7 +507,7 @@ def _dialog_text(ctx: _Ctx, action: Action, r: TransactionEntry) -> str:
         return (f"Confirm that you received “{fields['item']}” from {fields['name']}? "
                 "Once confirmed, this rental can no longer be cancelled.")
     if action is Action.CONFIRM_DROPOFF:
-        return (f"Confirm that you returned “{fields['item']}” to {fields['name']}? "
+        return (f"Confirm that {fields['name']} returned “{fields['item']}” to you? "
                 "The rental can then be completed.")
     if action is Action.COMPLETE:
         return f"Mark “{fields['item']}” with {fields['name']} as completed? This can’t be undone."
@@ -523,7 +523,7 @@ def _dialog_labels(ctx: _Ctx, action: Action) -> tuple[str, str]:
         Action.CANCEL: (ctx.copy.keep_label, "Yes, cancel it"),
         Action.WITHDRAW: ("Keep request", "Yes, cancel it"),
         Action.CONFIRM_PICKUP: ("Not yet", "Yes, I received it"),
-        Action.CONFIRM_DROPOFF: ("Not yet", "Yes, I returned it"),
+        Action.CONFIRM_DROPOFF: ("Not yet", "Yes, I got it back"),
     }[action]
 
 
@@ -660,7 +660,7 @@ def render_actions(ctx: _Ctx, r: TransactionEntry) -> None:
             _open_confirm(ctx, Action.CANCEL, tid)
 
     elif Action.CONFIRM_DROPOFF in actions:
-        # rental is out: no cancelling, the renter confirms the return
+        # rental is out: no cancelling; the lender confirms the item is back
         if st.button("Confirm drop-off", key="act_dropoff", use_container_width=True):
             _open_confirm(ctx, Action.CONFIRM_DROPOFF, tid)
 

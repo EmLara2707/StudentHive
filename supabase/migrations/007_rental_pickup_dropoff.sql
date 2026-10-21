@@ -1,5 +1,6 @@
 -- StudentHive migration 007: rental pickup / drop-off confirmations
--- The renter confirms pickup (from the start day on) and later drop-off. Once the item is
+-- The renter confirms pickup (from the start day on); the lender confirms drop-off once the
+-- item is back with them (the app decides who; no column stores it). Once the item is
 -- picked up the rental can no longer be cancelled; it can be completed or cancelled only
 -- after drop-off. The app enforces the flow (Transaction model); the database guards the
 -- invariants below. Safe to run on existing data: both columns start empty.

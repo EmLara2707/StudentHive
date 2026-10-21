@@ -1,5 +1,6 @@
 """Authentication use-cases. Knows nothing about Streamlit or session_state:
 it takes plain values in and returns an AuthResult for the view to act on."""
+import logging
 import re
 from dataclasses import dataclass
 
@@ -10,6 +11,8 @@ from repositories.listing_repository import ListingRepository
 from repositories.review_repository import ReviewRepository
 from repositories.transaction_repository import TransactionRepository
 from repositories.user_repository import UserRepository
+
+log = logging.getLogger(__name__)
 
 _EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # StudentHive is for verified students: only addresses on these domains (or their
@@ -219,12 +222,27 @@ class AuthController:
             return AuthResult.failure(f"Type {self.DELETE_CONFIRMATION} to confirm.")
         if self._users.get_by_email(email) is None:
             return AuthResult.failure("Account not found.")
-        # The gateway deletes the account: in memory it removes the user, on Supabase it
-        # deletes the auth user and the foreign keys cascade to everything below it.
-        # Supabase side: only the signed-in person's own id is ever used.
-        user_id = self._gateway.current_user_id() or email
-        if "@" in user_id and user_id.lower() != email.strip().lower():
-            return AuthResult.failure("Account not found.")   # signed in as someone else
-        if not self._gateway.admin_delete_user(user_id).ok:
-            return AuthResult.failure("Account not found.")
+        # Only the signed-in person's own id is ever used (never the typed email), so nobody
+        # can delete someone else's account. Supabase needs that uuid: an email won't do.
+        user_id = self._gateway.current_user_id()
+        if not user_id:
+            return AuthResult.failure(self._EXPIRED)
+        # Photos first, then the auth user; the foreign keys cascade to everything else.
+        self._gateway.admin_remove_user_files(user_id)
+        outcome = self._gateway.admin_delete_user(user_id)
+        if not outcome.ok:
+            # The real cause goes to the server log; the student gets a plain message.
+            log.warning("delete account failed: %s: %s", outcome.error_code, outcome.message)
+            return AuthResult.failure(self._delete_failure_message(outcome))
         return AuthResult.success()
+
+    @staticmethod
+    def _delete_failure_message(outcome) -> str:
+        code = outcome.error_code
+        if code == gw.NOT_CONFIGURED:
+            return "Account deletion isn't set up on this server yet (the service key is missing)."
+        if code == gw.NETWORK:
+            return "Couldn't reach the server. Check your connection and try again."
+        if code == gw.SESSION_EXPIRED:
+            return AuthController._EXPIRED
+        return "We couldn't delete your account. Please try again in a moment."
